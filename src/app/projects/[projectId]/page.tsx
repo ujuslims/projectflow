@@ -3,7 +3,7 @@
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { DefineStages } from '@/components/project/define-stages';
-import { ProjectDetailsCard } from '@/components/project/project-details-card'; // New Import
+import { ProjectDetailsCard } from '@/components/project/project-details-card';
 import { StageColumn } from '@/components/project/stage-column';
 import { SubtaskDialog } from '@/components/project/subtask-dialog';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ export default function ProjectDetailPage() {
   const { 
     getProject, addStage, updateStage, deleteStage, 
     addSubtask, updateSubtask, deleteSubtask, moveSubtask,
-    setProjectSubtasks, setProjectStages, updateProject // Added updateProject
+    setProjectSubtasks, setProjectStages, updateProject
   } = useProjects();
   const { toast } = useToast();
 
@@ -38,6 +38,13 @@ export default function ProjectDetailPage() {
 
   const [isAISuggesting, setIsAISuggesting] = useState(false);
   const [isAIOrganizing, setIsAIOrganizing] = useState(false);
+
+  // Moved useMemo hook before conditional returns
+  const sortedStages = useMemo(() => {
+    const stages = project?.stages;
+    if (!stages) return [];
+    return [...stages].sort((a, b) => a.order - b.order);
+  }, [project?.stages]); // Dependency on project?.stages ensures re-memoization when stages change or project loads
 
   useEffect(() => {
     if (projectId) {
@@ -184,7 +191,9 @@ export default function ProjectDetailPage() {
         movedSubtask = { ...movedSubtask, stageId: targetStageId, order: newOrder };
         const finalSubtasks = [...otherSubtasks, movedSubtask].sort((a, b) => {
             if (a.stageId === b.stageId) return a.order - b.order;
-            return prev.stages.find(s => s.id === a.stageId)!.order - prev.stages.find(s => s.id === b.stageId)!.order;
+            const stageAOrder = prev.stages.find(s => s.id === a.stageId)?.order ?? 0;
+            const stageBOrder = prev.stages.find(s => s.id === b.stageId)?.order ?? 0;
+            return stageAOrder - stageBOrder || a.order - b.order;
         });
 
         return { ...prev, subtasks: finalSubtasks };
@@ -207,7 +216,13 @@ export default function ProjectDetailPage() {
       const input: SuggestSubtasksInput = { projectDescription: project.description };
       const result: SuggestSubtasksOutput = await suggestSubtasks(input);
       
-      const backlogStage = project.stages.sort((a,b) => a.order - b.order)[0]; 
+      const backlogStage = sortedStages[0]; // Use sortedStages
+      if (!backlogStage) {
+         toast({ title: "Error", description: "No stages available to add subtasks.", variant: "destructive" });
+         setIsAISuggesting(false);
+         return;
+      }
+
       const newSubtasks: Subtask[] = [];
       result.subtasks.forEach(subtaskName => {
         const addedSubtask = addSubtask(project.id, backlogStage.id, { name: subtaskName });
@@ -234,7 +249,7 @@ export default function ProjectDetailPage() {
     try {
       const input: OrganizeSubtasksInput = {
         projectName: project.name,
-        stages: project.stages.map(s => s.name),
+        stages: sortedStages.map(s => s.name), // Use sortedStages
         subtasks: project.subtasks.map(st => ({ name: st.name, description: st.description })),
       };
       const result: OrganizeSubtasksOutput = await organizeSubtasks(input);
@@ -243,41 +258,35 @@ export default function ProjectDetailPage() {
       const finalSubtasks: Subtask[] = [];
       
       Object.entries(result.categorizedSubtasks).forEach(([stageName, aiStageSubtasks]) => {
-        const targetStageId = project.stages.find(s => s.name === stageName)?.id;
-        if (targetStageId) {
+        const targetStage = sortedStages.find(s => s.name === stageName); // Use sortedStages
+        if (targetStage) {
           aiStageSubtasks.forEach((aiSubtask, order) => {
-            // Find subtask by name, imperfect but the AI only knows names
             const matchedSubtaskEntry = Array.from(currentSubtasksMap.entries()).find(([id, st]) => st.name === aiSubtask.name);
             if (matchedSubtaskEntry) {
               const [matchedId, matchedSubtask] = matchedSubtaskEntry;
               finalSubtasks.push({
                 ...matchedSubtask,
-                stageId: targetStageId,
+                stageId: targetStage.id,
                 order,
                 description: aiSubtask.description || matchedSubtask.description,
                 suggestedDeadline: aiSubtask.suggestedDeadline || matchedSubtask.suggestedDeadline,
               });
-              currentSubtasksMap.delete(matchedId); // Remove from map so it's not added again
+              currentSubtasksMap.delete(matchedId); 
             }
           });
         }
       });
 
-      // Add back any subtasks not matched/categorized by AI, keep their original stage and order (relative to other uncat. tasks)
-      // This might be complex to re-order perfectly. For now, add to first stage or keep original.
-      // For simplicity, we are using the AI's organization as authoritative for the subtasks it mentions.
-      // Subtasks not mentioned by the AI will remain in the `currentSubtasksMap`. We'll add them back.
-      // This simple approach appends them to their original stage, re-calculating order.
       Array.from(currentSubtasksMap.values()).forEach(unmatchedSubtask => {
         const originalStageSubtasksCount = finalSubtasks.filter(st => st.stageId === unmatchedSubtask.stageId).length;
         finalSubtasks.push({
             ...unmatchedSubtask,
-            order: originalStageSubtasksCount // Append to the end of its original stage among newly organized ones
+            order: originalStageSubtasksCount 
         });
       });
       
       setProjectSubtasks(project.id, finalSubtasks);
-      setProject(prev => prev ? {...prev, subtasks: finalSubtasks.sort((a,b) => (project.stages.find(s=>s.id === a.stageId)?.order ?? 0) - (project.stages.find(s=>s.id === b.stageId)?.order ?? 0) || a.order - b.order)} : null);
+      setProject(prev => prev ? {...prev, subtasks: finalSubtasks.sort((a,b) => (sortedStages.find(s=>s.id === a.stageId)?.order ?? 0) - (sortedStages.find(s=>s.id === b.stageId)?.order ?? 0) || a.order - b.order)} : null);
 
       toast({ title: "AI Organization Applied", description: "Subtasks have been organized." });
     } catch (error) {
@@ -299,8 +308,6 @@ export default function ProjectDetailPage() {
     );
   }
   
-  const sortedStages = useMemo(() => [...project.stages].sort((a, b) => a.order - b.order), [project.stages]);
-
   return (
     <AppLayout>
       <div className="mb-6">
@@ -312,7 +319,7 @@ export default function ProjectDetailPage() {
       <Separator className="my-8" />
 
       <DefineStages
-        stages={sortedStages}
+        stages={sortedStages} // Use the memoized sortedStages
         onAddStage={handleAddStage}
         onUpdateStage={handleUpdateStage}
         onDeleteStage={handleDeleteStage}
@@ -342,7 +349,7 @@ export default function ProjectDetailPage() {
 
       <Separator className="my-8" />
       
-      {project.stages.length === 0 ? (
+      {sortedStages.length === 0 ? ( // Use sortedStages
         <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
             <ListChecks className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2 text-muted-foreground">No Stages Defined</h2>
@@ -351,7 +358,7 @@ export default function ProjectDetailPage() {
       ) : (
         <ScrollArea className="w-full whitespace-nowrap pb-4">
             <div className="flex gap-6">
-            {sortedStages.map(stage => (
+            {sortedStages.map(stage => ( // Use sortedStages
                 <StageColumn
                 key={stage.id}
                 stage={stage}
@@ -380,3 +387,4 @@ export default function ProjectDetailPage() {
     </AppLayout>
   );
 }
+
