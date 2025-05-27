@@ -1,7 +1,9 @@
+
 "use client";
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { DefineStages } from '@/components/project/define-stages';
+import { ProjectDetailsCard } from '@/components/project/project-details-card'; // New Import
 import { StageColumn } from '@/components/project/stage-column';
 import { SubtaskDialog } from '@/components/project/subtask-dialog';
 import { Button } from '@/components/ui/button';
@@ -24,7 +26,7 @@ export default function ProjectDetailPage() {
   const { 
     getProject, addStage, updateStage, deleteStage, 
     addSubtask, updateSubtask, deleteSubtask, moveSubtask,
-    setProjectSubtasks, setProjectStages 
+    setProjectSubtasks, setProjectStages, updateProject // Added updateProject
   } = useProjects();
   const { toast } = useToast();
 
@@ -49,11 +51,20 @@ export default function ProjectDetailPage() {
     }
   }, [projectId, getProject, router, toast]);
 
+  const handleUpdateProjectDetails = (updates: Partial<Project>) => {
+    if (!project) return;
+    updateProject(project.id, updates);
+    // Project state will re-render due to context update
+  };
+
   const handleAddStage = (name: string) => {
     if (!project) return;
     const newStage = addStage(project.id, { name });
     if (newStage) {
-      setProject(prev => prev ? {...prev, stages: [...prev.stages, newStage]} : null);
+      // The project state will be updated via the context, causing a re-render.
+      // No need to call setProject here if context updates trigger re-render of this component.
+      // To be safe and ensure immediate UI update if context propagation is delayed:
+      setProject(prev => prev ? {...prev, stages: [...prev.stages, newStage].sort((a,b)=>a.order-b.order)} : null);
       toast({ title: "Success", description: `Stage "${name}" added.` });
     }
   };
@@ -61,7 +72,8 @@ export default function ProjectDetailPage() {
   const handleUpdateStage = (id: string, name: string) => {
     if (!project) return;
     updateStage(project.id, id, { name });
-     setProject(prev => prev ? {...prev, stages: prev.stages.map(s => s.id === id ? {...s, name} : s) } : null);
+    // As above, context should handle re-render. For safety:
+    setProject(prev => prev ? {...prev, stages: prev.stages.map(s => s.id === id ? {...s, name} : s).sort((a,b)=>a.order-b.order) } : null);
     toast({ title: "Success", description: `Stage updated.` });
   };
 
@@ -70,11 +82,13 @@ export default function ProjectDetailPage() {
     const stageToDelete = project.stages.find(s => s.id === id);
     if (window.confirm(`Are you sure you want to delete stage "${stageToDelete?.name}" and all its subtasks?`)) {
       deleteStage(project.id, id);
+      // Context handles re-render. For safety:
       setProject(prev => {
         if (!prev) return null;
+        const updatedStages = prev.stages.filter(s => s.id !== id);
         return {
           ...prev,
-          stages: prev.stages.filter(s => s.id !== id),
+          stages: updatedStages.sort((a,b)=>a.order-b.order),
           subtasks: prev.subtasks.filter(st => st.stageId !== id),
         };
       });
@@ -97,13 +111,14 @@ export default function ProjectDetailPage() {
   const handleSubtaskFormSubmit = (subtaskData: SubtaskCore) => {
     if (!project) return;
     if (editingSubtask) {
-      updateSubtask(project.id, editingSubtask.id, subtaskData);
-      setProject(prev => prev ? {...prev, subtasks: prev.subtasks.map(st => st.id === editingSubtask.id ? {...st, ...subtaskData} : st)} : null);
+      const updatedSubtaskData = { ...editingSubtask, ...subtaskData };
+      updateSubtask(project.id, editingSubtask.id, updatedSubtaskData);
+      setProject(prev => prev ? {...prev, subtasks: prev.subtasks.map(st => st.id === editingSubtask.id ? updatedSubtaskData : st)} : null);
       toast({ title: "Success", description: `Subtask "${subtaskData.name}" updated.` });
     } else if (targetStageIdForNewSubtask) {
       const newSubtask = addSubtask(project.id, targetStageIdForNewSubtask, subtaskData);
       if (newSubtask) {
-        setProject(prev => prev ? {...prev, subtasks: [...prev.subtasks, newSubtask]} : null);
+         setProject(prev => prev ? {...prev, subtasks: [...prev.subtasks, newSubtask]} : null);
         toast({ title: "Success", description: `Subtask "${subtaskData.name}" added.` });
       }
     }
@@ -128,7 +143,7 @@ export default function ProjectDetailPage() {
   };
 
   const onDragOver = (e: React.DragEvent<HTMLDivElement>, stageId: string) => {
-    e.preventDefault(); // Necessary to allow dropping
+    e.preventDefault(); 
   };
 
   const onDrop = (e: React.DragEvent<HTMLDivElement>, targetStageId: string) => {
@@ -136,37 +151,43 @@ export default function ProjectDetailPage() {
     if (!project || !draggedSubtaskId) return;
 
     const subtaskId = e.dataTransfer.getData("subtaskId");
-    const targetSubtasksInStage = project.subtasks.filter(st => st.stageId === targetStageId);
-    
-    // Calculate new order (simplified: append to end)
-    // For more precise drop positioning, you'd need to check y-coordinate relative to other cards.
+    const subtaskToMove = project.subtasks.find(st => st.id === subtaskId);
+    if (!subtaskToMove) return;
+
+    const targetSubtasksInStage = project.subtasks.filter(st => st.stageId === targetStageId && st.id !== subtaskId);
     const newOrder = targetSubtasksInStage.length; 
 
     moveSubtask(project.id, subtaskId, targetStageId, newOrder);
+    
+    // For immediate UI update:
     setProject(prev => {
-      if (!prev) return null;
-      const subtaskToMove = prev.subtasks.find(st => st.id === subtaskId);
-      if (!subtaskToMove) return prev;
+        if (!prev) return null;
+        let movedSubtask = prev.subtasks.find(st => st.id === subtaskId)!;
+        let otherSubtasks = prev.subtasks.filter(st => st.id !== subtaskId);
 
-      const oldStageId = subtaskToMove.stageId;
-      const updatedSubtasks = prev.subtasks
-        .filter(st => st.id !== subtaskId)
-        .map(st => {
-          if (st.stageId === oldStageId && st.order > subtaskToMove.order) {
-            return { ...st, order: st.order - 1 };
-          }
-          return st;
-        })
-        .map(st => {
-          if (st.stageId === targetStageId && st.order >= newOrder) {
-            return { ...st, order: st.order + 1 };
-          }
-          return st;
+        // Adjust order in old stage
+        otherSubtasks = otherSubtasks.map(st => {
+            if (st.stageId === movedSubtask.stageId && st.order > movedSubtask.order) {
+                return { ...st, order: st.order - 1 };
+            }
+            return st;
         });
-      
-      updatedSubtasks.push({ ...subtaskToMove, stageId: targetStageId, order: newOrder });
-      updatedSubtasks.sort((a,b) => a.stageId.localeCompare(b.stageId) || a.order - b.order);
-      return { ...prev, subtasks: updatedSubtasks };
+        
+        // Adjust order in new stage
+        otherSubtasks = otherSubtasks.map(st => {
+            if (st.stageId === targetStageId && st.order >= newOrder) {
+                return { ...st, order: st.order + 1 };
+            }
+            return st;
+        });
+        
+        movedSubtask = { ...movedSubtask, stageId: targetStageId, order: newOrder };
+        const finalSubtasks = [...otherSubtasks, movedSubtask].sort((a, b) => {
+            if (a.stageId === b.stageId) return a.order - b.order;
+            return prev.stages.find(s => s.id === a.stageId)!.order - prev.stages.find(s => s.id === b.stageId)!.order;
+        });
+
+        return { ...prev, subtasks: finalSubtasks };
     });
     setDraggedSubtaskId(null);
   };
@@ -186,14 +207,15 @@ export default function ProjectDetailPage() {
       const input: SuggestSubtasksInput = { projectDescription: project.description };
       const result: SuggestSubtasksOutput = await suggestSubtasks(input);
       
-      const backlogStage = project.stages.sort((a,b) => a.order - b.order)[0]; // Use the first stage as backlog
+      const backlogStage = project.stages.sort((a,b) => a.order - b.order)[0]; 
       const newSubtasks: Subtask[] = [];
       result.subtasks.forEach(subtaskName => {
         const addedSubtask = addSubtask(project.id, backlogStage.id, { name: subtaskName });
         if (addedSubtask) newSubtasks.push(addedSubtask);
       });
-      setProject(prev => prev ? {...prev, subtasks: [...prev.subtasks, ...newSubtasks]} : null);
-
+      if (newSubtasks.length > 0) {
+        setProject(prev => prev ? {...prev, subtasks: [...prev.subtasks, ...newSubtasks]} : null);
+      }
       toast({ title: "AI Suggestions Added", description: `${result.subtasks.length} subtasks suggested and added to "${backlogStage.name}".` });
     } catch (error) {
       console.error("AI Suggestion Error:", error);
@@ -217,67 +239,47 @@ export default function ProjectDetailPage() {
       };
       const result: OrganiseSubtasksOutput = await organizeSubtasks(input);
       
-      const updatedSubtasks: Subtask[] = [];
-      const stageNameMap = new Map(project.stages.map(s => [s.name, s.id]));
-
-      Object.entries(result.categorizedSubtasks).forEach(([stageName, aiSubtasks]) => {
-        const stageId = stageNameMap.get(stageName);
-        if (stageId) {
-          aiSubtasks.forEach((aiSubtask, index) => {
-            // Try to find existing subtask by name, or create new if AI generated new ones (though current AI flow doesn't)
-            const existingSubtask = project.subtasks.find(st => st.name === aiSubtask.name);
-            if (existingSubtask) {
-              const updatedSt = {
-                ...existingSubtask,
-                stageId: stageId,
-                order: index,
-                description: aiSubtask.description || existingSubtask.description,
-                suggestedDeadline: aiSubtask.suggestedDeadline || existingSubtask.suggestedDeadline,
-              };
-              updateSubtask(project.id, existingSubtask.id, updatedSt);
-              updatedSubtasks.push(updatedSt);
-            }
-            // If AI could potentially create NEW subtasks during organization, handle that here.
-            // For now, we assume it only re-organizes existing ones by name.
-          });
-        }
-      });
-      // Add subtasks that were not categorized by AI back to their original state or a default stage.
-      // This simple version assumes all subtasks are processed.
-      // A more robust solution would merge AI results with existing subtasks.
-      // For now, we are replacing the subtasks based on AI organization.
-      // We need to be careful not to lose subtask IDs if they are not matched by name.
-
-      // Simplified: we map AI suggestions to OUR subtasks by name (imperfect)
-      let currentSubtasks = [...project.subtasks];
-      const newlyOrganizedSubtasks: Subtask[] = [];
-
+      let currentSubtasksMap = new Map(project.subtasks.map(st => [st.id, {...st}]));
+      const finalSubtasks: Subtask[] = [];
+      
       Object.entries(result.categorizedSubtasks).forEach(([stageName, aiStageSubtasks]) => {
         const targetStageId = project.stages.find(s => s.name === stageName)?.id;
         if (targetStageId) {
           aiStageSubtasks.forEach((aiSubtask, order) => {
-            const matchIndex = currentSubtasks.findIndex(st => st.name === aiSubtask.name);
-            if (matchIndex !== -1) {
-              const matchedSubtask = currentSubtasks.splice(matchIndex, 1)[0];
-              newlyOrganizedSubtasks.push({
+            // Find subtask by name, imperfect but the AI only knows names
+            const matchedSubtaskEntry = Array.from(currentSubtasksMap.entries()).find(([id, st]) => st.name === aiSubtask.name);
+            if (matchedSubtaskEntry) {
+              const [matchedId, matchedSubtask] = matchedSubtaskEntry;
+              finalSubtasks.push({
                 ...matchedSubtask,
                 stageId: targetStageId,
                 order,
                 description: aiSubtask.description || matchedSubtask.description,
                 suggestedDeadline: aiSubtask.suggestedDeadline || matchedSubtask.suggestedDeadline,
               });
+              currentSubtasksMap.delete(matchedId); // Remove from map so it's not added again
             }
           });
         }
       });
-      // Add back any subtasks not matched by AI (e.g. if AI flow filters some out)
-      // or if names changed. This keeps original IDs.
-      const finalSubtasks = [...newlyOrganizedSubtasks, ...currentSubtasks.map((st, idx) => ({...st, order: newlyOrganizedSubtasks.filter(nos => nos.stageId === st.stageId).length + idx}))];
+
+      // Add back any subtasks not matched/categorized by AI, keep their original stage and order (relative to other uncat. tasks)
+      // This might be complex to re-order perfectly. For now, add to first stage or keep original.
+      // For simplicity, we are using the AI's organization as authoritative for the subtasks it mentions.
+      // Subtasks not mentioned by the AI will remain in the `currentSubtasksMap`. We'll add them back.
+      // This simple approach appends them to their original stage, re-calculating order.
+      Array.from(currentSubtasksMap.values()).forEach(unmatchedSubtask => {
+        const originalStageSubtasksCount = finalSubtasks.filter(st => st.stageId === unmatchedSubtask.stageId).length;
+        finalSubtasks.push({
+            ...unmatchedSubtask,
+            order: originalStageSubtasksCount // Append to the end of its original stage among newly organized ones
+        });
+      });
       
       setProjectSubtasks(project.id, finalSubtasks);
-      setProject(prev => prev ? {...prev, subtasks: finalSubtasks} : null);
+      setProject(prev => prev ? {...prev, subtasks: finalSubtasks.sort((a,b) => (project.stages.find(s=>s.id === a.stageId)?.order ?? 0) - (project.stages.find(s=>s.id === b.stageId)?.order ?? 0) || a.order - b.order)} : null);
 
-      toast({ title: "AI Organization Applied", description: "Subtasks have been organized by stage and deadlines suggested." });
+      toast({ title: "AI Organization Applied", description: "Subtasks have been organized." });
     } catch (error) {
       console.error("AI Organization Error:", error);
       toast({ title: "AI Error", description: "Could not organize subtasks.", variant: "destructive" });
@@ -302,9 +304,12 @@ export default function ProjectDetailPage() {
   return (
     <AppLayout>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-        <p className="text-muted-foreground mt-1">{project.description || "No description."}</p>
+        {/* Project Name and Description are now part of ProjectDetailsCard */}
       </div>
+      
+      <ProjectDetailsCard project={project} onUpdateProject={handleUpdateProjectDetails} />
+      
+      <Separator className="my-8" />
 
       <DefineStages
         stages={sortedStages}
@@ -363,7 +368,6 @@ export default function ProjectDetailPage() {
             <ScrollBar orientation="horizontal" />
         </ScrollArea>
       )}
-
 
       <SubtaskDialog
         isOpen={isSubtaskDialogOpen}

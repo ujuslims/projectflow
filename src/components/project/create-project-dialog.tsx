@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from 'react';
@@ -22,19 +23,24 @@ export function CreateProjectDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [budget, setBudget] = useState('');
   const { addProject } = useProjects();
   const router = useRouter();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      // Basic validation, consider using react-hook-form for more complex forms
       alert("Project name is required.");
       return;
     }
-    const newProject = addProject({ name, description });
+    const newProject = addProject({ 
+      name, 
+      description, 
+      budget: budget ? parseFloat(budget) : undefined 
+    });
     setName('');
     setDescription('');
+    setBudget('');
     setIsOpen(false);
     router.push(`/projects/${newProject.id}`);
   };
@@ -77,6 +83,19 @@ export function CreateProjectDialog() {
                 onChange={(e) => setDescription(e.target.value)}
                 className="col-span-3"
                 rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="budget" className="text-right">
+                Budget
+              </Label>
+              <Input
+                id="budget"
+                type="number"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                className="col-span-3"
+                placeholder="Optional (e.g., 5000)"
               />
             </div>
           </div>

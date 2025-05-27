@@ -1,19 +1,20 @@
+
 "use client";
 
-import type { Project, Stage, Subtask } from '@/lib/types';
+import type { Project, Stage, Subtask, ProjectStatus, SubtaskStatus } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks'>) => Project;
+  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes'> & { budget?: number }) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   addStage: (projectId: string, stage: Omit<Stage, 'id' | 'createdAt' | 'order'>) => Stage | undefined;
   updateStage: (projectId: string, stageId: string, updates: Partial<Omit<Stage, 'id' | 'createdAt'>>) => void;
   deleteStage: (projectId: string, stageId: string) => void;
-  addSubtask: (projectId: string, stageId: string, subtask: Omit<Subtask, 'id' | 'createdAt' | 'order' | 'stageId'>) => Subtask | undefined;
+  addSubtask: (projectId: string, stageId: string, subtask: Omit<Subtask, 'id' | 'createdAt' | 'order' | 'stageId' | 'status'>) => Subtask | undefined;
   updateSubtask: (projectId: string, subtaskId: string, updates: Partial<Omit<Subtask, 'id' | 'createdAt'>>) => void;
   moveSubtask: (projectId: string, subtaskId: string, newStageId: string, newOrder: number) => void;
   deleteSubtask: (projectId: string, subtaskId: string) => void;
@@ -26,13 +27,17 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useLocalStorage<Project[]>('projects', []);
 
-  const addProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks'>) => {
+  const addProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes'> & { budget?: number }) => {
     const newProject: Project = {
       ...projectData,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       stages: [],
       subtasks: [],
+      budget: projectData.budget || 0,
+      spent: 0,
+      status: 'Not Started' as ProjectStatus,
+      outcomeNotes: '',
     };
     setProjects([...projects, newProject]);
     return newProject;
@@ -100,7 +105,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const addSubtask = (projectId: string, stageId: string, subtaskData: Omit<Subtask, 'id' | 'createdAt' | 'order' | 'stageId'>) => {
+  const addSubtask = (projectId: string, stageId: string, subtaskData: Omit<Subtask, 'id' | 'createdAt' | 'order' | 'stageId' | 'status'>) => {
     let newSubtask: Subtask | undefined;
     setProjects(prevProjects =>
       prevProjects.map(p => {
@@ -114,6 +119,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
             stageId,
             createdAt: new Date().toISOString(),
             order: p.subtasks.filter(st => st.stageId === stageId).length,
+            status: 'To Do' as SubtaskStatus,
           };
           return { ...p, subtasks: [...p.subtasks, newSubtask] };
         }
