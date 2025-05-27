@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Briefcase, CalendarCheck2, Edit, Hourglass, InfoIcon, ListChecks, PackageOpen, DollarSign, Percent, XCircle } from 'lucide-react';
+import { ArrowRight, Briefcase, CalendarCheck2, Edit, Hourglass, InfoIcon, ListChecks, PackageOpen, DollarSign, Percent, XCircle, CalendarDays } from 'lucide-react'; // Added CalendarDays
 import { useMemo } from 'react';
-import { formatCurrency } from '@/lib/utils'; // Assuming we'll create/use this
+import { formatCurrency, cn } from '@/lib/utils';
+import { format as formatDate, parseISO } from 'date-fns'; // Added date-fns
 
 interface ProjectCardProps {
   project: Project;
@@ -24,9 +25,9 @@ const projectStatusIconsSm: Record<ProjectStatus, JSX.Element | null> = {
 const projectStatusColors: Record<ProjectStatus, "default" | "secondary" | "destructive" | "outline"> = {
     'Not Started': 'secondary',
     'Planning': 'outline',
-    'In Progress': 'default', // often blue/primary
-    'On Hold': 'secondary', // yellow/orange like
-    'Completed': 'default', // should be green-ish if primary is not green
+    'In Progress': 'default', 
+    'On Hold': 'secondary', 
+    'Completed': 'default', 
     'Cancelled': 'destructive',
 };
 
@@ -39,7 +40,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const status = project.status || 'Not Started';
   const statusIcon = projectStatusIconsSm[status];
   const statusBadgeVariant = projectStatusColors[status];
-   // Special styling for Completed status if primary is not green
   const isCompleted = status === 'Completed';
 
 
@@ -51,7 +51,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 <Briefcase className="h-6 w-6 text-primary flex-shrink-0" />
                 <CardTitle className="text-xl leading-tight">{project.name}</CardTitle>
             </div>
-            <Badge variant={statusBadgeVariant} className={isCompleted ? "bg-green-600 text-white" : ""}>
+            <Badge variant={statusBadgeVariant} className={cn(isCompleted ? "bg-green-600 text-white" : "", "capitalize")}>
                 {statusIcon}
                 <span className="ml-1.5">{status}</span>
             </Badge>
@@ -65,13 +65,19 @@ export function ProjectCard({ project }: ProjectCardProps) {
           <ListChecks className="h-4 w-4 mr-2 text-primary" />
           <span>{completedSubtasks} / {subtaskCount} tasks ({progressPercentage}%)</span>
         </div>
+        {project.dueDate && (
+           <div className="text-sm text-muted-foreground flex items-center">
+             <CalendarDays className="h-4 w-4 mr-2 text-primary" />
+             <span>Due: {formatDate(parseISO(project.dueDate), 'MMM dd, yyyy')}</span>
+           </div>
+        )}
         {project.budget !== undefined && project.budget > 0 && (
           <div className="text-sm text-muted-foreground flex items-center">
             <DollarSign className="h-4 w-4 mr-2 text-primary" />
             <span>Budget: {formatCurrency(project.budget)}</span>
           </div>
         )}
-         {project.budget === undefined || project.budget === 0 && (
+         {(project.budget === undefined || project.budget === 0) && !project.dueDate && ( // Show "No budget set" only if also no due date, to avoid clutter
              <div className="text-sm text-muted-foreground flex items-center">
                 <DollarSign className="h-4 w-4 mr-2 text-muted-foreground/70" />
                 <span>No budget set</span>

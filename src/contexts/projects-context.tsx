@@ -7,7 +7,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes'> & { budget?: number }) => Project;
+  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate'> & { budget?: number }) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
@@ -20,6 +20,7 @@ interface ProjectsContextType {
   deleteSubtask: (projectId: string, subtaskId: string) => void;
   setProjectSubtasks: (projectId: string, subtasks: Subtask[]) => void;
   setProjectStages: (projectId: string, stages: Stage[]) => void;
+  markAllSubtasksAsDone: (projectId: string) => void; // NEW
 }
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
@@ -27,7 +28,7 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useLocalStorage<Project[]>('projects', []);
 
-  const addProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes'> & { budget?: number }) => {
+  const addProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes'| 'dueDate'> & { budget?: number }) => {
     const newProject: Project = {
       ...projectData,
       id: crypto.randomUUID(),
@@ -38,6 +39,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       spent: 0,
       status: 'Not Started' as ProjectStatus,
       outcomeNotes: '',
+      dueDate: undefined, // NEW
     };
     setProjects([...projects, newProject]);
     return newProject;
@@ -198,13 +200,29 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     updateProject(projectId, { stages });
   };
 
+  const markAllSubtasksAsDone = (projectId: string) => { // NEW function
+    setProjects(prevProjects =>
+      prevProjects.map(p => {
+        if (p.id === projectId) {
+          const updatedSubtasks = p.subtasks.map(st => ({
+            ...st,
+            status: 'Done' as SubtaskStatus,
+          }));
+          return { ...p, subtasks: updatedSubtasks };
+        }
+        return p;
+      })
+    );
+  };
+
 
   return (
     <ProjectsContext.Provider value={{ 
         projects, addProject, getProject, updateProject, deleteProject,
         addStage, updateStage, deleteStage,
         addSubtask, updateSubtask, moveSubtask, deleteSubtask,
-        setProjectSubtasks, setProjectStages
+        setProjectSubtasks, setProjectStages,
+        markAllSubtasksAsDone // NEW
       }}>
       {children}
     </ProjectsContext.Provider>

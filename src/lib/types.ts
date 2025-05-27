@@ -1,3 +1,4 @@
+
 export type ProjectStatus = 'Not Started' | 'Planning' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled';
 export type SubtaskStatus = 'To Do' | 'In Progress' | 'Done' | 'Blocked';
 
@@ -29,6 +30,7 @@ export interface Project {
   stages: Stage[];
   subtasks: Subtask[];
   createdAt: string; // ISO date string
+  dueDate?: string; // ISO date string - NEW
   budget?: number;
   spent?: number;
   status?: ProjectStatus;
