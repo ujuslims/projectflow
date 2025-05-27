@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskCore } from '@/lib/types';
-import { organizeSubtasks, OrganiseSubtasksInput, OrganiseSubtasksOutput, suggestSubtasks, SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/flows';
+import { organizeSubtasks, OrganizeSubtasksInput, OrganizeSubtasksOutput, suggestSubtasks, SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/flows';
 import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -232,12 +232,12 @@ export default function ProjectDetailPage() {
     }
     setIsAIOrganizing(true);
     try {
-      const input: OrganiseSubtasksInput = {
+      const input: OrganizeSubtasksInput = {
         projectName: project.name,
         stages: project.stages.map(s => s.name),
         subtasks: project.subtasks.map(st => ({ name: st.name, description: st.description })),
       };
-      const result: OrganiseSubtasksOutput = await organizeSubtasks(input);
+      const result: OrganizeSubtasksOutput = await organizeSubtasks(input);
       
       let currentSubtasksMap = new Map(project.subtasks.map(st => [st.id, {...st}]));
       const finalSubtasks: Subtask[] = [];

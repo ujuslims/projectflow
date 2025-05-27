@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from '@/hooks/use-toast';
 import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, InfoIcon, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, ShieldQuestion } from 'lucide-react';
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
-import { formatCurrency } from '@/lib/utils'; // Assuming you'll create this
+import { formatCurrency } from '@/lib/utils'; // Ensure this import is present and correct
 
 interface ProjectDetailsCardProps {
   project: Project;
@@ -230,8 +230,3 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     </Card>
   );
 }
-
-// Helper function, can be moved to utils.ts if used elsewhere
-export const formatCurrency = (amount: number, currency = 'USD') => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
-};
