@@ -13,7 +13,8 @@ import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskCore } from '@/lib/types';
 import { organizeSubtasks, OrganizeSubtasksInput, OrganizeSubtasksOutput, suggestSubtasks, SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/flows';
-import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info } from 'lucide-react';
+import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info, BarChartHorizontalBig } from 'lucide-react'; // Added BarChartHorizontalBig
+import Link from 'next/link'; // Added Link
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -44,7 +45,7 @@ export default function ProjectDetailPage() {
     const stages = project?.stages;
     if (!stages) return [];
     return [...stages].sort((a, b) => a.order - b.order);
-  }, [project?.stages]); // Dependency on project?.stages ensures re-memoization when stages change or project loads
+  }, [project?.stages]); 
 
   useEffect(() => {
     if (projectId) {
@@ -68,9 +69,6 @@ export default function ProjectDetailPage() {
     if (!project) return;
     const newStage = addStage(project.id, { name });
     if (newStage) {
-      // The project state will be updated via the context, causing a re-render.
-      // No need to call setProject here if context updates trigger re-render of this component.
-      // To be safe and ensure immediate UI update if context propagation is delayed:
       setProject(prev => prev ? {...prev, stages: [...prev.stages, newStage].sort((a,b)=>a.order-b.order)} : null);
       toast({ title: "Success", description: `Stage "${name}" added.` });
     }
@@ -79,7 +77,6 @@ export default function ProjectDetailPage() {
   const handleUpdateStage = (id: string, name: string) => {
     if (!project) return;
     updateStage(project.id, id, { name });
-    // As above, context should handle re-render. For safety:
     setProject(prev => prev ? {...prev, stages: prev.stages.map(s => s.id === id ? {...s, name} : s).sort((a,b)=>a.order-b.order) } : null);
     toast({ title: "Success", description: `Stage updated.` });
   };
@@ -89,7 +86,6 @@ export default function ProjectDetailPage() {
     const stageToDelete = project.stages.find(s => s.id === id);
     if (window.confirm(`Are you sure you want to delete stage "${stageToDelete?.name}" and all its subtasks?`)) {
       deleteStage(project.id, id);
-      // Context handles re-render. For safety:
       setProject(prev => {
         if (!prev) return null;
         const updatedStages = prev.stages.filter(s => s.id !== id);
@@ -166,13 +162,11 @@ export default function ProjectDetailPage() {
 
     moveSubtask(project.id, subtaskId, targetStageId, newOrder);
     
-    // For immediate UI update:
     setProject(prev => {
         if (!prev) return null;
         let movedSubtask = prev.subtasks.find(st => st.id === subtaskId)!;
         let otherSubtasks = prev.subtasks.filter(st => st.id !== subtaskId);
 
-        // Adjust order in old stage
         otherSubtasks = otherSubtasks.map(st => {
             if (st.stageId === movedSubtask.stageId && st.order > movedSubtask.order) {
                 return { ...st, order: st.order - 1 };
@@ -180,7 +174,6 @@ export default function ProjectDetailPage() {
             return st;
         });
         
-        // Adjust order in new stage
         otherSubtasks = otherSubtasks.map(st => {
             if (st.stageId === targetStageId && st.order >= newOrder) {
                 return { ...st, order: st.order + 1 };
@@ -216,7 +209,7 @@ export default function ProjectDetailPage() {
       const input: SuggestSubtasksInput = { projectDescription: project.description };
       const result: SuggestSubtasksOutput = await suggestSubtasks(input);
       
-      const backlogStage = sortedStages[0]; // Use sortedStages
+      const backlogStage = sortedStages[0]; 
       if (!backlogStage) {
          toast({ title: "Error", description: "No stages available to add subtasks.", variant: "destructive" });
          setIsAISuggesting(false);
@@ -249,7 +242,7 @@ export default function ProjectDetailPage() {
     try {
       const input: OrganizeSubtasksInput = {
         projectName: project.name,
-        stages: sortedStages.map(s => s.name), // Use sortedStages
+        stages: sortedStages.map(s => s.name), 
         subtasks: project.subtasks.map(st => ({ name: st.name, description: st.description })),
       };
       const result: OrganizeSubtasksOutput = await organizeSubtasks(input);
@@ -258,9 +251,10 @@ export default function ProjectDetailPage() {
       const finalSubtasks: Subtask[] = [];
       
       Object.entries(result.categorizedSubtasks).forEach(([stageName, aiStageSubtasks]) => {
-        const targetStage = sortedStages.find(s => s.name === stageName); // Use sortedStages
+        const targetStage = sortedStages.find(s => s.name === stageName); 
         if (targetStage) {
           aiStageSubtasks.forEach((aiSubtask, order) => {
+            // Attempt to find a matching subtask by name (simple matching)
             const matchedSubtaskEntry = Array.from(currentSubtasksMap.entries()).find(([id, st]) => st.name === aiSubtask.name);
             if (matchedSubtaskEntry) {
               const [matchedId, matchedSubtask] = matchedSubtaskEntry;
@@ -269,7 +263,7 @@ export default function ProjectDetailPage() {
                 stageId: targetStage.id,
                 order,
                 description: aiSubtask.description || matchedSubtask.description,
-                suggestedDeadline: aiSubtask.suggestedDeadline || matchedSubtask.suggestedDeadline,
+                endDate: aiSubtask.endDate || matchedSubtask.endDate, // Use renamed field
               });
               currentSubtasksMap.delete(matchedId); 
             }
@@ -277,11 +271,12 @@ export default function ProjectDetailPage() {
         }
       });
 
+      // Add any subtasks not categorized by AI back to their original stage or a default one
       Array.from(currentSubtasksMap.values()).forEach(unmatchedSubtask => {
         const originalStageSubtasksCount = finalSubtasks.filter(st => st.stageId === unmatchedSubtask.stageId).length;
         finalSubtasks.push({
             ...unmatchedSubtask,
-            order: originalStageSubtasksCount 
+            order: originalStageSubtasksCount // Append to the end of its current stage
         });
       });
       
@@ -319,7 +314,7 @@ export default function ProjectDetailPage() {
       <Separator className="my-8" />
 
       <DefineStages
-        stages={sortedStages} // Use the memoized sortedStages
+        stages={sortedStages} 
         onAddStage={handleAddStage}
         onUpdateStage={handleUpdateStage}
         onDeleteStage={handleDeleteStage}
@@ -333,6 +328,12 @@ export default function ProjectDetailPage() {
         <Button onClick={handleAIOrganizeSubtasks} disabled={isAIOrganizing || project.subtasks.length === 0 || project.stages.length === 0} variant="outline">
           {isAIOrganizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Brain className="mr-2 h-4 w-4" />}
           AI Organize Subtasks
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={`/projects/${project.id}/timeline`}>
+            <BarChartHorizontalBig className="mr-2 h-4 w-4" />
+            View Timeline
+          </Link>
         </Button>
       </div>
       {(!project.description || project.stages.length === 0) && (
@@ -349,7 +350,7 @@ export default function ProjectDetailPage() {
 
       <Separator className="my-8" />
       
-      {sortedStages.length === 0 ? ( // Use sortedStages
+      {sortedStages.length === 0 ? ( 
         <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
             <ListChecks className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2 text-muted-foreground">No Stages Defined</h2>
@@ -358,7 +359,7 @@ export default function ProjectDetailPage() {
       ) : (
         <ScrollArea className="w-full whitespace-nowrap pb-4">
             <div className="flex gap-6">
-            {sortedStages.map(stage => ( // Use sortedStages
+            {sortedStages.map(stage => ( 
                 <StageColumn
                 key={stage.id}
                 stage={stage}
@@ -387,4 +388,3 @@ export default function ProjectDetailPage() {
     </AppLayout>
   );
 }
-
