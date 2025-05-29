@@ -8,12 +8,12 @@ import { projectStageTemplates } from '@/lib/project-templates'; // Import templ
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectType'> // Removed createdAt
-                      & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; startDate?: string; dueDate?: string; }) => Project; // Added dueDate
+  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectTypes'> 
+                      & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; startDate?: string; dueDate?: string; }) => Project; 
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
-  addStage: (projectId: string, stage: Omit<Stage, 'id' | 'createdAt' | 'order'>) => Stage | undefined;
+  addStage: (projectId: string, stageData: Omit<Stage, 'id' | 'createdAt' | 'order'>) => Stage | undefined;
   updateStage: (projectId: string, stageId: string, updates: Partial<Omit<Stage, 'id' | 'createdAt'>>) => void;
   deleteStage: (projectId: string, stageId: string) => void;
   addSubtask: (projectId: string, stageId: string, subtask: SubtaskCore) => Subtask | undefined;
@@ -30,25 +30,35 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useLocalStorage<Project[]>('projects', []);
 
-  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectType'> 
-                                & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; startDate?: string; dueDate?: string; }) => {
+  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectTypes'> 
+                                & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; startDate?: string; dueDate?: string; }) => {
     
-    const initialStages: Stage[] = [];
-    if (projectData.projectType && projectStageTemplates[projectData.projectType]) {
-      const templateStageNames = projectStageTemplates[projectData.projectType];
-      templateStageNames.forEach((stageName, index) => {
-        initialStages.push({
-          id: crypto.randomUUID(),
-          name: stageName,
-          order: index,
-          createdAt: new Date().toISOString(),
-        });
+    const initialStageNames = new Set<string>();
+    if (projectData.projectTypes && projectData.projectTypes.length > 0) {
+      projectData.projectTypes.forEach(typeId => {
+        if (projectStageTemplates[typeId]) {
+          projectStageTemplates[typeId].forEach(stageName => {
+            initialStageNames.add(stageName);
+          });
+        }
       });
     }
+    // Add a default 'Backlog' stage if no types selected or no templates found
+    if (initialStageNames.size === 0) {
+        initialStageNames.add('Backlog');
+    }
+
+
+    const initialStages: Stage[] = Array.from(initialStageNames).map((stageName, index) => ({
+      id: crypto.randomUUID(),
+      name: stageName,
+      order: index,
+      createdAt: new Date().toISOString(),
+    }));
 
     const newProject: Project = {
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(), // Always set to current date/time
+      createdAt: new Date().toISOString(),
       name: projectData.name,
       description: projectData.description || '',
       stages: initialStages,
@@ -57,13 +67,13 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       spent: 0,
       status: 'Not Started' as ProjectStatus,
       outcomeNotes: '',
-      startDate: projectData.startDate, // Use provided startDate
-      dueDate: projectData.dueDate, // Use provided dueDate
+      startDate: projectData.startDate, 
+      dueDate: projectData.dueDate, 
       projectNumber: projectData.projectNumber || '',
       clientContact: projectData.clientContact || '',
       siteAddress: projectData.siteAddress || '',
       coordinateSystem: projectData.coordinateSystem || '',
-      projectType: projectData.projectType || undefined,
+      projectTypes: projectData.projectTypes || [],
     };
     setProjects(prevProjects => [...prevProjects, newProject]);
     return newProject;

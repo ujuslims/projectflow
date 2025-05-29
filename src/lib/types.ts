@@ -37,7 +37,7 @@ export interface Project {
   stages: Stage[];
   subtasks: Subtask[];
   createdAt: string; // ISO date string
-  startDate?: string; // ISO date string - NEW
+  startDate?: string; // ISO date string
   dueDate?: string; // ISO date string
   budget?: number;
   spent?: number;
@@ -48,5 +48,5 @@ export interface Project {
   clientContact?: string;
   siteAddress?: string;
   coordinateSystem?: string;
-  projectType?: string; // Added for stage templates
+  projectTypes?: string[]; // Changed from projectType: string
 }
