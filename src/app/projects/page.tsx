@@ -5,17 +5,20 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { CreateProjectDialog } from '@/components/project/create-project-dialog';
 import { ProjectCard } from '@/components/project/project-card';
 import { useProjects } from '@/contexts/projects-context';
-import { FolderOpen, PackageOpen, Hourglass, CheckCircle2, Briefcase } from 'lucide-react';
+import { FolderOpen, PackageOpen, Hourglass, CheckCircle2, Briefcase, CalendarIcon } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { ProjectStatus } from '@/lib/types';
+import { getYear } from 'date-fns';
 
 type FilterStatus = 'all' | 'notStarted' | 'inProgress' | 'completed';
 
 export default function ProjectsPage() {
   const { projects } = useProjects();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const [filterYear, setFilterYear] = useState<string>('all');
 
   const projectCounts = useMemo(() => {
     const counts = {
@@ -37,24 +40,51 @@ export default function ProjectsPage() {
     return counts;
   }, [projects]);
 
-  const filteredProjects = useMemo(() => {
-    if (filterStatus === 'all') {
-      return projects;
-    }
-    return projects.filter(p => {
-      const status = p.status || ('Not Started' as ProjectStatus);
-      if (filterStatus === 'notStarted') {
-        return status === 'Not Started';
+  const availableYears = useMemo(() => {
+    if (!projects || projects.length === 0) return [];
+    const years = new Set<string>();
+    projects.forEach(p => {
+      if (p.createdAt) {
+        try {
+          years.add(getYear(new Date(p.createdAt)).toString());
+        } catch (e) {
+          // console.warn("Invalid date for project:", p.name, p.createdAt);
+          // Potentially handle projects with invalid dates if necessary
+        }
       }
-      if (filterStatus === 'inProgress') {
-        return status === 'Planning' || status === 'In Progress';
-      }
-      if (filterStatus === 'completed') {
-        return status === 'Completed';
-      }
-      return true; // Should not happen
     });
-  }, [projects, filterStatus]);
+    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a)); // Sort years descending
+  }, [projects]);
+
+  const filteredProjects = useMemo(() => {
+    let tempProjects = projects;
+
+    // Filter by status
+    if (filterStatus !== 'all') {
+      tempProjects = tempProjects.filter(p => {
+        const status = p.status || ('Not Started' as ProjectStatus);
+        if (filterStatus === 'notStarted') return status === 'Not Started';
+        if (filterStatus === 'inProgress') return status === 'Planning' || status === 'In Progress';
+        if (filterStatus === 'completed') return status === 'Completed';
+        return true; 
+      });
+    }
+
+    // Filter by year
+    if (filterYear !== 'all') {
+      tempProjects = tempProjects.filter(p => {
+        if (p.createdAt) {
+          try {
+            return getYear(new Date(p.createdAt)).toString() === filterYear;
+          } catch (e) {
+            return false; // Invalid date, don't include
+          }
+        }
+        return false; // No createdAt date, don't include unless 'all years'
+      });
+    }
+    return tempProjects;
+  }, [projects, filterStatus, filterYear]);
 
   const StatCard = ({ title, count, icon: Icon, statusFilter, currentFilter, onClick }: {
     title: string;
@@ -88,7 +118,7 @@ export default function ProjectsPage() {
         <CreateProjectDialog />
       </div>
 
-      <div className="mb-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="All Projects"
           count={projectCounts.total}
@@ -122,6 +152,30 @@ export default function ProjectsPage() {
           onClick={() => setFilterStatus('completed')}
         />
       </div>
+      
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg bg-card">
+        <h2 className="text-md font-semibold text-card-foreground whitespace-nowrap">Filter by:</h2>
+        {availableYears.length > 0 && (
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+            <Select value={filterYear} onValueChange={setFilterYear}>
+              <SelectTrigger className="w-full sm:w-[180px]" id="year-filter">
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {availableYears.length === 0 && projects.length > 0 && (
+             <p className="text-sm text-muted-foreground">No specific years found for filtering.</p>
+        )}
+      </div>
+
 
       {projects.length === 0 ? (
          <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
@@ -132,8 +186,8 @@ export default function ProjectsPage() {
       ) : filteredProjects.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
           <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold mb-2 text-muted-foreground">No Projects Match Filter</h2>
-          <p className="text-muted-foreground mb-4">Try adjusting your filter or create a new project.</p>
+          <h2 className="text-xl font-semibold mb-2 text-muted-foreground">No Projects Match Filters</h2>
+          <p className="text-muted-foreground mb-4">Try adjusting your status or year filter.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
