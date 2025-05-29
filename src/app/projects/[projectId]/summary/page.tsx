@@ -8,9 +8,9 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
-import type { Project, Stage, Subtask, SubtaskStatus } from '@/lib/types';
+import type { Project, Stage, Subtask, SubtaskStatus, ProjectStatus } from '@/lib/types';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle } from 'lucide-react'; // Added PlayCircle
+import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -87,7 +87,7 @@ export default function ProjectSummaryPage() {
     );
   }
 
-  const projectStatusIcons: Record<Project['status'] & string, JSX.Element> = {
+  const projectStatusIcons: Record<ProjectStatus, JSX.Element> = {
     'Not Started': <PackageOpen className="h-4 w-4" />,
     'Planning': <Edit className="h-4 w-4" />,
     'In Progress': <Hourglass className="h-4 w-4" />,
@@ -95,8 +95,13 @@ export default function ProjectSummaryPage() {
     'Completed': <CalendarCheck2 className="h-4 w-4" />,
     'Cancelled': <XCircle className="h-4 w-4" />,
   };
-  const currentStatusIcon = project.status ? projectStatusIcons[project.status] : <InfoIcon className="h-4 w-4" />;
 
+  let statusIconToRender: JSX.Element;
+  if (project.status && projectStatusIcons[project.status]) {
+    statusIconToRender = projectStatusIcons[project.status];
+  } else {
+    statusIconToRender = <InfoIcon className="h-4 w-4" />; // Default icon if status is undefined or not in map
+  }
 
   return (
     <AppLayout>
@@ -132,7 +137,10 @@ export default function ProjectSummaryPage() {
             <div className="flex items-start"><User className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" /><div><strong>Client:</strong> {project.clientContact || 'N/A'}</div></div>
             <div className="flex items-start"><Building className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" /><div><strong>Site:</strong> {project.siteAddress || 'N/A'}</div></div>
             <div className="flex items-start"><Globe className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" /><div><strong>Coord. System:</strong> {project.coordinateSystem || 'N/A'}</div></div>
-            <div className="flex items-start">{currentStatusIcon && React.cloneElement(currentStatusIcon, { className: "h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0"})}<div><strong>Status:</strong> {project.status || 'N/A'}</div></div>
+            <div className="flex items-start">
+              {React.cloneElement(statusIconToRender, { className: "h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0"})}
+              <div><strong>Status:</strong> {project.status || 'N/A'}</div>
+            </div>
             <div className="flex items-start"><PlayCircle className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" /><div><strong>Start Date:</strong> {project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'PPP') : 'N/A'}</div></div>
             <div className="flex items-start"><CalendarDays className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" /><div><strong>Due Date:</strong> {project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'PPP') : 'N/A'}</div></div>
           </CardContent>
@@ -213,7 +221,7 @@ export default function ProjectSummaryPage() {
           </Card>
         )}
       </div>
-      <style jsx global>{\`
+      <style jsx global>{`
         @media print {
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .print\\:hidden { display: none !important; }
@@ -231,7 +239,9 @@ export default function ProjectSummaryPage() {
           .print\\:last\\:border-b-0:last-child { border-bottom-width: 0 !important; }
           .print\\:last\\:pb-0:last-child { padding-bottom: 0 !important; }
         }
-      \`}</style>
+      `}</style>
     </AppLayout>
   );
 }
+
+    
