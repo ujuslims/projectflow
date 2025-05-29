@@ -7,14 +7,14 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate'> & { budget?: number }) => Project;
+  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem'> & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; }) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   addStage: (projectId: string, stage: Omit<Stage, 'id' | 'createdAt' | 'order'>) => Stage | undefined;
   updateStage: (projectId: string, stageId: string, updates: Partial<Omit<Stage, 'id' | 'createdAt'>>) => void;
   deleteStage: (projectId: string, stageId: string) => void;
-  addSubtask: (projectId: string, stageId: string, subtask: Omit<Subtask, 'id' | 'createdAt' | 'order' | 'stageId' | 'status' | 'startDate' | 'endDate' | 'assignedPersonnel' | 'location'> & SubtaskCore) => Subtask | undefined;
+  addSubtask: (projectId: string, stageId: string, subtask: SubtaskCore) => Subtask | undefined;
   updateSubtask: (projectId: string, subtaskId: string, updates: Partial<Omit<Subtask, 'id' | 'createdAt'>>) => void;
   moveSubtask: (projectId: string, subtaskId: string, newStageId: string, newOrder: number) => void;
   deleteSubtask: (projectId: string, subtaskId: string) => void;
@@ -28,11 +28,12 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useLocalStorage<Project[]>('projects', []);
 
-  const addProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes'| 'dueDate'> & { budget?: number }) => {
+  const addProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem'> & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; }) => {
     const newProject: Project = {
-      ...projectData,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
+      name: projectData.name,
+      description: projectData.description || '',
       stages: [],
       subtasks: [],
       budget: projectData.budget || 0,
@@ -40,8 +41,12 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       status: 'Not Started' as ProjectStatus,
       outcomeNotes: '',
       dueDate: undefined,
+      projectNumber: projectData.projectNumber || '',
+      clientContact: projectData.clientContact || '',
+      siteAddress: projectData.siteAddress || '',
+      coordinateSystem: projectData.coordinateSystem || '',
     };
-    setProjects([...projects, newProject]);
+    setProjects(prevProjects => [...prevProjects, newProject]);
     return newProject;
   };
 
@@ -94,7 +99,6 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setProjects(prevProjects =>
       prevProjects.map(p => {
         if (p.id === projectId) {
-          // Also delete subtasks associated with this stage
           const updatedSubtasks = p.subtasks.filter(st => st.stageId !== stageId);
           return {
             ...p,
@@ -107,7 +111,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const addSubtask = (projectId: string, stageId: string, subtaskData: Omit<Subtask, 'id' | 'createdAt' | 'order' | 'stageId' | 'status' | 'startDate' | 'endDate' | 'assignedPersonnel' | 'location'> & SubtaskCore) => {
+  const addSubtask = (projectId: string, stageId: string, subtaskData: SubtaskCore) => {
     let newSubtask: Subtask | undefined;
     setProjects(prevProjects =>
       prevProjects.map(p => {
@@ -116,17 +120,20 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
           if (!stageExists) return p; 
           
           newSubtask = {
-            name: subtaskData.name,
-            description: subtaskData.description,
-            startDate: subtaskData.startDate,
-            endDate: subtaskData.endDate, // Was suggestedDeadline
-            assignedPersonnel: subtaskData.assignedPersonnel,
-            location: subtaskData.location,
             id: crypto.randomUUID(),
             stageId,
             createdAt: new Date().toISOString(),
             order: p.subtasks.filter(st => st.stageId === stageId).length,
+            name: subtaskData.name,
+            description: subtaskData.description,
+            startDate: subtaskData.startDate,
+            endDate: subtaskData.endDate,
+            assignedPersonnel: subtaskData.assignedPersonnel,
+            location: subtaskData.location,
             status: subtaskData.status || 'To Do' as SubtaskStatus,
+            fieldCrewLead: subtaskData.fieldCrewLead || '',
+            equipmentUsed: subtaskData.equipmentUsed || '',
+            dataDeliverables: subtaskData.dataDeliverables || '',
           };
           return { ...p, subtasks: [...p.subtasks, newSubtask] };
         }

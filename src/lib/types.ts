@@ -5,11 +5,15 @@ export type SubtaskStatus = 'To Do' | 'In Progress' | 'Done' | 'Blocked';
 export interface SubtaskCore {
   name: string;
   description?: string;
-  startDate?: string; // ISO date string - NEW
-  endDate?: string; // ISO date string - RENAMED from suggestedDeadline
+  startDate?: string; // ISO date string
+  endDate?: string; // ISO date string
   status?: SubtaskStatus;
-  assignedPersonnel?: number; // NEW
-  location?: string; // NEW
+  assignedPersonnel?: number;
+  location?: string;
+  // Industry-specific fields for Subtask
+  fieldCrewLead?: string;
+  equipmentUsed?: string; // Comma-separated or list
+  dataDeliverables?: string; // Comma-separated or list
 }
 
 export interface Subtask extends SubtaskCore {
@@ -38,4 +42,9 @@ export interface Project {
   spent?: number;
   status?: ProjectStatus;
   outcomeNotes?: string;
+  // Industry-specific fields for Project
+  projectNumber?: string;
+  clientContact?: string;
+  siteAddress?: string;
+  coordinateSystem?: string;
 }

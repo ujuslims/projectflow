@@ -24,6 +24,10 @@ export function CreateProjectDialog() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
+  const [projectNumber, setProjectNumber] = useState('');
+  const [clientContact, setClientContact] = useState('');
+  const [siteAddress, setSiteAddress] = useState('');
+  const [coordinateSystem, setCoordinateSystem] = useState('');
   const { addProject } = useProjects();
   const router = useRouter();
 
@@ -36,11 +40,20 @@ export function CreateProjectDialog() {
     const newProject = addProject({ 
       name, 
       description, 
-      budget: budget ? parseFloat(budget) : undefined 
+      budget: budget ? parseFloat(budget) : undefined,
+      projectNumber,
+      clientContact,
+      siteAddress,
+      coordinateSystem,
     });
+    // Reset form fields
     setName('');
     setDescription('');
     setBudget('');
+    setProjectNumber('');
+    setClientContact('');
+    setSiteAddress('');
+    setCoordinateSystem('');
     setIsOpen(false);
     router.push(`/projects/${newProject.id}`);
   };
@@ -52,7 +65,7 @@ export function CreateProjectDialog() {
           <PlusCircle className="mr-2 h-4 w-4" /> New Project
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md"> {/* Increased max-width slightly */}
         <DialogHeader>
           <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
@@ -60,7 +73,7 @@ export function CreateProjectDialog() {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2"> {/* Added scroll for many fields */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Name
@@ -71,6 +84,54 @@ export function CreateProjectDialog() {
                 onChange={(e) => setName(e.target.value)}
                 className="col-span-3"
                 required
+              />
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="projectNumber" className="text-right">
+                Proj. No.
+              </Label>
+              <Input
+                id="projectNumber"
+                value={projectNumber}
+                onChange={(e) => setProjectNumber(e.target.value)}
+                className="col-span-3"
+                placeholder="e.g., P2024-001"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="clientContact" className="text-right">
+                Client
+              </Label>
+              <Input
+                id="clientContact"
+                value={clientContact}
+                onChange={(e) => setClientContact(e.target.value)}
+                className="col-span-3"
+                placeholder="e.g., John Doe (Acme Corp)"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="siteAddress" className="text-right">
+                Site
+              </Label>
+              <Input
+                id="siteAddress"
+                value={siteAddress}
+                onChange={(e) => setSiteAddress(e.target.value)}
+                className="col-span-3"
+                placeholder="e.g., 123 Main St, Anytown"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="coordinateSystem" className="text-right">
+                Coord. Sys.
+              </Label>
+              <Input
+                id="coordinateSystem"
+                value={coordinateSystem}
+                onChange={(e) => setCoordinateSystem(e.target.value)}
+                className="col-span-3"
+                placeholder="e.g., WGS84, UTM Zone 10N"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -87,7 +148,7 @@ export function CreateProjectDialog() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="budget" className="text-right">
-                Budget
+                Budget ($)
               </Label>
               <Input
                 id="budget"

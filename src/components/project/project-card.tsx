@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Briefcase, CalendarCheck2, Edit, Hourglass, InfoIcon, ListChecks, PackageOpen, DollarSign, Percent, XCircle, CalendarDays } from 'lucide-react'; // Added CalendarDays
+import { ArrowRight, Briefcase, CalendarCheck2, Edit, Hourglass, InfoIcon, ListChecks, PackageOpen, DollarSign, Percent, XCircle, CalendarDays, Hash, UserCircle } from 'lucide-react'; // Added Hash, UserCircle
 import { useMemo } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
-import { format as formatDate, parseISO } from 'date-fns'; // Added date-fns
+import { format as formatDate, parseISO, isValid } from 'date-fns';
 
 interface ProjectCardProps {
   project: Project;
@@ -46,41 +46,53 @@ export function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex items-start justify-between mb-1">
+        <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
                 <Briefcase className="h-6 w-6 text-primary flex-shrink-0" />
                 <CardTitle className="text-xl leading-tight">{project.name}</CardTitle>
             </div>
-            <Badge variant={statusBadgeVariant} className={cn(isCompleted ? "bg-green-600 text-white" : "", "capitalize")}>
+             <Badge variant={statusBadgeVariant} className={cn(isCompleted ? "bg-green-600 text-white" : "", "capitalize text-xs px-2 py-1")}>
                 {statusIcon}
                 <span className="ml-1.5">{status}</span>
             </Badge>
         </div>
-        <CardDescription className="h-12 overflow-hidden text-ellipsis text-xs">
+        {project.projectNumber && (
+            <div className="text-xs text-muted-foreground flex items-center mb-1">
+                <Hash className="h-3.5 w-3.5 mr-1.5 text-primary/70" />
+                <span>{project.projectNumber}</span>
+            </div>
+        )}
+        <CardDescription className="h-12 overflow-hidden text-ellipsis text-sm">
           {project.description || "No description provided."}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow space-y-2">
-        <div className="text-sm text-muted-foreground flex items-center">
+      <CardContent className="flex-grow space-y-2.5 text-sm">
+        <div className="text-muted-foreground flex items-center">
           <ListChecks className="h-4 w-4 mr-2 text-primary" />
           <span>{completedSubtasks} / {subtaskCount} tasks ({progressPercentage}%)</span>
         </div>
-        {project.dueDate && (
-           <div className="text-sm text-muted-foreground flex items-center">
+        {project.clientContact && (
+           <div className="text-muted-foreground flex items-center">
+             <UserCircle className="h-4 w-4 mr-2 text-primary" />
+             <span>Client: {project.clientContact.length > 25 ? project.clientContact.substring(0,22) + '...' : project.clientContact}</span>
+           </div>
+        )}
+        {project.dueDate && isValid(parseISO(project.dueDate)) && (
+           <div className="text-muted-foreground flex items-center">
              <CalendarDays className="h-4 w-4 mr-2 text-primary" />
              <span>Due: {formatDate(parseISO(project.dueDate), 'MMM dd, yyyy')}</span>
            </div>
         )}
         {project.budget !== undefined && project.budget > 0 && (
-          <div className="text-sm text-muted-foreground flex items-center">
+          <div className="text-muted-foreground flex items-center">
             <DollarSign className="h-4 w-4 mr-2 text-primary" />
             <span>Budget: {formatCurrency(project.budget)}</span>
           </div>
         )}
-         {(project.budget === undefined || project.budget === 0) && !project.dueDate && ( // Show "No budget set" only if also no due date, to avoid clutter
-             <div className="text-sm text-muted-foreground flex items-center">
-                <DollarSign className="h-4 w-4 mr-2 text-muted-foreground/70" />
-                <span>No budget set</span>
+         {(project.budget === undefined || project.budget === 0) && !project.dueDate && !project.clientContact && (
+             <div className="text-muted-foreground flex items-center">
+                <InfoIcon className="h-4 w-4 mr-2 text-muted-foreground/70" />
+                <span>More details inside...</span>
             </div>
          )}
       </CardContent>

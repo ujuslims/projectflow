@@ -5,8 +5,8 @@ import type { Subtask, SubtaskStatus } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Edit3, Trash2, CalendarDays, CheckCircle, Hourglass, ListChecks, XCircle, Users, MapPin, CalendarPlus, CalendarMinus } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { GripVertical, Edit3, Trash2, CalendarPlus, CalendarMinus, CheckCircle, Hourglass, ListChecks, XCircle, Users, MapPin, UserCog, Package, FileText } from 'lucide-react'; // Added UserCog, Package, FileText
+import { format, parseISO, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface SubtaskCardProps {
@@ -35,6 +35,16 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
   const badgeVariant = statusColorMap[subtask.status || 'To Do'];
   const isDone = subtask.status === 'Done';
 
+  const renderDetail = (Icon: React.ElementType, value?: string | number, labelPrefix?: string) => {
+    if (!value && typeof value !== 'number') return null;
+    return (
+      <div className="flex items-center text-xs text-muted-foreground">
+        <Icon className="h-3 w-3 mr-1.5 flex-shrink-0" />
+        <span>{labelPrefix}{value}</span>
+      </div>
+    );
+  };
+
   return (
     <Card 
       draggable 
@@ -55,35 +65,18 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
         )}
         <div className="flex flex-col gap-1.5 mb-2">
             {subtask.status && (
-            <Badge variant={badgeVariant} className={cn("text-xs w-fit", isDone && "bg-primary text-primary-foreground")}>
+            <Badge variant={badgeVariant} className={cn("text-xs w-fit", isDone && "bg-accent text-accent-foreground")}> {/* Changed Done to use accent */}
                 {statusIconMap[subtask.status]}
                 <span className="ml-1">{subtask.status}</span>
             </Badge>
             )}
-            {subtask.startDate && (
-            <div className="flex items-center text-xs text-muted-foreground">
-                <CalendarPlus className="h-3 w-3 mr-1.5 text-green-600" />
-                <span>Start: {format(parseISO(subtask.startDate), 'MMM dd, yyyy')}</span>
-            </div>
-            )}
-            {subtask.endDate && (
-            <div className="flex items-center text-xs text-muted-foreground">
-                <CalendarMinus className="h-3 w-3 mr-1.5 text-red-600" />
-                <span>End: {format(parseISO(subtask.endDate), 'MMM dd, yyyy')}</span>
-            </div>
-            )}
-             {subtask.assignedPersonnel !== undefined && subtask.assignedPersonnel > 0 && (
-            <div className="flex items-center text-xs text-muted-foreground">
-                <Users className="h-3 w-3 mr-1.5" />
-                <span>{subtask.assignedPersonnel} {subtask.assignedPersonnel === 1 ? 'person' : 'people'}</span>
-            </div>
-            )}
-            {subtask.location && (
-            <div className="flex items-center text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3 mr-1.5" />
-                <span>{subtask.location}</span>
-            </div>
-            )}
+            {subtask.startDate && isValid(parseISO(subtask.startDate)) && renderDetail(CalendarPlus, format(parseISO(subtask.startDate), 'MMM dd, yy'), 'Start: ')}
+            {subtask.endDate && isValid(parseISO(subtask.endDate)) && renderDetail(CalendarMinus, format(parseISO(subtask.endDate), 'MMM dd, yy'), 'End: ')}
+            {renderDetail(UserCog, subtask.fieldCrewLead, 'Lead: ')}
+            {renderDetail(Users, subtask.assignedPersonnel, `${subtask.assignedPersonnel === 1 ? 'Person' : 'People'}: `)}
+            {renderDetail(MapPin, subtask.location)}
+            {subtask.equipmentUsed && renderDetail(Package, subtask.equipmentUsed.length > 30 ? `${subtask.equipmentUsed.substring(0,27)}...` : subtask.equipmentUsed, 'Equip: ')}
+            {subtask.dataDeliverables && renderDetail(FileText, subtask.dataDeliverables.length > 30 ? `${subtask.dataDeliverables.substring(0,27)}...` : subtask.dataDeliverables, 'Deliver: ')}
         </div>
         <div className="flex justify-end space-x-2 mt-1">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label="Edit subtask">

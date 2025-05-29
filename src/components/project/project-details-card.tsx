@@ -9,45 +9,55 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // NEW
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, ShieldQuestion, Award, CalendarDays, CheckSquare } from 'lucide-react';
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, MapPin, Globe } from 'lucide-react';
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
-import { format as formatDate, parseISO } from 'date-fns';
-import { useProjects } from '@/contexts/projects-context'; // NEW for markAllSubtasksAsDone
+import { format as formatDate, parseISO, isValid } from 'date-fns';
+import { useProjects } from '@/contexts/projects-context';
 
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'spent' | 'status' | 'outcomeNotes' | 'dueDate'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'spent' | 'status' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
 
 export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsCardProps) {
   const { toast } = useToast();
-  const { markAllSubtasksAsDone } = useProjects(); // NEW
+  const { markAllSubtasksAsDone } = useProjects();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description);
-  const [dueDate, setDueDate] = useState(project.dueDate ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : ''); // NEW
+  const [dueDate, setDueDate] = useState(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
   const [budget, setBudget] = useState<string>(project.budget?.toString() || '');
   const [spent, setSpent] = useState<string>(project.spent?.toString() || '');
   const [status, setStatus] = useState<ProjectStatus>(project.status || 'Not Started');
   const [outcomeNotes, setOutcomeNotes] = useState(project.outcomeNotes || '');
+  // New industry-specific fields
+  const [projectNumber, setProjectNumber] = useState(project.projectNumber || '');
+  const [clientContact, setClientContact] = useState(project.clientContact || '');
+  const [siteAddress, setSiteAddress] = useState(project.siteAddress || '');
+  const [coordinateSystem, setCoordinateSystem] = useState(project.coordinateSystem || '');
+
 
   useEffect(() => {
     setName(project.name);
     setDescription(project.description);
-    setDueDate(project.dueDate ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : ''); // NEW
+    setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
     setBudget(project.budget?.toString() || '');
     setSpent(project.spent?.toString() || '');
     setStatus(project.status || 'Not Started');
     setOutcomeNotes(project.outcomeNotes || '');
+    setProjectNumber(project.projectNumber || '');
+    setClientContact(project.clientContact || '');
+    setSiteAddress(project.siteAddress || '');
+    setCoordinateSystem(project.coordinateSystem || '');
   }, [project]);
 
   const completedSubtasksCount = useMemo(() => {
@@ -68,7 +78,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setIsLoading(true);
     const parsedBudget = budget ? parseFloat(budget) : undefined;
     const parsedSpent = spent ? parseFloat(spent) : undefined;
-    const finalDueDate = dueDate ? new Date(dueDate).toISOString() : undefined; // NEW
+    const finalDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
 
     if (parsedBudget !== undefined && isNaN(parsedBudget)) {
         toast({ title: "Error", description: "Invalid budget amount.", variant: "destructive" });
@@ -84,11 +94,15 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     onUpdateProject({
       name,
       description,
-      dueDate: finalDueDate, // NEW
+      dueDate: finalDueDate,
       budget: parsedBudget,
       spent: parsedSpent,
       status,
-      outcomeNotes
+      outcomeNotes,
+      projectNumber,
+      clientContact,
+      siteAddress,
+      coordinateSystem,
     });
     setIsEditing(false);
     setIsLoading(false);
@@ -99,7 +113,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     'Not Started': <PackageOpen className="h-4 w-4" />,
     'Planning': <Edit className="h-4 w-4" />,
     'In Progress': <Hourglass className="h-4 w-4" />,
-    'On Hold': <Info className="h-4 w-4" />, // Changed from InfoIcon for consistency if Info is preferred
+    'On Hold': <Info className="h-4 w-4" />,
     'Completed': <CalendarCheck2 className="h-4 w-4" />,
     'Cancelled': <XCircle className="h-4 w-4" />,
   };
@@ -110,6 +124,24 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       toast({ title: "Success", description: "All subtasks marked as Done." });
     }
   };
+
+  const renderField = (label: string, value: string | undefined | null, Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholder?: string ) => {
+    const displayValue = value || (isEditingMode ? '' : 'Not set');
+    return (
+      <div>
+        <Label className="flex items-center">
+            {Icon && <Icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+            {label}
+        </Label>
+        {isEditingMode ? (
+          editComponent
+        ) : (
+          <p className={cn("text-sm mt-1", !value && "text-muted-foreground")}>{displayValue}</p>
+        )}
+      </div>
+    );
+  };
+
 
   return (
     <Card className="shadow-lg">
@@ -129,7 +161,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       </CardHeader>
       <form onSubmit={handleSave}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <CardContent className="p-0"> {/* Remove CardContent padding to use TabList padding */}
+          <CardContent className="p-0">
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-0 rounded-none border-b">
               <TabsTrigger value="general" className="rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
                 <Info className="mr-2 h-4 w-4"/>General
@@ -146,135 +178,119 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
             </TabsList>
           </CardContent>
 
-          <CardContent className="space-y-6 pt-6"> {/* Add padding back for tab content */}
-            <TabsContent value="general" className="mt-0">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="projectName">Project Name</Label>
-                        {isEditing ? (
-                        <Input id="projectName" value={name} onChange={(e) => setName(e.target.value)} />
-                        ) : (
-                        <p className="text-lg font-semibold mt-1">{project.name}</p>
-                        )}
-                    </div>
-                    <div>
-                        <Label htmlFor="projectStatus">Status</Label>
-                        {isEditing ? (
-                        <Select value={status} onValueChange={(value) => setStatus(value as ProjectStatus)}>
-                            <SelectTrigger id="projectStatus">
-                            <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                            {projectStatuses.map(s => (
-                                <SelectItem key={s} value={s}><div className="flex items-center">{projectStatusIcons[s]}<span className="ml-2">{s}</span></div></SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        ) : (
-                        <div className="flex items-center text-lg mt-1">
-                            {projectStatusIcons[project.status || 'Not Started']}
-                            <span className="ml-2 font-semibold">{project.status || 'Not Started'}</span>
-                        </div>
-                        )}
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor="projectDueDate">Due Date</Label>
-                    {isEditing ? (
+          <CardContent className="space-y-6 pt-6">
+            <TabsContent value="general" className="mt-0 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {renderField("Project Name", project.name, FileText, isEditing, 
+                    <Input id="projectName" value={name} onChange={(e) => setName(e.target.value)} />
+                )}
+                {renderField("Status", project.status, Hourglass, isEditing,
+                  <Select value={status} onValueChange={(value) => setStatus(value as ProjectStatus)}>
+                    <SelectTrigger id="projectStatus"><SelectValue placeholder="Select status" /></SelectTrigger>
+                    <SelectContent>
+                      {projectStatuses.map(s => (
+                        <SelectItem key={s} value={s}><div className="flex items-center">{projectStatusIcons[s]}<span className="ml-2">{s}</span></div></SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {renderField("Project Number", project.projectNumber, Hash, isEditing,
+                    <Input id="projectNumber" value={projectNumber} onChange={(e) => setProjectNumber(e.target.value)} placeholder="e.g., P2024-001" />
+                )}
+                 {renderField("Due Date", project.dueDate ? (isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'PPP') : 'Invalid Date') : 'Not set', CalendarDays, isEditing,
                     <Input id="projectDueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-                    ) : (
-                    <p className="text-sm text-muted-foreground mt-1">
-                        {project.dueDate ? formatDate(parseISO(project.dueDate), 'PPP') : 'Not set'}
-                    </p>
-                    )}
-                </div>
-                <div>
-                    <Label htmlFor="projectDescription">Description</Label>
-                    {isEditing ? (
-                    <Textarea id="projectDescription" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
-                    ) : (
-                    <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{project.description || "No description provided."}</p>
-                    )}
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="budget" className="mt-0">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="projectBudget">Total Budget</Label>
-                    {isEditing ? (
-                      <Input id="projectBudget" type="number" placeholder="e.g., 5000" value={budget} onChange={(e) => setBudget(e.target.value)} />
-                    ) : (
-                      <p className="text-lg mt-1">{project.budget ? formatCurrency(project.budget) : 'Not set'}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="projectSpent">Amount Spent</Label>
-                    {isEditing ? (
-                      <Input id="projectSpent" type="number" placeholder="e.g., 1500" value={spent} onChange={(e) => setSpent(e.target.value)} />
-                    ) : (
-                      <p className="text-lg mt-1">{project.spent ? formatCurrency(project.spent) : formatCurrency(0)}</p>
-                    )}
-                  </div>
-                </div>
-                {project.budget && project.budget > 0 && (
-                  <div>
-                    <Label>Budget Usage</Label>
-                    <Progress value={budgetProgressPercentage} className="w-full mt-1 h-3" />
-                    <p className="text-sm text-muted-foreground mt-1">{budgetProgressPercentage}% of budget used.</p>
-                  </div>
-                )}
-                 {(!project.budget || project.budget === 0) && !isEditing && (
-                    <p className="text-sm text-muted-foreground">No budget set for this project.</p>
-                 )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="progress" className="mt-0">
-              <div className="space-y-4">
-                <div>
-                    <Label>Overall Task Progress</Label>
-                    <Progress value={taskProgressPercentage} className="w-full mt-1 h-3" />
-                    <p className="text-sm text-muted-foreground mt-1">
-                        {completedSubtasksCount} of {totalSubtasksCount} tasks completed ({taskProgressPercentage}%).
-                    </p>
-                </div>
-                {project.status === 'Completed' && !isEditing && (
-                  <div className="pt-4">
-                    <Button type="button" variant="outline" onClick={handleMarkAllTasksDone}>
-                      <CheckSquare className="mr-2 h-4 w-4" />
-                      Finalize: Mark all tasks as Done
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      This action will set the status of all subtasks for this project to 'Done'.
-                    </p>
-                  </div>
                 )}
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {renderField("Client Contact", project.clientContact, User, isEditing,
+                    <Input id="clientContact" value={clientContact} onChange={(e) => setClientContact(e.target.value)} placeholder="e.g., Jane Doe (XYZ Corp)" />
+                )}
+                {renderField("Site Address", project.siteAddress, Building, isEditing,
+                    <Input id="siteAddress" value={siteAddress} onChange={(e) => setSiteAddress(e.target.value)} placeholder="e.g., 456 Field Ave" />
+                )}
+              </div>
+
+              {renderField("Coordinate System", project.coordinateSystem, Globe, isEditing,
+                <Input id="coordinateSystem" value={coordinateSystem} onChange={(e) => setCoordinateSystem(e.target.value)} placeholder="e.g., WGS84 / UTM Zone 12N" />
+              )}
+             
+              {renderField("Description", project.description, undefined, isEditing,
+                <Textarea id="projectDescription" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Detailed project scope and objectives..." />,
+                 "No description provided."
+              )}
             </TabsContent>
 
-            <TabsContent value="outcomes" className="mt-0">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="outcomeNotes">Evaluation / Lessons Learned</Label>
-                  {isEditing ? (
-                    <Textarea id="outcomeNotes" placeholder="e.g., Key achievements, challenges, future recommendations..." value={outcomeNotes} onChange={(e) => setOutcomeNotes(e.target.value)} rows={4} />
-                  ) : (
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">
-                      {project.outcomeNotes || 'No outcome notes yet.'}
-                    </p>
-                  )}
-                </div>
+            <TabsContent value="budget" className="mt-0 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {renderField("Total Budget", project.budget ? formatCurrency(project.budget) : 'Not set', Banknote, isEditing,
+                    <Input id="projectBudget" type="number" placeholder="e.g., 5000" value={budget} onChange={(e) => setBudget(e.target.value)} />
+                )}
+                {renderField("Amount Spent", project.spent ? formatCurrency(project.spent) : formatCurrency(0), Banknote, isEditing,
+                     <Input id="projectSpent" type="number" placeholder="e.g., 1500" value={spent} onChange={(e) => setSpent(e.target.value)} />
+                )}
               </div>
+              {project.budget && project.budget > 0 && (
+                <div>
+                  <Label>Budget Usage</Label>
+                  <Progress value={budgetProgressPercentage} className="w-full mt-1 h-3" />
+                  <p className="text-sm text-muted-foreground mt-1">{budgetProgressPercentage}% of budget used.</p>
+                </div>
+              )}
+              {(!project.budget || project.budget === 0) && !isEditing && (
+                  <p className="text-sm text-muted-foreground">No budget set for this project.</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="progress" className="mt-0 space-y-4">
+              <div>
+                <Label>Overall Task Progress</Label>
+                <Progress value={taskProgressPercentage} className="w-full mt-1 h-3" />
+                <p className="text-sm text-muted-foreground mt-1">
+                  {completedSubtasksCount} of {totalSubtasksCount} tasks completed ({taskProgressPercentage}%).
+                </p>
+              </div>
+              {project.status === 'Completed' && !isEditing && (
+                <div className="pt-4">
+                  <Button type="button" variant="outline" onClick={handleMarkAllTasksDone}>
+                    <CheckSquare className="mr-2 h-4 w-4" />
+                    Finalize: Mark all tasks as Done
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    This action will set the status of all subtasks for this project to 'Done'.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="outcomes" className="mt-0 space-y-4">
+               {renderField("Evaluation / Lessons Learned", project.outcomeNotes, Award, isEditing,
+                <Textarea id="outcomeNotes" placeholder="e.g., Key achievements, challenges, future recommendations..." value={outcomeNotes} onChange={(e) => setOutcomeNotes(e.target.value)} rows={4} />,
+                 "No outcome notes yet."
+              )}
             </TabsContent>
           </CardContent>
         </Tabs>
         {isEditing && (
           <CardFooter className="flex justify-end gap-2 mt-0 pt-0 pb-6 px-6">
-            <Button type="button" variant="outline" onClick={() => { setIsEditing(false); /* Reset form might be needed here if not using useEffect for all fields */ }}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => { 
+                setIsEditing(false); 
+                // Reset fields to project current state
+                setName(project.name);
+                setDescription(project.description);
+                setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
+                setBudget(project.budget?.toString() || '');
+                setSpent(project.spent?.toString() || '');
+                setStatus(project.status || 'Not Started');
+                setOutcomeNotes(project.outcomeNotes || '');
+                setProjectNumber(project.projectNumber || '');
+                setClientContact(project.clientContact || '');
+                setSiteAddress(project.siteAddress || '');
+                setCoordinateSystem(project.coordinateSystem || '');
+            }}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes

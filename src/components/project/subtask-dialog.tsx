@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect, type FormEvent } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area'; // Added for scrollability
 
 interface SubtaskDialogProps {
   isOpen: boolean;
@@ -38,6 +39,10 @@ export function SubtaskDialog({
   const [assignedPersonnel, setAssignedPersonnel] = useState('');
   const [location, setLocation] = useState('');
   const [status, setStatus] = useState<SubtaskStatus>('To Do');
+  // New industry-specific fields
+  const [fieldCrewLead, setFieldCrewLead] = useState('');
+  const [equipmentUsed, setEquipmentUsed] = useState('');
+  const [dataDeliverables, setDataDeliverables] = useState('');
 
   useEffect(() => {
     if (isOpen) { 
@@ -48,6 +53,9 @@ export function SubtaskDialog({
       setAssignedPersonnel(initialData?.assignedPersonnel?.toString() || '');
       setLocation(initialData?.location || '');
       setStatus(initialData?.status || 'To Do');
+      setFieldCrewLead(initialData?.fieldCrewLead || '');
+      setEquipmentUsed(initialData?.equipmentUsed || '');
+      setDataDeliverables(initialData?.dataDeliverables || '');
     }
   }, [initialData, isOpen]);
 
@@ -64,110 +72,153 @@ export function SubtaskDialog({
       endDate: endDate ? new Date(endDate).toISOString() : undefined,
       assignedPersonnel: assignedPersonnel ? parseInt(assignedPersonnel, 10) : undefined,
       location: location || undefined,
-      status
+      status,
+      fieldCrewLead: fieldCrewLead || undefined,
+      equipmentUsed: equipmentUsed || undefined,
+      dataDeliverables: dataDeliverables || undefined,
     });
     onOpenChange(false); 
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-lg"> {/* Adjusted width slightly */}
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="subtask-name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="subtask-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="col-span-3"
-                required
-              />
+          <ScrollArea className="max-h-[70vh] pr-4"> {/* Added ScrollArea */}
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="subtask-name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="subtask-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4"> {/* Changed items-center to items-start for textarea */}
+                <Label htmlFor="subtask-description" className="text-right pt-2">
+                  Description
+                </Label>
+                <Textarea
+                  id="subtask-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="col-span-3"
+                  rows={2}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="subtask-status" className="text-right">
+                  Status
+                </Label>
+                <Select value={status} onValueChange={(value) => setStatus(value as SubtaskStatus)}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subtaskStatuses.map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="subtask-start-date" className="text-right">
+                  Start Date
+                </Label>
+                <Input
+                  id="subtask-start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="subtask-end-date" className="text-right">
+                  End Date
+                </Label>
+                <Input
+                  id="subtask-end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="subtask-crew-lead" className="text-right">
+                  Crew Lead
+                </Label>
+                <Input
+                  id="subtask-crew-lead"
+                  value={fieldCrewLead}
+                  onChange={(e) => setFieldCrewLead(e.target.value)}
+                  className="col-span-3"
+                  placeholder="e.g., Mike R."
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="subtask-personnel" className="text-right">
+                  Personnel #
+                </Label>
+                <Input
+                  id="subtask-personnel"
+                  type="number"
+                  value={assignedPersonnel}
+                  onChange={(e) => setAssignedPersonnel(e.target.value)}
+                  className="col-span-3"
+                  placeholder="e.g., 3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="subtask-location" className="text-right">
+                  Location
+                </Label>
+                <Input
+                  id="subtask-location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="col-span-3"
+                  placeholder="e.g., Site A, Zone 1"
+                />
+              </div>
+               <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="subtask-equipment" className="text-right pt-2">
+                  Equipment
+                </Label>
+                <Textarea
+                  id="subtask-equipment"
+                  value={equipmentUsed}
+                  onChange={(e) => setEquipmentUsed(e.target.value)}
+                  className="col-span-3"
+                  rows={2}
+                  placeholder="e.g., GPS, Total Station, Drone"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="subtask-deliverables" className="text-right pt-2">
+                  Deliverables
+                </Label>
+                <Textarea
+                  id="subtask-deliverables"
+                  value={dataDeliverables}
+                  onChange={(e) => setDataDeliverables(e.target.value)}
+                  className="col-span-3"
+                  rows={2}
+                  placeholder="e.g., Raw data, Processed map, Report"
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="subtask-description" className="text-right">
-                Description
-              </Label>
-              <Textarea
-                id="subtask-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="col-span-3"
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="subtask-start-date" className="text-right">
-                Start Date
-              </Label>
-              <Input
-                id="subtask-start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="subtask-end-date" className="text-right">
-                End Date
-              </Label>
-              <Input
-                id="subtask-end-date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="subtask-personnel" className="text-right">
-                Personnel
-              </Label>
-              <Input
-                id="subtask-personnel"
-                type="number"
-                value={assignedPersonnel}
-                onChange={(e) => setAssignedPersonnel(e.target.value)}
-                className="col-span-3"
-                placeholder="e.g., 3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="subtask-location" className="text-right">
-                Location
-              </Label>
-              <Input
-                id="subtask-location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="col-span-3"
-                placeholder="e.g., Site A, Floor 2"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="subtask-status" className="text-right">
-                Status
-              </Label>
-              <Select value={status} onValueChange={(value) => setStatus(value as SubtaskStatus)}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subtaskStatuses.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
+          </ScrollArea>
+          <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit">{submitButtonText}</Button>
           </DialogFooter>
