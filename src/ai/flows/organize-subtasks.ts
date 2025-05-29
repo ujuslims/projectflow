@@ -2,7 +2,9 @@
 'use server';
 
 /**
- * @fileOverview AI agent that suggests subtask organization and deadlines for project planning.
+ * @fileOverview AI agent that suggests subtask organization and deadlines for project planning,
+ * specializing in topographic survey, geotechnical, geophysical, geospatial, construction,
+ * and reality scanning projects.
  *
  * - organizeSubtasks - A function that organizes subtasks by stage and suggests deadlines.
  * - OrganizeSubtasksInput - The input type for the organizeSubtasks function.
@@ -14,7 +16,7 @@ import {z} from 'genkit';
 
 const OrganizeSubtasksInputSchema = z.object({
   projectName: z.string().describe('The name of the project.'),
-  stages: z.array(z.string()).describe('The different stages of the project.'),
+  stages: z.array(z.string()).describe('The different stages of the project, as defined by the user.'),
   subtasks: z.array(
     z.object({
       name: z.string().describe('The name of the subtask.'),
@@ -32,10 +34,10 @@ const OrganizeSubtasksOutputSchema = z.object({
       z.object({
         name: z.string().describe('The name of the subtask.'),
         description: z.string().optional().describe('A description of the subtask.'),
-        endDate: z.string().optional().describe('A suggested end date for the subtask (ISO format).'), // RENAMED from suggestedDeadline
+        endDate: z.string().optional().describe('A suggested end date for the subtask (ISO format).'),
       })
     )
-  ).describe('Subtasks categorized by stage, with suggested end dates.'), // UPDATED description
+  ).describe('Subtasks categorized by the user-defined stages, with suggested end dates.'),
 });
 
 export type OrganizeSubtasksOutput = z.infer<typeof OrganizeSubtasksOutputSchema>;
@@ -48,21 +50,24 @@ const prompt = ai.definePrompt({
   name: 'organizeSubtasksPrompt',
   input: {schema: OrganizeSubtasksInputSchema},
   output: {schema: OrganizeSubtasksOutputSchema},
-  prompt: `You are an AI project management assistant helping users to organize their projects.
+  prompt: `You are an AI project management assistant specializing in topographic survey, geotechnical, geophysical, geospatial, construction, and reality scanning projects.
 
 The user is working on the project named: {{{projectName}}}
 
-The project has the following stages: {{#each stages}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+The project has the following user-defined stages: {{#each stages}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
 Given the following subtasks:
 {{#each subtasks}}
 - Name: {{{name}}}, Description: {{{description}}}
 {{/each}}
 
-Please categorize the subtasks by stage, and suggest an end date (ISO format) for each subtask. Return the categorized subtasks with the suggested end dates.
+Please categorize the subtasks into the user-defined stages.
+When categorizing, consider common workflows, dependencies, and typical project phases for projects in the specified industries (e.g., planning, site mobilization, fieldwork, data processing, analysis, reporting, demobilization, deliverables).
+Also, suggest an end date (ISO format) for each subtask.
 
+Return the categorized subtasks with the suggested end dates.
 Output in JSON format:
-`, // UPDATED prompt text
+`,
 });
 
 const organizeSubtasksFlow = ai.defineFlow(

@@ -2,7 +2,9 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for suggesting subtasks based on a project description.
+ * @fileOverview This file defines a Genkit flow for suggesting subtasks based on a project description,
+ * with a focus on industries like topographic survey, geotechnical, geophysical, geospatial, construction,
+ * and reality scanning.
  *
  * The flow takes a project description as input and returns a list of suggested subtasks.
  * @module suggest-subtasks
@@ -34,7 +36,10 @@ const suggestSubtasksPrompt = ai.definePrompt({
   name: 'suggestSubtasksPrompt',
   input: {schema: SuggestSubtasksInputSchema},
   output: {schema: SuggestSubtasksOutputSchema},
-  prompt: `Based on the following project description, suggest a list of subtasks that would be necessary to complete the project. Return the subtasks as a JSON array of strings.
+  prompt: `You are an expert project planner specializing in industries like topographic survey, geotechnical, geophysical, geospatial, construction, and reality scanning.
+Based on the following project description, suggest a list of subtasks that would be necessary to complete the project.
+Consider common project phases such as planning, site assessment, fieldwork/data acquisition, data processing, analysis, reporting, and deliverables.
+Return the subtasks as a JSON array of strings.
 
 Project Description: {{{projectDescription}}}
 
