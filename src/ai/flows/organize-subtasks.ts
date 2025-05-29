@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -31,10 +32,10 @@ const OrganizeSubtasksOutputSchema = z.object({
       z.object({
         name: z.string().describe('The name of the subtask.'),
         description: z.string().optional().describe('A description of the subtask.'),
-        suggestedDeadline: z.string().optional().describe('A suggested soft deadline for the subtask (ISO format).'),
+        endDate: z.string().optional().describe('A suggested end date for the subtask (ISO format).'), // RENAMED from suggestedDeadline
       })
     )
-  ).describe('Subtasks categorized by stage, with suggested deadlines.'),
+  ).describe('Subtasks categorized by stage, with suggested end dates.'), // UPDATED description
 });
 
 export type OrganizeSubtasksOutput = z.infer<typeof OrganizeSubtasksOutputSchema>;
@@ -58,10 +59,10 @@ Given the following subtasks:
 - Name: {{{name}}}, Description: {{{description}}}
 {{/each}}
 
-Please categorize the subtasks by stage, and suggest a soft deadline (ISO format) for each subtask. Return the categorized subtasks with the suggested deadlines.
+Please categorize the subtasks by stage, and suggest an end date (ISO format) for each subtask. Return the categorized subtasks with the suggested end dates.
 
 Output in JSON format:
-`,
+`, // UPDATED prompt text
 });
 
 const organizeSubtasksFlow = ai.defineFlow(

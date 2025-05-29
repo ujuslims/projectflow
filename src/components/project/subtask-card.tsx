@@ -5,8 +5,9 @@ import type { Subtask, SubtaskStatus } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Edit3, Trash2, CalendarDays, CheckCircle, Hourglass, ListChecks, XCircle } from 'lucide-react';
+import { GripVertical, Edit3, Trash2, CalendarDays, CheckCircle, Hourglass, ListChecks, XCircle, Users, MapPin, CalendarPlus, CalendarMinus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface SubtaskCardProps {
   subtask: Subtask;
@@ -25,15 +26,13 @@ const statusIconMap: Record<SubtaskStatus, JSX.Element> = {
 const statusColorMap: Record<SubtaskStatus, "default" | "secondary" | "destructive" | "outline"> = {
   'To Do': 'secondary',
   'In Progress': 'default',
-  'Done': 'default', // Will be styled with primary color if 'default' badge is primary
+  'Done': 'default', 
   'Blocked': 'destructive',
 };
 
 
 export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskCardProps) {
   const badgeVariant = statusColorMap[subtask.status || 'To Do'];
-  // For 'Done', if 'default' is primary, we might want a greenish badge or just rely on the icon.
-  // Let's assume primary is a positive color for 'Done'.
   const isDone = subtask.status === 'Done';
 
   return (
@@ -54,17 +53,35 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
             {subtask.description}
           </CardDescription>
         )}
-        <div className="flex flex-wrap gap-2 items-center mb-2">
+        <div className="flex flex-col gap-1.5 mb-2">
             {subtask.status && (
-            <Badge variant={badgeVariant} className={cn("text-xs", isDone && "bg-primary text-primary-foreground")}>
+            <Badge variant={badgeVariant} className={cn("text-xs w-fit", isDone && "bg-primary text-primary-foreground")}>
                 {statusIconMap[subtask.status]}
                 <span className="ml-1">{subtask.status}</span>
             </Badge>
             )}
-            {subtask.suggestedDeadline && (
+            {subtask.startDate && (
             <div className="flex items-center text-xs text-muted-foreground">
-                <CalendarDays className="h-3 w-3 mr-1" />
-                <span>{format(parseISO(subtask.suggestedDeadline), 'MMM dd, yyyy')}</span>
+                <CalendarPlus className="h-3 w-3 mr-1.5 text-green-600" />
+                <span>Start: {format(parseISO(subtask.startDate), 'MMM dd, yyyy')}</span>
+            </div>
+            )}
+            {subtask.endDate && (
+            <div className="flex items-center text-xs text-muted-foreground">
+                <CalendarMinus className="h-3 w-3 mr-1.5 text-red-600" />
+                <span>End: {format(parseISO(subtask.endDate), 'MMM dd, yyyy')}</span>
+            </div>
+            )}
+             {subtask.assignedPersonnel !== undefined && subtask.assignedPersonnel > 0 && (
+            <div className="flex items-center text-xs text-muted-foreground">
+                <Users className="h-3 w-3 mr-1.5" />
+                <span>{subtask.assignedPersonnel} {subtask.assignedPersonnel === 1 ? 'person' : 'people'}</span>
+            </div>
+            )}
+            {subtask.location && (
+            <div className="flex items-center text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3 mr-1.5" />
+                <span>{subtask.location}</span>
             </div>
             )}
         </div>

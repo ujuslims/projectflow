@@ -33,14 +33,20 @@ export function SubtaskDialog({
 }: SubtaskDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [suggestedDeadline, setSuggestedDeadline] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [assignedPersonnel, setAssignedPersonnel] = useState('');
+  const [location, setLocation] = useState('');
   const [status, setStatus] = useState<SubtaskStatus>('To Do');
 
   useEffect(() => {
-    if (isOpen) { // only reset form when dialog opens or initialData changes
+    if (isOpen) { 
       setName(initialData?.name || '');
       setDescription(initialData?.description || '');
-      setSuggestedDeadline(initialData?.suggestedDeadline ? new Date(initialData.suggestedDeadline).toISOString().split('T')[0] : '');
+      setStartDate(initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : '');
+      setEndDate(initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : '');
+      setAssignedPersonnel(initialData?.assignedPersonnel?.toString() || '');
+      setLocation(initialData?.location || '');
       setStatus(initialData?.status || 'To Do');
     }
   }, [initialData, isOpen]);
@@ -54,10 +60,13 @@ export function SubtaskDialog({
     onSubmit({ 
       name, 
       description, 
-      suggestedDeadline: suggestedDeadline ? new Date(suggestedDeadline).toISOString() : undefined,
+      startDate: startDate ? new Date(startDate).toISOString() : undefined,
+      endDate: endDate ? new Date(endDate).toISOString() : undefined,
+      assignedPersonnel: assignedPersonnel ? parseInt(assignedPersonnel, 10) : undefined,
+      location: location || undefined,
       status
     });
-    onOpenChange(false); // Close dialog on submit
+    onOpenChange(false); 
   };
 
   return (
@@ -94,15 +103,52 @@ export function SubtaskDialog({
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="subtask-deadline" className="text-right">
-                Deadline
+              <Label htmlFor="subtask-start-date" className="text-right">
+                Start Date
               </Label>
               <Input
-                id="subtask-deadline"
+                id="subtask-start-date"
                 type="date"
-                value={suggestedDeadline}
-                onChange={(e) => setSuggestedDeadline(e.target.value)}
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="subtask-end-date" className="text-right">
+                End Date
+              </Label>
+              <Input
+                id="subtask-end-date"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="subtask-personnel" className="text-right">
+                Personnel
+              </Label>
+              <Input
+                id="subtask-personnel"
+                type="number"
+                value={assignedPersonnel}
+                onChange={(e) => setAssignedPersonnel(e.target.value)}
+                className="col-span-3"
+                placeholder="e.g., 3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="subtask-location" className="text-right">
+                Location
+              </Label>
+              <Input
+                id="subtask-location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="col-span-3"
+                placeholder="e.g., Site A, Floor 2"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
