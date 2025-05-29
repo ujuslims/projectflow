@@ -8,8 +8,8 @@ import { projectStageTemplates } from '@/lib/project-templates'; // Import templ
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectType'> 
-                      & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; }) => Project;
+  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectType'> 
+                      & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; createdAt?: string; }) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
@@ -30,8 +30,8 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useLocalStorage<Project[]>('projects', []);
 
-  const addProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectType'> 
-                                & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; }) => {
+  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectType'> 
+                                & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; createdAt?: string; }) => {
     
     const initialStages: Stage[] = [];
     if (projectData.projectType && projectStageTemplates[projectData.projectType]) {
@@ -48,7 +48,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
 
     const newProject: Project = {
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
+      createdAt: projectData.createdAt ? new Date(projectData.createdAt).toISOString() : new Date().toISOString(),
       name: projectData.name,
       description: projectData.description || '',
       stages: initialStages,
@@ -266,3 +266,5 @@ export const useProjects = () => {
   }
   return context;
 };
+
+    

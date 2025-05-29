@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjects } from '@/contexts/projects-context';
-import { projectTypes } from '@/lib/project-templates'; // Import project types
-import { PlusCircle } from 'lucide-react';
+import { projectTypes } from '@/lib/project-templates';
+import { PlusCircle, CalendarClock } from 'lucide-react'; // Added CalendarClock
 import { useRouter } from 'next/navigation';
 
 export function CreateProjectDialog() {
@@ -30,7 +30,8 @@ export function CreateProjectDialog() {
   const [clientContact, setClientContact] = useState('');
   const [siteAddress, setSiteAddress] = useState('');
   const [coordinateSystem, setCoordinateSystem] = useState('');
-  const [projectType, setProjectType] = useState<string>('none'); // Added projectType state
+  const [projectType, setProjectType] = useState<string>('none');
+  const [createdAtDate, setCreatedAtDate] = useState(''); // New state for creation date
   const { addProject } = useProjects();
   const router = useRouter();
 
@@ -48,7 +49,8 @@ export function CreateProjectDialog() {
       clientContact,
       siteAddress,
       coordinateSystem,
-      projectType: projectType === 'none' ? undefined : projectType, // Pass projectType
+      projectType: projectType === 'none' ? undefined : projectType,
+      createdAt: createdAtDate ? new Date(createdAtDate).toISOString() : undefined, // Pass createdAt
     });
     // Reset form fields
     setName('');
@@ -58,7 +60,8 @@ export function CreateProjectDialog() {
     setClientContact('');
     setSiteAddress('');
     setCoordinateSystem('');
-    setProjectType('none'); // Reset project type
+    setProjectType('none');
+    setCreatedAtDate(''); // Reset creation date
     setIsOpen(false);
     router.push(`/projects/${newProject.id}`);
   };
@@ -181,6 +184,19 @@ export function CreateProjectDialog() {
                 placeholder="Optional (e.g., 5000)"
               />
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="createdAtDate" className="text-right flex items-center">
+                 <CalendarClock className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Created
+              </Label>
+              <Input
+                id="createdAtDate"
+                type="date"
+                value={createdAtDate}
+                onChange={(e) => setCreatedAtDate(e.target.value)}
+                className="col-span-3"
+                placeholder="Defaults to today"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
@@ -191,3 +207,5 @@ export function CreateProjectDialog() {
     </Dialog>
   );
 }
+
+    
