@@ -37,6 +37,7 @@ export interface Project {
   stages: Stage[];
   subtasks: Subtask[];
   createdAt: string; // ISO date string
+  startDate?: string; // ISO date string - NEW
   dueDate?: string; // ISO date string
   budget?: number;
   spent?: number;

@@ -10,7 +10,7 @@ import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskStatus } from '@/lib/types';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog } from 'lucide-react';
+import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle } from 'lucide-react'; // Added PlayCircle
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -133,6 +133,7 @@ export default function ProjectSummaryPage() {
             <div className="flex items-start"><Building className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" /><div><strong>Site:</strong> {project.siteAddress || 'N/A'}</div></div>
             <div className="flex items-start"><Globe className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" /><div><strong>Coord. System:</strong> {project.coordinateSystem || 'N/A'}</div></div>
             <div className="flex items-start">{currentStatusIcon && React.cloneElement(currentStatusIcon, { className: "h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0"})}<div><strong>Status:</strong> {project.status || 'N/A'}</div></div>
+            <div className="flex items-start"><PlayCircle className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" /><div><strong>Start Date:</strong> {project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'PPP') : 'N/A'}</div></div>
             <div className="flex items-start"><CalendarDays className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" /><div><strong>Due Date:</strong> {project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'PPP') : 'N/A'}</div></div>
           </CardContent>
         </Card>
@@ -212,7 +213,7 @@ export default function ProjectSummaryPage() {
           </Card>
         )}
       </div>
-      <style jsx global>{`
+      <style jsx global>{\`
         @media print {
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .print\\:hidden { display: none !important; }
@@ -230,8 +231,7 @@ export default function ProjectSummaryPage() {
           .print\\:last\\:border-b-0:last-child { border-bottom-width: 0 !important; }
           .print\\:last\\:pb-0:last-child { padding-bottom: 0 !important; }
         }
-      `}</style>
+      \`}</style>
     </AppLayout>
   );
 }
-

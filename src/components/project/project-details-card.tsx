@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, MapPin, Globe } from 'lucide-react';
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle } from 'lucide-react'; // Added PlayCircle
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
@@ -20,7 +20,7 @@ import { useProjects } from '@/contexts/projects-context';
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'spent' | 'status' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'spent' | 'status' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
@@ -34,6 +34,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description);
+  const [startDate, setStartDate] = useState(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
   const [dueDate, setDueDate] = useState(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
   const [budget, setBudget] = useState<string>(project.budget?.toString() || '');
   const [spent, setSpent] = useState<string>(project.spent?.toString() || '');
@@ -49,6 +50,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   useEffect(() => {
     setName(project.name);
     setDescription(project.description);
+    setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
     setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
     setBudget(project.budget?.toString() || '');
     setSpent(project.spent?.toString() || '');
@@ -78,6 +80,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setIsLoading(true);
     const parsedBudget = budget ? parseFloat(budget) : undefined;
     const parsedSpent = spent ? parseFloat(spent) : undefined;
+    const finalStartDate = startDate ? new Date(startDate).toISOString() : undefined;
     const finalDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
 
     if (parsedBudget !== undefined && isNaN(parsedBudget)) {
@@ -94,6 +97,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     onUpdateProject({
       name,
       description,
+      startDate: finalStartDate,
       dueDate: finalDueDate,
       budget: parsedBudget,
       spent: parsedSpent,
@@ -200,23 +204,28 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 {renderField("Project Number", project.projectNumber, Hash, isEditing,
                     <Input id="projectNumber" value={projectNumber} onChange={(e) => setProjectNumber(e.target.value)} placeholder="e.g., P2024-001" />
                 )}
+                {renderField("Client Contact", project.clientContact, User, isEditing,
+                    <Input id="clientContact" value={clientContact} onChange={(e) => setClientContact(e.target.value)} placeholder="e.g., Jane Doe (XYZ Corp)" />
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {renderField("Start Date", project.startDate ? (isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'PPP') : 'Invalid Date') : 'Not set', PlayCircle, isEditing,
+                    <Input id="projectStartDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                )}
                  {renderField("Due Date", project.dueDate ? (isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'PPP') : 'Invalid Date') : 'Not set', CalendarDays, isEditing,
                     <Input id="projectDueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 {renderField("Client Contact", project.clientContact, User, isEditing,
-                    <Input id="clientContact" value={clientContact} onChange={(e) => setClientContact(e.target.value)} placeholder="e.g., Jane Doe (XYZ Corp)" />
-                )}
                 {renderField("Site Address", project.siteAddress, Building, isEditing,
                     <Input id="siteAddress" value={siteAddress} onChange={(e) => setSiteAddress(e.target.value)} placeholder="e.g., 456 Field Ave" />
                 )}
+                {renderField("Coordinate System", project.coordinateSystem, Globe, isEditing,
+                  <Input id="coordinateSystem" value={coordinateSystem} onChange={(e) => setCoordinateSystem(e.target.value)} placeholder="e.g., WGS84 / UTM Zone 12N" />
+                )}
               </div>
-
-              {renderField("Coordinate System", project.coordinateSystem, Globe, isEditing,
-                <Input id="coordinateSystem" value={coordinateSystem} onChange={(e) => setCoordinateSystem(e.target.value)} placeholder="e.g., WGS84 / UTM Zone 12N" />
-              )}
              
               {renderField("Description", project.description, undefined, isEditing,
                 <Textarea id="projectDescription" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Detailed project scope and objectives..." />,
@@ -281,6 +290,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 // Reset fields to project current state
                 setName(project.name);
                 setDescription(project.description);
+                setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
                 setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
                 setBudget(project.budget?.toString() || '');
                 setSpent(project.spent?.toString() || '');
