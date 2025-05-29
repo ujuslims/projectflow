@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useProjects } from '@/contexts/projects-context';
 import { projectTypes } from '@/lib/project-templates';
-import { PlusCircle, CalendarClock, PlayCircle } from 'lucide-react'; // Added PlayCircle
+import { PlusCircle, PlayCircle, CalendarDays } from 'lucide-react'; // Added CalendarDays, removed CalendarClock
 import { useRouter } from 'next/navigation';
 
 export function CreateProjectDialog() {
@@ -31,8 +31,8 @@ export function CreateProjectDialog() {
   const [siteAddress, setSiteAddress] = useState('');
   const [coordinateSystem, setCoordinateSystem] = useState('');
   const [projectType, setProjectType] = useState<string>('none');
-  const [createdAtDate, setCreatedAtDate] = useState(''); 
-  const [startDate, setStartDate] = useState(''); // New state for start date
+  const [startDate, setStartDate] = useState('');
+  const [dueDate, setDueDate] = useState(''); // New state for due date
   const { addProject } = useProjects();
   const router = useRouter();
 
@@ -51,8 +51,8 @@ export function CreateProjectDialog() {
       siteAddress,
       coordinateSystem,
       projectType: projectType === 'none' ? undefined : projectType,
-      createdAt: createdAtDate ? new Date(createdAtDate).toISOString() : undefined,
-      startDate: startDate ? new Date(startDate).toISOString() : undefined, // Pass startDate
+      startDate: startDate ? new Date(startDate).toISOString() : undefined,
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined, // Pass dueDate
     });
     // Reset form fields
     setName('');
@@ -63,8 +63,8 @@ export function CreateProjectDialog() {
     setSiteAddress('');
     setCoordinateSystem('');
     setProjectType('none');
-    setCreatedAtDate('');
-    setStartDate(''); // Reset start date
+    setStartDate('');
+    setDueDate(''); // Reset due date
     setIsOpen(false);
     router.push(`/projects/${newProject.id}`);
   };
@@ -84,7 +84,7 @@ export function CreateProjectDialog() {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2"> {/* Increased max-h slightly */}
+          <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Name
@@ -200,16 +200,15 @@ export function CreateProjectDialog() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="createdAtDate" className="text-right flex items-center">
-                 <CalendarClock className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Created
+              <Label htmlFor="dueDate" className="text-right flex items-center">
+                <CalendarDays className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Due Date
               </Label>
               <Input
-                id="createdAtDate"
+                id="dueDate"
                 type="date"
-                value={createdAtDate}
-                onChange={(e) => setCreatedAtDate(e.target.value)}
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
                 className="col-span-3"
-                placeholder="Defaults to today"
               />
             </div>
           </div>

@@ -8,8 +8,8 @@ import { projectStageTemplates } from '@/lib/project-templates'; // Import templ
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectType'> 
-                      & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; createdAt?: string; startDate?: string; }) => Project;
+  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectType'> // Removed createdAt
+                      & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; startDate?: string; dueDate?: string; }) => Project; // Added dueDate
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
@@ -30,8 +30,8 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useLocalStorage<Project[]>('projects', []);
 
-  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectType'> 
-                                & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; createdAt?: string; startDate?: string; }) => {
+  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectType'> 
+                                & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; startDate?: string; dueDate?: string; }) => {
     
     const initialStages: Stage[] = [];
     if (projectData.projectType && projectStageTemplates[projectData.projectType]) {
@@ -48,7 +48,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
 
     const newProject: Project = {
       id: crypto.randomUUID(),
-      createdAt: projectData.createdAt ? new Date(projectData.createdAt).toISOString() : new Date().toISOString(),
+      createdAt: new Date().toISOString(), // Always set to current date/time
       name: projectData.name,
       description: projectData.description || '',
       stages: initialStages,
@@ -57,8 +57,8 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       spent: 0,
       status: 'Not Started' as ProjectStatus,
       outcomeNotes: '',
-      startDate: projectData.startDate ? new Date(projectData.startDate).toISOString() : undefined,
-      dueDate: undefined, // Handled by ProjectDetailsCard logic
+      startDate: projectData.startDate, // Use provided startDate
+      dueDate: projectData.dueDate, // Use provided dueDate
       projectNumber: projectData.projectNumber || '',
       clientContact: projectData.clientContact || '',
       siteAddress: projectData.siteAddress || '',
