@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Briefcase, CalendarCheck2, Edit, Hourglass, InfoIcon, ListChecks, PackageOpen, DollarSign, Percent, XCircle, CalendarDays, Hash, UserCircle } from 'lucide-react'; // Added Hash, UserCircle
+import { ArrowRight, Briefcase, CalendarCheck2, Edit, Hourglass, InfoIcon, ListChecks, PackageOpen, DollarSign, Percent, XCircle, CalendarDays, Hash, UserCircle } from 'lucide-react';
 import { useMemo } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
@@ -63,7 +63,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </div>
         )}
         <CardDescription className="h-12 overflow-hidden text-ellipsis text-sm">
-          {project.description || "No description provided."}
+          {project.description || "No scope of work provided."} {/* Updated fallback text */}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-2.5 text-sm">

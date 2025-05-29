@@ -14,10 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjects } from '@/contexts/projects-context';
-import { projectTypes } from '@/lib/project-templates'; // Using projectTypes from templates
+import { projectTypes } from '@/lib/project-templates';
 import { PlusCircle, PlayCircle, CalendarDays, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScrollArea } from '../ui/scroll-area';
@@ -25,15 +25,15 @@ import { ScrollArea } from '../ui/scroll-area';
 export function CreateProjectDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [scopeOfWork, setScopeOfWork] = useState(''); // Changed from description
   const [budget, setBudget] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
   const [clientContact, setClientContact] = useState('');
   const [siteAddress, setSiteAddress] = useState('');
   const [coordinateSystem, setCoordinateSystem] = useState('');
-  const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>([]); // Changed to array for multiple types
+  const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(''); // Added dueDate
   const { addProject } = useProjects();
   const router = useRouter();
 
@@ -51,27 +51,27 @@ export function CreateProjectDialog() {
     }
     const newProject = addProject({ 
       name, 
-      description, 
+      description: scopeOfWork, // Pass scopeOfWork as description
       budget: budget ? parseFloat(budget) : undefined,
       projectNumber,
       clientContact,
       siteAddress,
       coordinateSystem,
-      projectTypes: selectedProjectTypes, // Pass array of selected types
+      projectTypes: selectedProjectTypes,
       startDate: startDate ? new Date(startDate).toISOString() : undefined,
-      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined, 
     });
     // Reset form fields
     setName('');
-    setDescription('');
+    setScopeOfWork(''); // Reset scopeOfWork
     setBudget('');
     setProjectNumber('');
     setClientContact('');
     setSiteAddress('');
     setCoordinateSystem('');
-    setSelectedProjectTypes([]); // Reset selected types
+    setSelectedProjectTypes([]);
     setStartDate('');
-    setDueDate('');
+    setDueDate(''); // Reset dueDate
     setIsOpen(false);
     router.push(`/projects/${newProject.id}`);
   };
@@ -111,7 +111,7 @@ export function CreateProjectDialog() {
                    <Workflow className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Types
                 </Label>
                 <div className="col-span-3 space-y-2">
-                  {projectTypes.filter(pt => pt.id !== 'none').map(pt => ( // Exclude 'none' type
+                  {projectTypes.filter(pt => pt.id !== 'none').map(pt => (
                     <div key={pt.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={`type-${pt.id}`}
@@ -174,16 +174,17 @@ export function CreateProjectDialog() {
                   placeholder="e.g., WGS84, UTM Zone 10N"
                 />
               </div>
-              <div className="grid grid-cols-4 items-start gap-4"> {/* Changed items-center to items-start */}
-                <Label htmlFor="description" className="text-right pt-2">
-                  Description
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="scopeOfWork" className="text-right pt-2"> {/* Changed from description */}
+                  Scope of Work
                 </Label>
                 <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  id="scopeOfWork" // Changed from description
+                  value={scopeOfWork}
+                  onChange={(e) => setScopeOfWork(e.target.value)}
                   className="col-span-3"
                   rows={3}
+                  placeholder="Detailed project scope and objectives..." // Updated placeholder
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">

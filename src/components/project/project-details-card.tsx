@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle } from 'lucide-react'; // Added PlayCircle
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle } from 'lucide-react';
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
@@ -33,14 +33,13 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [activeTab, setActiveTab] = useState("general");
 
   const [name, setName] = useState(project.name);
-  const [description, setDescription] = useState(project.description);
+  const [scopeOfWork, setScopeOfWork] = useState(project.description); // Changed from description
   const [startDate, setStartDate] = useState(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
   const [dueDate, setDueDate] = useState(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
   const [budget, setBudget] = useState<string>(project.budget?.toString() || '');
   const [spent, setSpent] = useState<string>(project.spent?.toString() || '');
   const [status, setStatus] = useState<ProjectStatus>(project.status || 'Not Started');
   const [outcomeNotes, setOutcomeNotes] = useState(project.outcomeNotes || '');
-  // New industry-specific fields
   const [projectNumber, setProjectNumber] = useState(project.projectNumber || '');
   const [clientContact, setClientContact] = useState(project.clientContact || '');
   const [siteAddress, setSiteAddress] = useState(project.siteAddress || '');
@@ -49,7 +48,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
   useEffect(() => {
     setName(project.name);
-    setDescription(project.description);
+    setScopeOfWork(project.description); // Changed from description
     setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
     setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
     setBudget(project.budget?.toString() || '');
@@ -96,7 +95,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
     onUpdateProject({
       name,
-      description,
+      description: scopeOfWork, // Pass scopeOfWork as description
       startDate: finalStartDate,
       dueDate: finalDueDate,
       budget: parsedBudget,
@@ -140,7 +139,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
         {isEditingMode ? (
           editComponent
         ) : (
-          <p className={cn("text-sm mt-1", !value && "text-muted-foreground")}>{displayValue}</p>
+          <p className={cn("text-sm mt-1 whitespace-pre-wrap", !value && "text-muted-foreground")}>{displayValue}</p> // Added whitespace-pre-wrap
         )}
       </div>
     );
@@ -227,9 +226,9 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 )}
               </div>
              
-              {renderField("Description", project.description, undefined, isEditing,
-                <Textarea id="projectDescription" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Detailed project scope and objectives..." />,
-                 "No description provided."
+              {renderField("Scope of Work", project.description, undefined, isEditing, // Changed from Description
+                <Textarea id="projectScopeOfWork" value={scopeOfWork} onChange={(e) => setScopeOfWork(e.target.value)} rows={3} placeholder="Detailed project scope and objectives..." />, // Updated placeholder
+                 "No scope of work provided." // Updated fallback
               )}
             </TabsContent>
 
@@ -287,9 +286,8 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
           <CardFooter className="flex justify-end gap-2 mt-0 pt-0 pb-6 px-6">
             <Button type="button" variant="outline" onClick={() => { 
                 setIsEditing(false); 
-                // Reset fields to project current state
                 setName(project.name);
-                setDescription(project.description);
+                setScopeOfWork(project.description); // Reset to project.description
                 setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
                 setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
                 setBudget(project.budget?.toString() || '');

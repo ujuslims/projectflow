@@ -100,7 +100,7 @@ export default function ProjectSummaryPage() {
   if (project.status && projectStatusIcons[project.status]) {
     statusIconToRender = projectStatusIcons[project.status];
   } else {
-    statusIconToRender = <InfoIcon className="h-4 w-4" />; // Default icon if status is undefined or not in map
+    statusIconToRender = <InfoIcon className="h-4 w-4" />;
   }
 
   return (
@@ -121,7 +121,6 @@ export default function ProjectSummaryPage() {
         </div>
       </div>
       
-      {/* For print view, simpler header */}
       <div className="hidden print:block mb-8">
         <h1 className="text-2xl font-bold">Project Summary: {project.name}</h1>
         <p className="text-sm text-muted-foreground">Generated on: {formatDate(new Date(), 'PPP p')}</p>
@@ -148,7 +147,7 @@ export default function ProjectSummaryPage() {
 
         {project.description && (
           <Card className="print:shadow-none print:border-0">
-            <CardHeader><CardTitle className="text-xl">Description</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-xl">Scope of Work</CardTitle></CardHeader> {/* Changed from Description */}
             <CardContent><p className="text-sm whitespace-pre-wrap">{project.description}</p></CardContent>
           </Card>
         )}
@@ -230,10 +229,10 @@ export default function ProjectSummaryPage() {
           .print\\:border-0 { border: 0 !important; }
           .print\\:bg-transparent { background-color: transparent !important; }
           .print\\:p-0 { padding: 0 !important; }
-          .print\\:text-green-700 { color: #15803d !important; } /* Tailwind green-700 */
-          .print\\:text-red-700 { color: #b91c1c !important; } /* Tailwind red-700 */
-          .print\\:text-blue-700 { color: #1d4ed8 !important; } /* Tailwind blue-700 */
-          .print\\:text-gray-700 { color: #374151 !important; } /* Tailwind gray-700 */
+          .print\\:text-green-700 { color: #15803d !important; }
+          .print\\:text-red-700 { color: #b91c1c !important; }
+          .print\\:text-blue-700 { color: #1d4ed8 !important; }
+          .print\\:text-gray-700 { color: #374151 !important; }
           .print\\:border-b { border-bottom-width: 1px !important; }
           .print\\:border-dashed { border-bottom-style: dashed !important; }
           .print\\:last\\:border-b-0:last-child { border-bottom-width: 0 !important; }
@@ -243,5 +242,3 @@ export default function ProjectSummaryPage() {
     </AppLayout>
   );
 }
-
-    
