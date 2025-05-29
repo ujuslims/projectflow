@@ -4,10 +4,12 @@
 import type { Project, Stage, Subtask, ProjectStatus, SubtaskStatus, SubtaskCore } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { projectStageTemplates } from '@/lib/project-templates'; // Import templates
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem'> & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; }) => Project;
+  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectType'> 
+                      & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; }) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
@@ -28,23 +30,39 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useLocalStorage<Project[]>('projects', []);
 
-  const addProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem'> & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; }) => {
+  const addProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectType'> 
+                                & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectType?: string; }) => {
+    
+    const initialStages: Stage[] = [];
+    if (projectData.projectType && projectStageTemplates[projectData.projectType]) {
+      const templateStageNames = projectStageTemplates[projectData.projectType];
+      templateStageNames.forEach((stageName, index) => {
+        initialStages.push({
+          id: crypto.randomUUID(),
+          name: stageName,
+          order: index,
+          createdAt: new Date().toISOString(),
+        });
+      });
+    }
+
     const newProject: Project = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       name: projectData.name,
       description: projectData.description || '',
-      stages: [],
+      stages: initialStages,
       subtasks: [],
       budget: projectData.budget || 0,
       spent: 0,
       status: 'Not Started' as ProjectStatus,
       outcomeNotes: '',
-      dueDate: undefined,
+      dueDate: undefined, // Handled by ProjectDetailsCard logic
       projectNumber: projectData.projectNumber || '',
       clientContact: projectData.clientContact || '',
       siteAddress: projectData.siteAddress || '',
       coordinateSystem: projectData.coordinateSystem || '',
+      projectType: projectData.projectType || undefined,
     };
     setProjects(prevProjects => [...prevProjects, newProject]);
     return newProject;

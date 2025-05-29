@@ -47,4 +47,5 @@ export interface Project {
   clientContact?: string;
   siteAddress?: string;
   coordinateSystem?: string;
+  projectType?: string; // Added for stage templates
 }

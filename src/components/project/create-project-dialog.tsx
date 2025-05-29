@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select
 import { Textarea } from "@/components/ui/textarea";
 import { useProjects } from '@/contexts/projects-context';
+import { projectTypes } from '@/lib/project-templates'; // Import project types
 import { PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -28,6 +30,7 @@ export function CreateProjectDialog() {
   const [clientContact, setClientContact] = useState('');
   const [siteAddress, setSiteAddress] = useState('');
   const [coordinateSystem, setCoordinateSystem] = useState('');
+  const [projectType, setProjectType] = useState<string>('none'); // Added projectType state
   const { addProject } = useProjects();
   const router = useRouter();
 
@@ -45,6 +48,7 @@ export function CreateProjectDialog() {
       clientContact,
       siteAddress,
       coordinateSystem,
+      projectType: projectType === 'none' ? undefined : projectType, // Pass projectType
     });
     // Reset form fields
     setName('');
@@ -54,6 +58,7 @@ export function CreateProjectDialog() {
     setClientContact('');
     setSiteAddress('');
     setCoordinateSystem('');
+    setProjectType('none'); // Reset project type
     setIsOpen(false);
     router.push(`/projects/${newProject.id}`);
   };
@@ -65,7 +70,7 @@ export function CreateProjectDialog() {
           <PlusCircle className="mr-2 h-4 w-4" /> New Project
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md"> {/* Increased max-width slightly */}
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
@@ -73,7 +78,7 @@ export function CreateProjectDialog() {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2"> {/* Added scroll for many fields */}
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Name
@@ -85,6 +90,23 @@ export function CreateProjectDialog() {
                 className="col-span-3"
                 required
               />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="projectType" className="text-right">
+                Type
+              </Label>
+              <Select value={projectType} onValueChange={setProjectType}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select project type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectTypes.map(pt => (
+                    <SelectItem key={pt.id} value={pt.id}>
+                      {pt.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="projectNumber" className="text-right">
