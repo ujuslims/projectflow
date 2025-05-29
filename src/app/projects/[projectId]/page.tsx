@@ -13,8 +13,8 @@ import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskCore } from '@/lib/types';
 import { organizeSubtasks, OrganizeSubtasksInput, OrganizeSubtasksOutput, suggestSubtasks, SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/flows';
-import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info, BarChartHorizontalBig } from 'lucide-react'; // Added BarChartHorizontalBig
-import Link from 'next/link'; // Added Link
+import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info, BarChartHorizontalBig, Printer } from 'lucide-react'; // Added Printer
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -263,7 +263,7 @@ export default function ProjectDetailPage() {
                 stageId: targetStage.id,
                 order,
                 description: aiSubtask.description || matchedSubtask.description,
-                endDate: aiSubtask.endDate || matchedSubtask.endDate, // Use renamed field
+                endDate: aiSubtask.endDate || matchedSubtask.endDate,
               });
               currentSubtasksMap.delete(matchedId); 
             }
@@ -320,7 +320,7 @@ export default function ProjectDetailPage() {
         onDeleteStage={handleDeleteStage}
       />
 
-      <div className="my-8 flex flex-col sm:flex-row gap-4 justify-start items-start sm:items-center">
+      <div className="my-8 flex flex-col sm:flex-row gap-4 justify-start items-start sm:items-center flex-wrap">
         <Button onClick={handleAISuggestSubtasks} disabled={isAISuggesting || !project.description || project.stages.length === 0}>
           {isAISuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
           AI Suggest Subtasks
@@ -333,6 +333,12 @@ export default function ProjectDetailPage() {
           <Link href={`/projects/${project.id}/timeline`}>
             <BarChartHorizontalBig className="mr-2 h-4 w-4" />
             View Timeline
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={`/projects/${project.id}/summary`}>
+            <Printer className="mr-2 h-4 w-4" />
+            View Project Summary
           </Link>
         </Button>
       </div>
@@ -388,3 +394,4 @@ export default function ProjectDetailPage() {
     </AppLayout>
   );
 }
+
