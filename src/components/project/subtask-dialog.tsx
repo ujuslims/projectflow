@@ -200,7 +200,7 @@ export function SubtaskDialog({
                   onChange={(e) => setEquipmentUsed(e.target.value)}
                   className="col-span-3"
                   rows={2}
-                  placeholder="e.g., GPS, Total Station, Drone"
+                  placeholder="e.g., GPS, Total Station, Drone (comma-separated)"
                 />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
@@ -213,7 +213,7 @@ export function SubtaskDialog({
                   onChange={(e) => setDataDeliverables(e.target.value)}
                   className="col-span-3"
                   rows={2}
-                  placeholder="e.g., Raw data, Processed map, Report"
+                  placeholder="e.g., Raw data, Processed map, Report (comma-separated)"
                 />
               </div>
             </div>
