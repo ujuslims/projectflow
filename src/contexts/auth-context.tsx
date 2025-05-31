@@ -75,6 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await signInWithPopup(auth, googleProvider);
       // User state will be updated by onAuthStateChanged
     } catch (err) {
+      console.error("Full Google Sign-In error:", err); // Added detailed logging
       setError(err as AuthError);
       throw err; // Re-throw to be caught by form handler
     } finally {
@@ -115,3 +116,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
