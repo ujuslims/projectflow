@@ -36,36 +36,34 @@ export default function HomePage() {
   // If not loading and no user, show the actual homepage content
   return (
     <AppLayout>
-      <section className="py-20 md:py-28 lg:py-32 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg">
-        <div className="container px-4 md:px-6 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-primary">
-              ProjectFlow
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-foreground/80 sm:text-xl">
-              Streamline Your Surveying, Geotechnical, and Construction Projects.
-              Plan smarter, collaborate effectively, and deliver results with AI-powered insights.
-            </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button asChild size="lg">
-                <Link href="/auth/signup">
-                  Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/auth/login">
-                  Login
-                </Link>
-              </Button>
-            </div>
+      <section className="py-20 md:py-28 lg:py-32 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg px-4 md:px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-primary">
+            ProjectFlow
+          </h1>
+          <p className="mt-6 text-lg leading-8 text-foreground/80 sm:text-xl">
+            Streamline Your Surveying, Geotechnical, and Construction Projects.
+            Plan smarter, collaborate effectively, and deliver results with AI-powered insights.
+          </p>
+          <div className="mt-10 flex items-center justify-center gap-x-6">
+            <Button asChild size="lg">
+              <Link href="/auth/signup">
+                Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/auth/login">
+                Login
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24">
-        <div className="container px-4 md:px-6">
+      <section className="py-16 md:py-24 px-4 md:px-6">
+        <div className="max-w-5xl mx-auto"> {/* Constrains features section width and centers it */}
           <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-foreground max-w-2xl mx-auto">
               Unlock Efficiency in Every Project Phase
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
