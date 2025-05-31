@@ -3,14 +3,15 @@
 
 import type { User as FirebaseUser, AuthError } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { auth } from '@/lib/firebase/config';
+import { auth, googleProvider } from '@/lib/firebase/config'; // Import googleProvider
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
+  signInWithPopup, // Import signInWithPopup
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
-import type { SignUpFormData, LoginFormData } from '@/lib/types'; // Assuming these will be defined
+import type { SignUpFormData, LoginFormData } from '@/lib/types';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -18,6 +19,7 @@ interface AuthContextType {
   error: AuthError | null;
   signUpWithEmail: (data: SignUpFormData) => Promise<void>;
   signInWithEmail: (data: LoginFormData) => Promise<void>;
+  signInWithGoogle: () => Promise<void>; // Add signInWithGoogle
   signOutUser: () => Promise<void>;
 }
 
@@ -44,6 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await createUserWithEmailAndPassword(auth, data.email, data.password);
       // User state will be updated by onAuthStateChanged
     } catch (err) {
+      console.error("Full sign-up error:", err);
       setError(err as AuthError);
       throw err; // Re-throw to be caught by form handler
     } finally {
@@ -56,6 +59,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
+      // User state will be updated by onAuthStateChanged
+    } catch (err) {
+      setError(err as AuthError);
+      throw err; // Re-throw to be caught by form handler
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await signInWithPopup(auth, googleProvider);
       // User state will be updated by onAuthStateChanged
     } catch (err) {
       setError(err as AuthError);
@@ -84,6 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     error,
     signUpWithEmail,
     signInWithEmail,
+    signInWithGoogle, // Provide signInWithGoogle
     signOutUser,
   };
 
