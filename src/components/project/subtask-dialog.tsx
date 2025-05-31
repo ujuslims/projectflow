@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect, type FormEvent } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area'; // Added for scrollability
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface SubtaskDialogProps {
   isOpen: boolean;
@@ -39,7 +39,6 @@ export function SubtaskDialog({
   const [assignedPersonnel, setAssignedPersonnel] = useState('');
   const [location, setLocation] = useState('');
   const [status, setStatus] = useState<SubtaskStatus>('To Do');
-  // New industry-specific fields
   const [fieldCrewLead, setFieldCrewLead] = useState('');
   const [equipmentUsed, setEquipmentUsed] = useState('');
   const [dataDeliverables, setDataDeliverables] = useState('');
@@ -82,44 +81,44 @@ export function SubtaskDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg"> {/* Adjusted width slightly */}
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <ScrollArea className="max-h-[70vh] pr-4"> {/* Added ScrollArea */}
+          <ScrollArea className="max-h-[70vh] pr-4">
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subtask-name" className="text-right">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                <Label htmlFor="subtask-name" className="text-left sm:text-right">
                   Name
                 </Label>
                 <Input
                   id="subtask-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   required
                 />
               </div>
-              <div className="grid grid-cols-4 items-start gap-4"> {/* Changed items-center to items-start for textarea */}
-                <Label htmlFor="subtask-description" className="text-right pt-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
+                <Label htmlFor="subtask-description" className="text-left sm:text-right pt-0 sm:pt-2">
                   Description
                 </Label>
                 <Textarea
                   id="subtask-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   rows={2}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subtask-status" className="text-right">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                <Label htmlFor="subtask-status" className="text-left sm:text-right">
                   Status
                 </Label>
                 <Select value={status} onValueChange={(value) => setStatus(value as SubtaskStatus)}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger className="col-span-1 sm:col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -129,8 +128,8 @@ export function SubtaskDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subtask-start-date" className="text-right">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                <Label htmlFor="subtask-start-date" className="text-left sm:text-right">
                   Start Date
                 </Label>
                 <Input
@@ -138,11 +137,11 @@ export function SubtaskDialog({
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subtask-end-date" className="text-right">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                <Label htmlFor="subtask-end-date" className="text-left sm:text-right">
                   End Date
                 </Label>
                 <Input
@@ -150,23 +149,23 @@ export function SubtaskDialog({
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subtask-crew-lead" className="text-right">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                <Label htmlFor="subtask-crew-lead" className="text-left sm:text-right">
                   Crew Lead
                 </Label>
                 <Input
                   id="subtask-crew-lead"
                   value={fieldCrewLead}
                   onChange={(e) => setFieldCrewLead(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   placeholder="e.g., Mike R."
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subtask-personnel" className="text-right">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                <Label htmlFor="subtask-personnel" className="text-left sm:text-right">
                   Personnel #
                 </Label>
                 <Input
@@ -174,44 +173,44 @@ export function SubtaskDialog({
                   type="number"
                   value={assignedPersonnel}
                   onChange={(e) => setAssignedPersonnel(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   placeholder="e.g., 3"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subtask-location" className="text-right">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                <Label htmlFor="subtask-location" className="text-left sm:text-right">
                   Location
                 </Label>
                 <Input
                   id="subtask-location"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   placeholder="e.g., Site A, Zone 1"
                 />
               </div>
-               <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="subtask-equipment" className="text-right pt-2">
+               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
+                <Label htmlFor="subtask-equipment" className="text-left sm:text-right pt-0 sm:pt-2">
                   Equipment
                 </Label>
                 <Textarea
                   id="subtask-equipment"
                   value={equipmentUsed}
                   onChange={(e) => setEquipmentUsed(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   rows={2}
                   placeholder="e.g., GPS, Total Station, Drone (comma-separated)"
                 />
               </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="subtask-deliverables" className="text-right pt-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
+                <Label htmlFor="subtask-deliverables" className="text-left sm:text-right pt-0 sm:pt-2">
                   Deliverables
                 </Label>
                 <Textarea
                   id="subtask-deliverables"
                   value={dataDeliverables}
                   onChange={(e) => setDataDeliverables(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   rows={2}
                   placeholder="e.g., Raw data, Processed map, Report (comma-separated)"
                 />

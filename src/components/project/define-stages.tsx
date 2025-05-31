@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Stage } from '@/lib/types';
@@ -12,7 +13,6 @@ interface DefineStagesProps {
   onAddStage: (name: string) => void;
   onUpdateStage: (id: string, name: string) => void;
   onDeleteStage: (id: string) => void;
-  // onReorderStages: (stages: Stage[]) => void; // Future: for drag-drop reordering of stages
 }
 
 export function DefineStages({ stages, onAddStage, onUpdateStage, onDeleteStage }: DefineStagesProps) {
@@ -51,7 +51,7 @@ export function DefineStages({ stages, onAddStage, onUpdateStage, onDeleteStage 
         </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleAddStage} className="flex gap-2 mb-4">
+        <form onSubmit={handleAddStage} className="flex flex-col sm:flex-row gap-2 mb-4">
           <Input
             type="text"
             placeholder="Enter new stage name (e.g., To Do, In Progress)"
@@ -59,16 +59,16 @@ export function DefineStages({ stages, onAddStage, onUpdateStage, onDeleteStage 
             onChange={(e) => setNewStageName(e.target.value)}
             className="flex-grow"
           />
-          <Button type="submit" variant="secondary">
+          <Button type="submit" variant="secondary" className="w-full sm:w-auto">
             <PlusCircle className="mr-2 h-4 w-4" /> Add Stage
           </Button>
         </form>
         {stages.length > 0 ? (
           <ul className="space-y-2">
             {stages.sort((a, b) => a.order - b.order).map((stage) => (
-              <li key={stage.id} className="flex items-center justify-between p-3 bg-secondary/30 rounded-md">
+              <li key={stage.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-secondary/30 rounded-md gap-2">
                 {editingStageId === stage.id ? (
-                  <form onSubmit={handleSaveStageEdit} className="flex-grow flex gap-2 items-center">
+                  <form onSubmit={handleSaveStageEdit} className="flex-grow flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full">
                     <Input
                       type="text"
                       value={editingStageName}
@@ -76,13 +76,15 @@ export function DefineStages({ stages, onAddStage, onUpdateStage, onDeleteStage 
                       className="flex-grow"
                       autoFocus
                     />
-                    <Button type="submit" size="sm">Save</Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditingStageId(null)}>Cancel</Button>
+                    <div className="flex gap-2 justify-end sm:justify-start">
+                        <Button type="submit" size="sm" className="w-full sm:w-auto">Save</Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setEditingStageId(null)} className="w-full sm:w-auto">Cancel</Button>
+                    </div>
                   </form>
                 ) : (
                   <>
-                    <span className="font-medium">{stage.name}</span>
-                    <div className="space-x-2">
+                    <span className="font-medium break-all">{stage.name}</span>
+                    <div className="space-x-2 flex-shrink-0 self-end sm:self-center">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditStage(stage)} aria-label="Edit stage">
                         <Edit2 className="h-4 w-4" />
                       </Button>
