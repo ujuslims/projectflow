@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, LayoutDashboard, Brain, BarChartHorizontalBig } from 'lucide-react';
 import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function HomePage() {
   const auth = useAuth();
@@ -35,7 +36,7 @@ export default function HomePage() {
   // If not loading and no user, show the actual homepage content
   return (
     <AppLayout>
-      <section className="py-20 md:py-28 lg:py-36 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg">
+      <section className="py-20 md:py-28 lg:py-32 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg">
         <div className="container px-4 md:px-6 text-center">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-primary">
@@ -60,7 +61,57 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      {/* "Why Choose ProjectFlow?" section and FeatureCards removed as per request to focus on the hero section. */}
+
+      <section className="py-16 md:py-24">
+        <div className="container px-4 md:px-6">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
+              Unlock Efficiency in Every Project Phase
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              ProjectFlow provides the tools you need to manage complex projects with ease and precision.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={<LayoutDashboard className="h-10 w-10 text-primary mb-4" />}
+              title="Intuitive Project Management"
+              description="Organize your projects with flexible stages and detailed subtasks. Our Kanban-style boards make it easy to visualize workflows and track progress from start to finish."
+            />
+            <FeatureCard
+              icon={<Brain className="h-10 w-10 text-primary mb-4" />}
+              title="AI-Powered Assistance"
+              description="Leverage artificial intelligence to suggest relevant subtasks and organize your project plan, tailored for specialized industries like surveying and construction."
+            />
+            <FeatureCard
+              icon={<BarChartHorizontalBig className="h-10 w-10 text-primary mb-4" />}
+              title="Comprehensive Oversight"
+              description="Gain clear insights with project timelines, financial summaries, and progress tracking. Make informed decisions and keep your projects on track and on budget."
+            />
+          </div>
+        </div>
+      </section>
     </AppLayout>
+  );
+}
+
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+function FeatureCard({ icon, title, description }: FeatureCardProps) {
+  return (
+    <Card className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card">
+      <CardHeader className="items-center">
+        {icon}
+        <CardTitle className="text-xl">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground">{description}</p>
+      </CardContent>
+    </Card>
   );
 }
