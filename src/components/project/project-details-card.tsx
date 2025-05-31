@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Project, ProjectStatus } from '@/lib/types';
+import type { Project, ProjectStatus, ProjectType as AppProjectType } from '@/lib/types'; // Renamed ProjectType to AppProjectType
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,17 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle } from 'lucide-react';
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow } from 'lucide-react'; // Added Workflow
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
 import { useProjects } from '@/contexts/projects-context';
-
+import { projectTypes as availableProjectTypes } from '@/lib/project-templates'; // Import available project types
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'spent' | 'status' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'spent' | 'status' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
@@ -33,7 +34,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [activeTab, setActiveTab] = useState("general");
 
   const [name, setName] = useState(project.name);
-  const [scopeOfWork, setScopeOfWork] = useState(project.description); // Changed from description
+  const [scopeOfWork, setScopeOfWork] = useState(project.description);
   const [startDate, setStartDate] = useState(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
   const [dueDate, setDueDate] = useState(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
   const [budget, setBudget] = useState<string>(project.budget?.toString() || '');
@@ -44,11 +45,12 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [clientContact, setClientContact] = useState(project.clientContact || '');
   const [siteAddress, setSiteAddress] = useState(project.siteAddress || '');
   const [coordinateSystem, setCoordinateSystem] = useState(project.coordinateSystem || '');
+  const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>(project.projectTypes || []);
 
 
   useEffect(() => {
     setName(project.name);
-    setScopeOfWork(project.description); // Changed from description
+    setScopeOfWork(project.description);
     setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
     setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
     setBudget(project.budget?.toString() || '');
@@ -59,6 +61,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setClientContact(project.clientContact || '');
     setSiteAddress(project.siteAddress || '');
     setCoordinateSystem(project.coordinateSystem || '');
+    setSelectedProjectTypes(project.projectTypes || []);
   }, [project]);
 
   const completedSubtasksCount = useMemo(() => {
@@ -73,6 +76,12 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     }
     return 0;
   }, [project.budget, project.spent]);
+
+  const handleProjectTypeChange = (typeId: string) => {
+    setSelectedProjectTypes(prev =>
+      prev.includes(typeId) ? prev.filter(id => id !== typeId) : [...prev, typeId]
+    );
+  };
 
   const handleSave = (e: FormEvent) => {
     e.preventDefault();
@@ -95,7 +104,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
     onUpdateProject({
       name,
-      description: scopeOfWork, // Pass scopeOfWork as description
+      description: scopeOfWork,
       startDate: finalStartDate,
       dueDate: finalDueDate,
       budget: parsedBudget,
@@ -106,6 +115,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       clientContact,
       siteAddress,
       coordinateSystem,
+      projectTypes: selectedProjectTypes,
     });
     setIsEditing(false);
     setIsLoading(false);
@@ -128,8 +138,16 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     }
   };
 
-  const renderField = (label: string, value: string | undefined | null, Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholder?: string ) => {
-    const displayValue = value || (isEditingMode ? '' : 'Not set');
+  const renderField = (label: string, value: string | undefined | null | string[], Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholder?: string ) => {
+    let displayValue: string | React.ReactNode = value || (isEditingMode ? '' : 'Not set');
+    if (Array.isArray(value)) { // Handle projectTypes array
+      if (value.length === 0) {
+        displayValue = 'Not set';
+      } else {
+        displayValue = value.map(typeId => availableProjectTypes.find(pt => pt.id === typeId)?.name || typeId).join(', ');
+      }
+    }
+
     return (
       <div>
         <Label className="flex items-center">
@@ -139,7 +157,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
         {isEditingMode ? (
           editComponent
         ) : (
-          <p className={cn("text-sm mt-1 whitespace-pre-wrap", !value && "text-muted-foreground")}>{displayValue}</p> // Added whitespace-pre-wrap
+          <p className={cn("text-sm mt-1 whitespace-pre-wrap", (!value || (Array.isArray(value) && value.length === 0)) && "text-muted-foreground")}>{displayValue}</p>
         )}
       </div>
     );
@@ -226,10 +244,28 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 )}
               </div>
              
-              {renderField("Scope of Work", project.description, undefined, isEditing, // Changed from Description
-                <Textarea id="projectScopeOfWork" value={scopeOfWork} onChange={(e) => setScopeOfWork(e.target.value)} rows={3} placeholder="Detailed project scope and objectives..." />, // Updated placeholder
-                 "No scope of work provided." // Updated fallback
+              {renderField("Scope of Work", project.description, undefined, isEditing,
+                <Textarea id="projectScopeOfWork" value={scopeOfWork} onChange={(e) => setScopeOfWork(e.target.value)} rows={3} placeholder="Detailed project scope and objectives..." />,
+                 "No scope of work provided."
               )}
+
+              {renderField("Project Types", project.projectTypes, Workflow, isEditing,
+                <div className="col-span-1 sm:col-span-full space-y-2 max-h-32 overflow-y-auto border p-2 rounded-md bg-input/50">
+                    {availableProjectTypes.filter(pt => pt.id !== 'none').map(pt => (
+                    <div key={pt.id} className="flex items-center space-x-2">
+                        <Checkbox
+                        id={`edit-type-${pt.id}`}
+                        checked={selectedProjectTypes.includes(pt.id)}
+                        onCheckedChange={() => handleProjectTypeChange(pt.id)}
+                        />
+                        <Label htmlFor={`edit-type-${pt.id}`} className="font-normal text-sm">
+                        {pt.name}
+                        </Label>
+                    </div>
+                    ))}
+                </div>
+              )}
+
             </TabsContent>
 
             <TabsContent value="budget" className="mt-0 space-y-4">
@@ -287,7 +323,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
             <Button type="button" variant="outline" onClick={() => { 
                 setIsEditing(false); 
                 setName(project.name);
-                setScopeOfWork(project.description); // Reset to project.description
+                setScopeOfWork(project.description);
                 setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
                 setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
                 setBudget(project.budget?.toString() || '');
@@ -298,6 +334,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 setClientContact(project.clientContact || '');
                 setSiteAddress(project.siteAddress || '');
                 setCoordinateSystem(project.coordinateSystem || '');
+                setSelectedProjectTypes(project.projectTypes || []);
             }}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -309,3 +346,4 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     </Card>
   );
 }
+

@@ -30,6 +30,11 @@ export interface Stage {
   createdAt: string; // ISO date string
 }
 
+export interface ProjectType { // Added this interface for clarity
+  id: string;
+  name: string;
+}
+
 export interface Project {
   id: string;
   name: string;
