@@ -20,7 +20,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const handleSignOut = async () => {
     try {
       await signOutUser();
-      router.push('/auth/login'); // Redirect to login after sign out
+      router.push('/'); // Redirect to homepage after sign out
     } catch (error) {
       console.error("Sign out error:", error);
       // Optionally show a toast notification for sign out error
