@@ -43,6 +43,7 @@ export default function SignUpPage() {
       toast({ title: "Account Created", description: "Welcome to ProjectFlow! Redirecting..." });
       router.push('/projects'); // Firebase onAuthStateChanged will handle user state
     } catch (error: any) {
+      console.error("Full sign-up error:", error); // Log the full error object
       const errorCode = error.code;
       let errorMessage = "Failed to create account. Please try again.";
       if (errorCode === 'auth/email-already-in-use') {
