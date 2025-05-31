@@ -1,12 +1,40 @@
 
+"use client";
+
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Lightbulb, ListChecks, PieChart, Users } from 'lucide-react';
+import { ArrowRight, Lightbulb, ListChecks, PieChart, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function HomePage() {
+  const auth = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Only redirect if auth is not loading and user exists
+    if (!auth.loading && auth.user) {
+      router.replace('/projects');
+    }
+  }, [auth.loading, auth.user, router]);
+
+  // If auth is loading, or if user exists (and redirect will happen), show loader
+  if (auth.loading || (!auth.loading && auth.user)) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-lg text-muted-foreground">Loading...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // If not loading and no user, show the actual homepage content
   return (
     <AppLayout>
       <section className="py-12 md:py-20 lg:py-28 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg">
