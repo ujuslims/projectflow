@@ -1,7 +1,7 @@
 
 "use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
+import { AppLayout } from '@/components/layout/app-layout'; // This will be provided by (protected)/layout.tsx
 import { CreateProjectDialog } from '@/components/project/create-project-dialog';
 import { ProjectCard } from '@/components/project/project-card';
 import { useProjects } from '@/contexts/projects-context';
@@ -12,13 +12,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import type { ProjectStatus } from '@/lib/types';
 import { getYear } from 'date-fns';
+// import { useAuth } from '@/contexts/auth-context'; // No longer needed here for protection
+// import { useRouter } from 'next/navigation'; // No longer needed here for protection
+// import { useEffect } from 'react'; // No longer needed here for protection
 
 type FilterStatus = 'all' | 'notStarted' | 'inProgress' | 'completed';
 
 export default function ProjectsPage() {
   const { projects } = useProjects();
+  // const { user, loading } = useAuth(); // Handled by (protected)/layout.tsx
+  // const router = useRouter(); // Handled by (protected)/layout.tsx
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [filterYear, setFilterYear] = useState<string>('all');
+
+  // useEffect(() => { // Protection logic moved to (protected)/layout.tsx
+  //   if (!loading && !user) {
+  //     router.replace('/auth/login');
+  //   }
+  // }, [user, loading, router]);
+
+  // if (loading || !user) { // Loading and initial auth check handled by (protected)/layout.tsx
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen">
+  //       <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  //       <p className="ml-2">Loading projects...</p>
+  //     </div>
+  //   );
+  // }
+
 
   const projectCounts = useMemo(() => {
     const counts = {
@@ -49,17 +70,15 @@ export default function ProjectsPage() {
           years.add(getYear(new Date(p.createdAt)).toString());
         } catch (e) {
           // console.warn("Invalid date for project:", p.name, p.createdAt);
-          // Potentially handle projects with invalid dates if necessary
         }
       }
     });
-    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a)); // Sort years descending
+    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a)); 
   }, [projects]);
 
   const filteredProjects = useMemo(() => {
     let tempProjects = projects;
 
-    // Filter by status
     if (filterStatus !== 'all') {
       tempProjects = tempProjects.filter(p => {
         const status = p.status || ('Not Started' as ProjectStatus);
@@ -70,17 +89,16 @@ export default function ProjectsPage() {
       });
     }
 
-    // Filter by year
     if (filterYear !== 'all') {
       tempProjects = tempProjects.filter(p => {
         if (p.createdAt) {
           try {
             return getYear(new Date(p.createdAt)).toString() === filterYear;
           } catch (e) {
-            return false; // Invalid date, don't include
+            return false; 
           }
         }
-        return false; // No createdAt date, don't include unless 'all years'
+        return false; 
       });
     }
     return tempProjects;
@@ -112,7 +130,8 @@ export default function ProjectsPage() {
   );
 
   return (
-    <AppLayout>
+    // AppLayout is now rendered by (protected)/layout.tsx
+    <> 
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
         <CreateProjectDialog />
@@ -176,7 +195,6 @@ export default function ProjectsPage() {
         )}
       </div>
 
-
       {projects.length === 0 ? (
          <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
           <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -198,6 +216,6 @@ export default function ProjectsPage() {
             ))}
         </div>
       )}
-    </AppLayout>
+    </>
   );
 }

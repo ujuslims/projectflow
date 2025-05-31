@@ -1,7 +1,7 @@
 
 "use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
+// AppLayout is now rendered by (protected)/layout.tsx
 import { DefineStages } from '@/components/project/define-stages';
 import { ProjectDetailsCard } from '@/components/project/project-details-card';
 import { StageColumn } from '@/components/project/stage-column';
@@ -13,16 +13,18 @@ import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskCore } from '@/lib/types';
 import { organizeSubtasks, OrganizeSubtasksInput, OrganizeSubtasksOutput, suggestSubtasks, SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/flows';
-import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info, BarChartHorizontalBig, Printer } from 'lucide-react'; // Added Printer
+import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info, BarChartHorizontalBig, Printer } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+// import { useAuth } from '@/contexts/auth-context'; // Protection handled by (protected)/layout.tsx
 
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
+  // const { user, loading: authLoading } = useAuth(); // Handled by (protected)/layout.tsx
   
   const { 
     getProject, addStage, updateStage, deleteStage, 
@@ -40,15 +42,20 @@ export default function ProjectDetailPage() {
   const [isAISuggesting, setIsAISuggesting] = useState(false);
   const [isAIOrganizing, setIsAIOrganizing] = useState(false);
 
-  // Moved useMemo hook before conditional returns
   const sortedStages = useMemo(() => {
     const stages = project?.stages;
     if (!stages) return [];
     return [...stages].sort((a, b) => a.order - b.order);
   }, [project?.stages]); 
 
+  // useEffect(() => { // Protection moved to (protected)/layout.tsx
+  //   if (!authLoading && !user) {
+  //     router.replace('/auth/login');
+  //   }
+  // }, [user, authLoading, router]);
+
   useEffect(() => {
-    if (projectId) {
+    if (projectId) { // && user
       const currentProject = getProject(projectId);
       if (currentProject) {
         setProject(currentProject);
@@ -57,12 +64,11 @@ export default function ProjectDetailPage() {
         router.push('/projects');
       }
     }
-  }, [projectId, getProject, router, toast]);
+  }, [projectId, getProject, router, toast]); // user removed from deps as auth is handled upstream
 
   const handleUpdateProjectDetails = (updates: Partial<Project>) => {
     if (!project) return;
     updateProject(project.id, updates);
-    // Project state will re-render due to context update
   };
 
   const handleAddStage = (name: string) => {
@@ -196,7 +202,7 @@ export default function ProjectDetailPage() {
 
   const handleAISuggestSubtasks = async () => {
     if (!project || !project.description) {
-      toast({ title: "Info", description: "Project description is needed for AI suggestions.", variant: "default" });
+      toast({ title: "Info", description: "Project scope of work is needed for AI suggestions.", variant: "default" });
       return;
     }
     if (project.stages.length === 0) {
@@ -254,7 +260,6 @@ export default function ProjectDetailPage() {
         const targetStage = sortedStages.find(s => s.name === stageName); 
         if (targetStage) {
           aiStageSubtasks.forEach((aiSubtask, order) => {
-            // Attempt to find a matching subtask by name (simple matching)
             const matchedSubtaskEntry = Array.from(currentSubtasksMap.entries()).find(([id, st]) => st.name === aiSubtask.name);
             if (matchedSubtaskEntry) {
               const [matchedId, matchedSubtask] = matchedSubtaskEntry;
@@ -271,12 +276,11 @@ export default function ProjectDetailPage() {
         }
       });
 
-      // Add any subtasks not categorized by AI back to their original stage or a default one
       Array.from(currentSubtasksMap.values()).forEach(unmatchedSubtask => {
         const originalStageSubtasksCount = finalSubtasks.filter(st => st.stageId === unmatchedSubtask.stageId).length;
         finalSubtasks.push({
             ...unmatchedSubtask,
-            order: originalStageSubtasksCount // Append to the end of its current stage
+            order: originalStageSubtasksCount 
         });
       });
       
@@ -292,34 +296,36 @@ export default function ProjectDetailPage() {
     }
   };
 
+  // if (authLoading) { // Loading handled by (protected)/layout.tsx
+  //   return (
+  //       <div className="flex items-center justify-center h-full">
+  //         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  //         <p className="ml-2">Authenticating...</p>
+  //       </div>
+  //   );
+  // }
+  
   if (!project) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="ml-2">Loading project...</p>
-        </div>
-      </AppLayout>
+      // AppLayout is rendered by (protected)/layout.tsx
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading project...</p>
+      </div>
     );
   }
   
   return (
-    <AppLayout>
-      <div className="mb-6">
-        {/* Project Name and Description are now part of ProjectDetailsCard */}
-      </div>
-      
+    // AppLayout is rendered by (protected)/layout.tsx
+    <>
       <ProjectDetailsCard project={project} onUpdateProject={handleUpdateProjectDetails} />
-      
       <Separator className="my-8" />
-
       <DefineStages
         stages={sortedStages} 
         onAddStage={handleAddStage}
         onUpdateStage={handleUpdateStage}
         onDeleteStage={handleDeleteStage}
       />
-
       <div className="my-8 flex flex-col sm:flex-row gap-4 justify-start items-start sm:items-center flex-wrap">
         <Button onClick={handleAISuggestSubtasks} disabled={isAISuggesting || !project.description || project.stages.length === 0}>
           {isAISuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
@@ -347,15 +353,12 @@ export default function ProjectDetailPage() {
             <Info className="h-4 w-4 text-accent" />
             <AlertTitle className="text-accent">AI Feature Tip</AlertTitle>
             <AlertDescription>
-              {!project.description && "Add a project description to enable AI Subtask Suggestions. "}
+              {!project.description && "Add a project scope of work to enable AI Subtask Suggestions. "}
               {project.stages.length === 0 && "Add at least one stage to enable AI features."}
             </AlertDescription>
           </Alert>
         )}
-
-
       <Separator className="my-8" />
-      
       {sortedStages.length === 0 ? ( 
         <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
             <ListChecks className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -382,7 +385,6 @@ export default function ProjectDetailPage() {
             <ScrollBar orientation="horizontal" />
         </ScrollArea>
       )}
-
       <SubtaskDialog
         isOpen={isSubtaskDialogOpen}
         onOpenChange={setIsSubtaskDialogOpen}
@@ -391,7 +393,6 @@ export default function ProjectDetailPage() {
         dialogTitle={editingSubtask ? "Edit Subtask" : "Add New Subtask"}
         submitButtonText={editingSubtask ? "Save Changes" : "Add Subtask"}
       />
-    </AppLayout>
+    </>
   );
 }
-

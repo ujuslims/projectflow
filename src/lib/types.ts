@@ -33,11 +33,11 @@ export interface Stage {
 export interface Project {
   id: string;
   name: string;
-  description: string;
+  description: string; // This is the Scope of Work
   stages: Stage[];
   subtasks: Subtask[];
-  createdAt: string; // ISO date string
-  startDate?: string; // ISO date string
+  createdAt: string; // ISO date string - when record created in this system
+  startDate?: string; // ISO date string - actual project start date
   dueDate?: string; // ISO date string
   budget?: number;
   spent?: number;
@@ -48,5 +48,18 @@ export interface Project {
   clientContact?: string;
   siteAddress?: string;
   coordinateSystem?: string;
-  projectTypes?: string[]; // Changed from projectType: string
+  projectTypes?: string[]; 
+  userId?: string; // To associate project with a user
+}
+
+// Form data types for Auth
+export interface SignUpFormData {
+  email: string;
+  password: string;
+  confirmPassword?: string; // confirmPassword might not be strictly needed by Firebase but good for UI
+}
+
+export interface LoginFormData {
+  email: string;
+  password: string;
 }

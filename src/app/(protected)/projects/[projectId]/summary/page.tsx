@@ -1,7 +1,7 @@
 
 "use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
+// AppLayout is now rendered by (protected)/layout.tsx
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -10,11 +10,13 @@ import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskStatus, ProjectStatus } from '@/lib/types';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle } from 'lucide-react';
+import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 import { format as formatDate, parseISO, isValid, differenceInCalendarDays } from 'date-fns';
+// import { useAuth } from '@/contexts/auth-context'; // Protection handled by (protected)/layout.tsx
+
 
 const statusIconMapSmall: Record<SubtaskStatus, JSX.Element> = {
   'To Do': <ListChecks className="h-3.5 w-3.5" />,
@@ -30,11 +32,18 @@ export default function ProjectSummaryPage() {
   const projectId = params.projectId as string;
   const { getProject } = useProjects();
   const { toast } = useToast();
+  // const { user, loading: authLoading } = useAuth(); // Handled by (protected)/layout.tsx
   const [project, setProject] = useState<Project | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Page-specific loading
+
+  // useEffect(() => { // Protection handled by (protected)/layout.tsx
+  //   if (!authLoading && !user) {
+  //     router.replace('/auth/login');
+  //   }
+  // }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (projectId) {
+    if (projectId) { // && user
       const currentProject = getProject(projectId);
       if (currentProject) {
         setProject(currentProject);
@@ -44,7 +53,7 @@ export default function ProjectSummaryPage() {
       }
       setIsLoading(false);
     }
-  }, [projectId, getProject, router, toast]);
+  }, [projectId, getProject, router, toast]); // user removed from deps
 
   const completedSubtasksCount = useMemo(() => {
     return project?.subtasks.filter(st => st.status === 'Done').length || 0;
@@ -66,24 +75,30 @@ export default function ProjectSummaryPage() {
     window.print();
   };
 
-  if (isLoading) {
+  // if (authLoading) { // Handled by (protected)/layout.tsx
+  //   return (
+  //     <div className="flex items-center justify-center h-full">
+  //       <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  //     </div>
+  //   );
+  // }
+  
+  if (isLoading) { // Page-specific loading for project data
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-full">
-          <ListChecks className="h-8 w-8 animate-spin text-primary" />
-          <p className="ml-2">Loading project summary...</p>
-        </div>
-      </AppLayout>
+      // AppLayout is rendered by (protected)/layout.tsx
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading project summary...</p>
+      </div>
     );
   }
 
   if (!project) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-full">
-          <p>Project not found.</p>
-        </div>
-      </AppLayout>
+      // AppLayout is rendered by (protected)/layout.tsx
+      <div className="flex items-center justify-center h-full">
+        <p>Project not found.</p>
+      </div>
     );
   }
 
@@ -95,16 +110,18 @@ export default function ProjectSummaryPage() {
     'Completed': <CalendarCheck2 className="h-4 w-4" />,
     'Cancelled': <XCircle className="h-4 w-4" />,
   };
-
+  
   let statusIconToRender: JSX.Element;
   if (project.status && projectStatusIcons[project.status]) {
     statusIconToRender = projectStatusIcons[project.status];
   } else {
-    statusIconToRender = <InfoIcon className="h-4 w-4" />;
+    statusIconToRender = <InfoIcon className="h-4 w-4" />; // Default icon
   }
 
+
   return (
-    <AppLayout>
+    // AppLayout is rendered by (protected)/layout.tsx
+    <>
       <div className="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 print:hidden">
         <h1 className="text-3xl font-bold tracking-tight">Project Summary: {project.name}</h1>
         <div className="flex gap-2">
@@ -147,7 +164,7 @@ export default function ProjectSummaryPage() {
 
         {project.description && (
           <Card className="print:shadow-none print:border-0">
-            <CardHeader><CardTitle className="text-xl">Scope of Work</CardTitle></CardHeader> {/* Changed from Description */}
+            <CardHeader><CardTitle className="text-xl">Scope of Work</CardTitle></CardHeader>
             <CardContent><p className="text-sm whitespace-pre-wrap">{project.description}</p></CardContent>
           </Card>
         )}
@@ -239,6 +256,6 @@ export default function ProjectSummaryPage() {
           .print\\:last\\:pb-0:last-child { padding-bottom: 0 !important; }
         }
       `}</style>
-    </AppLayout>
+    </>
   );
 }
