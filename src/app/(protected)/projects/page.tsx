@@ -133,7 +133,7 @@ export default function ProjectsPage() {
     // AppLayout is now rendered by (protected)/layout.tsx
     <> 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <CreateProjectDialog />
       </div>
 
