@@ -53,7 +53,7 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
     >
       <CardHeader className="p-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-base font-medium break-words w-[calc(100%-40px)]">{subtask.name}</CardTitle>
+          <CardTitle className="text-base font-medium break-words w-[calc(100%-40px)] min-w-0">{subtask.name}</CardTitle>
           <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         </div>
       </CardHeader>
