@@ -111,7 +111,7 @@ export function CreateProjectDialog({
             )}
           </Button>
         ) : (
-          <Button variant="destructive">
+          <Button variant="ghost">
             <PlusCircle className="mr-2 h-4 w-4" /> New Project
           </Button>
         )}
@@ -142,7 +142,7 @@ export function CreateProjectDialog({
 
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
                 <Label htmlFor="projectTypes" className="text-left sm:text-right pt-0 sm:pt-2 flex items-center">
-                  <Workflow className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Types
+                  <Workflow className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Project Types
                 </Label>
                 <div className="col-span-1 sm:col-span-3 space-y-2">
                   {projectTypes.filter(pt => pt.id !== 'none').map(pt => (
