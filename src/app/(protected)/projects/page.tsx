@@ -137,12 +137,16 @@ export default function ProjectsPage() {
       const targetMonthNum = selectedMonth !== 'all' ? parseInt(selectedMonth) : undefined; // Month is 0-indexed from monthOptions
 
       tempProjects = tempProjects.filter(p => {
-        const matchesCreatedAt = dateMatchesFilter(p.createdAt, targetYearNum, targetMonthNum);
         const matchesStartDate = dateMatchesFilter(p.startDate, targetYearNum, targetMonthNum);
-        // const matchesDueDate = dateMatchesFilter(p.dueDate, targetYearNum, targetMonthNum); // dueDate no longer used for primary filter
+        const matchesDueDate = dateMatchesFilter(p.dueDate, targetYearNum, targetMonthNum);
         
-        // Only include project if createdAt or startDate matches the filter
-        return matchesCreatedAt || matchesStartDate;
+        // If the project has defined start or due dates, prioritize those for filtering.
+        if (p.startDate || p.dueDate) {
+          return matchesStartDate || matchesDueDate;
+        } else {
+          // If no start or due date, fall back to createdAt.
+          return dateMatchesFilter(p.createdAt, targetYearNum, targetMonthNum);
+        }
       });
     }
     
