@@ -95,10 +95,8 @@ export function CreateProjectDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
-          {/* ScrollArea's own className does not have horizontal padding now */}
-          <ScrollArea className="flex-grow min-h-0">
-            {/* Content div inside ScrollArea has specific right padding for the scrollbar */}
-            <div className="grid gap-4 p-6 pr-3"> {/* Adjusted pr-3 for scrollbar visibility, p-6 applies to other sides */}
+          <ScrollArea className="flex-grow min-h-0 pr-4"> {/* Added pr-4 to ScrollArea */}
+            <div className="grid gap-4 p-6"> {/* Symmetrical p-6 for content */}
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="name" className="text-left sm:text-right">
                   Name
