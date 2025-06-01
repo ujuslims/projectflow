@@ -48,9 +48,9 @@ Suggest a general list of subtasks that would be necessary to complete the proje
 {{/if}}
 
 Consider common project phases such as planning, site assessment, fieldwork/data acquisition, data processing, analysis, reporting, and deliverables.
-Return the subtasks as a JSON array of strings.
-
-Subtasks:`,
+Your response MUST be a JSON object with a single key "subtasks". The value of "subtasks" MUST be an array of strings, where each string is a suggested subtask.
+Example format: {"subtasks": ["Develop project charter", "Conduct site visit", "Analyze collected data"]}
+`,
 });
 
 const suggestSubtasksFlow = ai.defineFlow(
