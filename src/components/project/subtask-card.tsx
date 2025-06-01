@@ -49,20 +49,20 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
     <Card
       draggable
       onDragStart={(e) => onDragStart(e, subtask.id)}
-      className="mb-3 bg-card hover:shadow-md transition-shadow duration-200 cursor-grab active:cursor-grabbing flex flex-col" // Ensure card is a flex column
+      className="mb-3 bg-card hover:shadow-md transition-shadow duration-200 cursor-grab active:cursor-grabbing flex flex-col"
     >
       <CardHeader className="p-3 flex-shrink-0">
         <div className="flex justify-between items-start">
           <div className="flex-grow min-w-0 mr-2">
-            <CardTitle className="text-base font-medium break-words">
+            <CardTitle className="text-base font-medium break-words min-w-0">
               {subtask.name}
             </CardTitle>
           </div>
           <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         </div>
       </CardHeader>
-      <CardContent className="p-3 pt-0 flex-grow flex flex-col"> {/* Make content grow and be a flex column */}
-        <div className="flex-grow"> {/* Wrapper for description and details, allows this section to take space */}
+      <CardContent className="p-3 pt-0 flex-grow flex flex-col">
+        <div className="flex-grow min-h-0"> {/* Added min-h-0 for proper flex child sizing */}
           {subtask.description && (
             <CardDescription className="text-xs mb-2 break-words min-w-0">
               {subtask.description}
@@ -84,7 +84,7 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
             {renderDetail(FileText, subtask.dataDeliverables, 'Deliver: ')}
           </div>
         </div>
-        <div className="flex justify-end space-x-1 mt-1 flex-shrink-0"> {/* Ensure buttons don't shrink and are at the bottom */}
+        <div className="flex justify-end space-x-1 mt-1 flex-shrink-0">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label="Edit subtask">
             <Edit3 className="h-4 w-4" />
           </Button>
