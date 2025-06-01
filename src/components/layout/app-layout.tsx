@@ -66,7 +66,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                   size="sm"
                   asChild
                   className={cn(
-                    currentPath === item.href ? "bg-accent text-accent-foreground" : "",
+                    currentPath === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground",
                     "justify-start"
                   )}
                 >
@@ -82,7 +82,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 triggerButtonProps={{ 
                   variant: "ghost", 
                   size: "sm",
-                  className: "justify-start text-muted-foreground hover:text-foreground"
+                  className: "justify-start text-primary" // Changed text color here
                 }}
                 triggerButtonContent={
                   <>
