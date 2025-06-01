@@ -86,7 +86,7 @@ export function CreateProjectDialog() {
           <PlusCircle className="mr-2 h-4 w-4" /> New Project
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
