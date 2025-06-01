@@ -17,7 +17,7 @@ type FilterStatus = 'all' | 'notStarted' | 'inProgress' | 'completed';
 
 const monthOptions = [
   { value: "all", label: "All Months" },
-  { value: "0", label: "January" }, // Changed to 0-indexed
+  { value: "0", label: "January" }, 
   { value: "1", label: "February" },
   { value: "2", label: "March" },
   { value: "3", label: "April" },
@@ -139,9 +139,10 @@ export default function ProjectsPage() {
       tempProjects = tempProjects.filter(p => {
         const matchesCreatedAt = dateMatchesFilter(p.createdAt, targetYearNum, targetMonthNum);
         const matchesStartDate = dateMatchesFilter(p.startDate, targetYearNum, targetMonthNum);
-        const matchesDueDate = dateMatchesFilter(p.dueDate, targetYearNum, targetMonthNum);
+        // const matchesDueDate = dateMatchesFilter(p.dueDate, targetYearNum, targetMonthNum); // dueDate no longer used for primary filter
         
-        return matchesCreatedAt || matchesStartDate || matchesDueDate;
+        // Only include project if createdAt or startDate matches the filter
+        return matchesCreatedAt || matchesStartDate;
       });
     }
     
@@ -277,4 +278,3 @@ export default function ProjectsPage() {
     </>
   );
 }
-
