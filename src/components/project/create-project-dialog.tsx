@@ -26,7 +26,7 @@ export function CreateProjectDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [scopeOfWork, setScopeOfWork] = useState('');
-  const [expectedDeliverables, setExpectedDeliverables] = useState(''); // New state
+  const [expectedDeliverables, setExpectedDeliverables] = useState('');
   const [budget, setBudget] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
   const [clientContact, setClientContact] = useState('');
@@ -53,7 +53,7 @@ export function CreateProjectDialog() {
     const newProject = addProject({
       name,
       description: scopeOfWork,
-      expectedDeliverables: expectedDeliverables || undefined, // Add to project data
+      expectedDeliverables: expectedDeliverables || undefined,
       budget: budget ? parseFloat(budget) : undefined,
       projectNumber,
       clientContact,
@@ -66,7 +66,7 @@ export function CreateProjectDialog() {
     // Reset form fields
     setName('');
     setScopeOfWork('');
-    setExpectedDeliverables(''); // Reset new field
+    setExpectedDeliverables('');
     setBudget('');
     setProjectNumber('');
     setClientContact('');
@@ -82,167 +82,193 @@ export function CreateProjectDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive">
+        <Button variant="destructive"> {/* Changed from default to destructive as per original setup */}
           <PlusCircle className="mr-2 h-4 w-4" /> New Project
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      {/*
+        DialogContent:
+        - sm:max-w-md: Standard width constraint.
+        - max-h-[90vh]: Limits dialog height to 90% of viewport height.
+        - flex flex-col: Enables flex layout for direct children (Header, Form).
+        - p-0: Removes default padding, managed by children now.
+      */}
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0">
+        {/* DialogHeader: Fixed at the top of the DialogContent. */}
+        <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
             Fill in the details for your new project. Click save when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <ScrollArea className="max-h-[70vh] pr-2">
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
-                <Label htmlFor="name" className="text-left sm:text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                  required
-                />
-              </div>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
-                <Label htmlFor="projectTypes" className="text-left sm:text-right pt-0 sm:pt-2 flex items-center">
-                   <Workflow className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Types
-                </Label>
-                <div className="col-span-1 sm:col-span-3 space-y-2">
-                  {projectTypes.filter(pt => pt.id !== 'none').map(pt => (
-                    <div key={pt.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`type-${pt.id}`}
-                        checked={selectedProjectTypes.includes(pt.id)}
-                        onCheckedChange={() => handleProjectTypeChange(pt.id)}
-                      />
-                      <Label htmlFor={`type-${pt.id}`} className="font-normal text-sm">
-                        {pt.name}
-                      </Label>
-                    </div>
-                  ))}
+        {/*
+          Form:
+          - flex flex-col: Manages its children (ScrollArea, Footer) in a column.
+          - flex-grow: Takes available vertical space from DialogContent.
+          - overflow-hidden: Important for flex-grow to work correctly with ScrollArea.
+        */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
+          {/*
+            ScrollArea:
+            - flex-grow: Takes available space within the form for scrolling content.
+            - min-h-0: Allows the ScrollArea to shrink if needed.
+            - pr-1: To avoid content touching the edge of the scrollbar track if it's on the right.
+          */}
+          <ScrollArea className="flex-grow min-h-0 pr-1">
+            {/* Content wrapper for padding inside the scrollable area */}
+            <div className="p-6">
+              <div className="grid gap-4"> {/* Removed py-4, p-6 on parent handles spacing */}
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="name" className="text-left sm:text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                    required
+                  />
                 </div>
-              </div>
 
-               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
-                <Label htmlFor="projectNumber" className="text-left sm:text-right">
-                  Proj. No.
-                </Label>
-                <Input
-                  id="projectNumber"
-                  value={projectNumber}
-                  onChange={(e) => setProjectNumber(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                  placeholder="e.g., P2024-001"
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
-                <Label htmlFor="clientContact" className="text-left sm:text-right">
-                  Client
-                </Label>
-                <Input
-                  id="clientContact"
-                  value={clientContact}
-                  onChange={(e) => setClientContact(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                  placeholder="e.g., John Doe (Acme Corp)"
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
-                <Label htmlFor="siteAddress" className="text-left sm:text-right">
-                  Site
-                </Label>
-                <Input
-                  id="siteAddress"
-                  value={siteAddress}
-                  onChange={(e) => setSiteAddress(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                  placeholder="e.g., 123 Main St, Anytown"
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
-                <Label htmlFor="coordinateSystem" className="text-left sm:text-right">
-                  Coord. Sys.
-                </Label>
-                <Input
-                  id="coordinateSystem"
-                  value={coordinateSystem}
-                  onChange={(e) => setCoordinateSystem(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                  placeholder="e.g., WGS84, UTM Zone 10N"
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
-                <Label htmlFor="scopeOfWork" className="text-left sm:text-right pt-0 sm:pt-2">
-                  Scope of Work
-                </Label>
-                <Textarea
-                  id="scopeOfWork"
-                  value={scopeOfWork}
-                  onChange={(e) => setScopeOfWork(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                  rows={3}
-                  placeholder="Detailed project scope and objectives..."
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
-                <Label htmlFor="expectedDeliverables" className="text-left sm:text-right pt-0 sm:pt-2 flex items-start">
-                   <FileArchive className="h-3.5 w-3.5 mr-1 mt-0.5 text-muted-foreground" /> Deliverables
-                </Label>
-                <Textarea
-                  id="expectedDeliverables"
-                  value={expectedDeliverables}
-                  onChange={(e) => setExpectedDeliverables(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                  rows={2}
-                  placeholder="e.g., Final report, CAD drawings, GIS data..."
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
-                <Label htmlFor="budget" className="text-left sm:text-right">
-                  Budget ($)
-                </Label>
-                <Input
-                  id="budget"
-                  type="number"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                  placeholder="Optional (e.g., 5000)"
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
-                <Label htmlFor="startDate" className="text-left sm:text-right flex items-center">
-                  <PlayCircle className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Start Date
-                </Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
-                <Label htmlFor="dueDate" className="text-left sm:text-right flex items-center">
-                  <CalendarDays className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Due Date
-                </Label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
-                />
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
+                  <Label htmlFor="projectTypes" className="text-left sm:text-right pt-0 sm:pt-2 flex items-center">
+                    <Workflow className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Types
+                  </Label>
+                  <div className="col-span-1 sm:col-span-3 space-y-2">
+                    {projectTypes.filter(pt => pt.id !== 'none').map(pt => (
+                      <div key={pt.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`type-${pt.id}`}
+                          checked={selectedProjectTypes.includes(pt.id)}
+                          onCheckedChange={() => handleProjectTypeChange(pt.id)}
+                        />
+                        <Label htmlFor={`type-${pt.id}`} className="font-normal text-sm">
+                          {pt.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="projectNumber" className="text-left sm:text-right">
+                    Proj. No.
+                  </Label>
+                  <Input
+                    id="projectNumber"
+                    value={projectNumber}
+                    onChange={(e) => setProjectNumber(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                    placeholder="e.g., P2024-001"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="clientContact" className="text-left sm:text-right">
+                    Client
+                  </Label>
+                  <Input
+                    id="clientContact"
+                    value={clientContact}
+                    onChange={(e) => setClientContact(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                    placeholder="e.g., John Doe (Acme Corp)"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="siteAddress" className="text-left sm:text-right">
+                    Site
+                  </Label>
+                  <Input
+                    id="siteAddress"
+                    value={siteAddress}
+                    onChange={(e) => setSiteAddress(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                    placeholder="e.g., 123 Main St, Anytown"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="coordinateSystem" className="text-left sm:text-right">
+                    Coord. Sys.
+                  </Label>
+                  <Input
+                    id="coordinateSystem"
+                    value={coordinateSystem}
+                    onChange={(e) => setCoordinateSystem(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                    placeholder="e.g., WGS84, UTM Zone 10N"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
+                  <Label htmlFor="scopeOfWork" className="text-left sm:text-right pt-0 sm:pt-2">
+                    Scope of Work
+                  </Label>
+                  <Textarea
+                    id="scopeOfWork"
+                    value={scopeOfWork}
+                    onChange={(e) => setScopeOfWork(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                    rows={3}
+                    placeholder="Detailed project scope and objectives..."
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
+                  <Label htmlFor="expectedDeliverables" className="text-left sm:text-right pt-0 sm:pt-2 flex items-start">
+                    <FileArchive className="h-3.5 w-3.5 mr-1 mt-0.5 text-muted-foreground" /> Deliverables
+                  </Label>
+                  <Textarea
+                    id="expectedDeliverables"
+                    value={expectedDeliverables}
+                    onChange={(e) => setExpectedDeliverables(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                    rows={2}
+                    placeholder="e.g., Final report, CAD drawings, GIS data..."
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="budget" className="text-left sm:text-right">
+                    Budget ($)
+                  </Label>
+                  <Input
+                    id="budget"
+                    type="number"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                    placeholder="Optional (e.g., 5000)"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="startDate" className="text-left sm:text-right flex items-center">
+                    <PlayCircle className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Start Date
+                  </Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="dueDate" className="text-left sm:text-right flex items-center">
+                    <CalendarDays className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Due Date
+                  </Label>
+                  <Input
+                    id="dueDate"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="col-span-1 sm:col-span-3"
+                  />
+                </div>
               </div>
             </div>
           </ScrollArea>
-          <DialogFooter className="mt-4">
+
+          {/* DialogFooter: Fixed at the bottom of the form. */}
+          <DialogFooter className="p-6 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
             <Button type="submit">Save Project</Button>
           </DialogFooter>
