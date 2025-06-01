@@ -22,7 +22,7 @@ import { useCurrency } from '@/contexts/currency-context';
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | /* 'spent' removed */ 'status' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
@@ -40,7 +40,6 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [startDate, setStartDate] = useState(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
   const [dueDate, setDueDate] = useState(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
   const [budget, setBudget] = useState<string>(project.budget?.toString() || '');
-  // const [spent, setSpent] = useState<string>(project.spent?.toString() || ''); // Removed, will be calculated
   const [status, setStatus] = useState<ProjectStatus>(project.status || 'Not Started');
   const [outcomeNotes, setOutcomeNotes] = useState(project.outcomeNotes || '');
   const [projectNumber, setProjectNumber] = useState(project.projectNumber || '');
@@ -60,7 +59,6 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
     setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
     setBudget(project.budget?.toString() || '');
-    // setSpent(project.spent?.toString() || ''); // No longer directly setting spent
     setStatus(project.status || 'Not Started');
     setOutcomeNotes(project.outcomeNotes || '');
     setProjectNumber(project.projectNumber || '');
@@ -79,7 +77,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const budgetProgressPercentage = useMemo(() => {
     const currentBudget = parseFloat(budget); 
     if (currentBudget && currentBudget > 0) {
-      return Math.min(Math.round(((calculatedSpent || 0) / currentBudget) * 100), 100);
+      return Math.round(((calculatedSpent || 0) / currentBudget) * 100);
     }
     return 0;
   }, [budget, calculatedSpent]);
@@ -95,7 +93,6 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     e.preventDefault();
     setIsLoading(true);
     const parsedBudget = budget ? parseFloat(budget) : undefined;
-    // const parsedSpent = spent ? parseFloat(spent) : undefined; // Not needed
     const finalStartDate = startDate ? new Date(startDate).toISOString() : undefined;
     const finalDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
 
@@ -104,7 +101,6 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
         setIsLoading(false);
         return;
     }
-    // No longer validating direct spent input
 
     onUpdateProject({
       name,
@@ -112,7 +108,6 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       startDate: finalStartDate,
       dueDate: finalDueDate,
       budget: parsedBudget,
-      // spent: parsedSpent, // Removed from updates
       status,
       outcomeNotes,
       projectNumber,
@@ -144,7 +139,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
   const renderField = (label: string, value: string | number | undefined | null | string[], Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholder?: string ) => {
     let displayValue: string | React.ReactNode = value || (isEditingMode ? '' : 'Not set');
-    if (label === "Amount Spent" || (label === "Total Budget" && typeof value === 'number')) { // Special handling for currency display
+    if (label === "Amount Spent" || (label === "Total Budget" && typeof value === 'number')) { 
         displayValue = formatCurrency(value as number, selectedCurrency);
     } else if (typeof value === 'number') { 
         displayValue = value.toString();
@@ -170,6 +165,14 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
         )}
       </div>
     );
+  };
+
+  const getBudgetUsageText = () => {
+    if (budgetProgressPercentage > 100) {
+      const overSpendPercent = budgetProgressPercentage - 100;
+      return `${budgetProgressPercentage}% used (${overSpendPercent}% over budget)`;
+    }
+    return `${budgetProgressPercentage}% of budget used.`;
   };
 
 
@@ -287,8 +290,20 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
               {(isEditing ? parseFloat(budget) : project.budget) && (isEditing ? parseFloat(budget) : project.budget)! > 0 && (
                 <div>
                   <Label>Budget Usage</Label>
-                  <Progress value={budgetProgressPercentage} className="w-full mt-1 h-3" />
-                  <p className="text-sm text-muted-foreground mt-1">{budgetProgressPercentage}% of budget used.</p>
+                  <Progress 
+                    value={Math.min(budgetProgressPercentage, 100)} 
+                    className={cn(
+                      "w-full mt-1 h-3",
+                      budgetProgressPercentage > 100 ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"
+                    )}
+                  />
+                  <p className={cn(
+                      "text-sm text-muted-foreground mt-1",
+                      budgetProgressPercentage > 100 && "text-destructive font-medium"
+                    )}
+                  >
+                    {getBudgetUsageText()}
+                  </p>
                 </div>
               )}
               {(!(isEditing ? parseFloat(budget) : project.budget) || (isEditing ? parseFloat(budget) : project.budget) === 0) && (
@@ -334,7 +349,6 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
                 setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
                 setBudget(project.budget?.toString() || '');
-                // setSpent(project.spent?.toString() || ''); // No need to reset spent, it's calculated
                 setStatus(project.status || 'Not Started');
                 setOutcomeNotes(project.outcomeNotes || '');
                 setProjectNumber(project.projectNumber || '');
@@ -353,3 +367,4 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     </Card>
   );
 }
+
