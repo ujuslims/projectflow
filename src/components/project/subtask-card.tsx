@@ -61,9 +61,9 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
           <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         </div>
       </CardHeader>
-      <CardContent className="p-3 pt-0 flex-grow flex flex-col justify-between">
-        {/* Main content area (description, details) */}
-        <div className="min-h-0"> {/* This div allows content to shrink if necessary, preventing overflow */}
+      <CardContent className="p-3 pt-0 flex-grow flex flex-col">
+        {/* Content area that grows: description and details */}
+        <div className="flex-grow min-h-0"> 
           {subtask.description && (
             <CardDescription className="text-xs mb-2 break-words min-w-0">
               {subtask.description}
@@ -85,8 +85,9 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
             {renderDetail(FileText, subtask.dataDeliverables, 'Deliver: ')}
           </div>
         </div>
-        {/* Action buttons, pushed to the bottom */}
-        <div className="flex justify-end space-x-1 mt-auto pt-2 flex-shrink-0">
+        
+        {/* Action buttons, at the bottom of the flex column, does not shrink */}
+        <div className="flex justify-end space-x-1 pt-2 flex-shrink-0">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label="Edit subtask">
             <Edit3 className="h-4 w-4" />
           </Button>
