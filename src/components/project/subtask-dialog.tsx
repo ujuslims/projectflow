@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect, type FormEvent } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DollarSign } from 'lucide-react'; // Import DollarSign
 
 interface SubtaskDialogProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export function SubtaskDialog({
   const [fieldCrewLead, setFieldCrewLead] = useState('');
   const [equipmentUsed, setEquipmentUsed] = useState('');
   const [dataDeliverables, setDataDeliverables] = useState('');
+  const [cost, setCost] = useState(''); // New state for cost
 
   useEffect(() => {
     if (isOpen) { 
@@ -55,6 +57,7 @@ export function SubtaskDialog({
       setFieldCrewLead(initialData?.fieldCrewLead || '');
       setEquipmentUsed(initialData?.equipmentUsed || '');
       setDataDeliverables(initialData?.dataDeliverables || '');
+      setCost(initialData?.cost?.toString() || ''); // Set cost
     }
   }, [initialData, isOpen]);
 
@@ -64,6 +67,12 @@ export function SubtaskDialog({
       alert("Subtask name is required.");
       return;
     }
+    const parsedCost = cost ? parseFloat(cost) : undefined;
+    if (cost && isNaN(parsedCost as number)) {
+        alert("Invalid cost amount.");
+        return;
+    }
+
     onSubmit({ 
       name, 
       description, 
@@ -75,6 +84,7 @@ export function SubtaskDialog({
       fieldCrewLead: fieldCrewLead || undefined,
       equipmentUsed: equipmentUsed || undefined,
       dataDeliverables: dataDeliverables || undefined,
+      cost: parsedCost, // Pass cost
     });
     onOpenChange(false); 
   };
@@ -127,6 +137,20 @@ export function SubtaskDialog({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                <Label htmlFor="subtask-cost" className="text-left sm:text-right flex items-center">
+                  <DollarSign className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Cost
+                </Label>
+                <Input
+                  id="subtask-cost"
+                  type="number"
+                  value={cost}
+                  onChange={(e) => setCost(e.target.value)}
+                  className="col-span-1 sm:col-span-3"
+                  placeholder="e.g., 250.50"
+                  step="0.01"
+                />
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="subtask-start-date" className="text-left sm:text-right">

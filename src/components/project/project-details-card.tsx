@@ -12,25 +12,25 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox"; 
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow } from 'lucide-react'; 
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign } from 'lucide-react'; 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
 import { useProjects } from '@/contexts/projects-context';
 import { projectTypes as availableProjectTypes } from '@/lib/project-templates'; 
-import { useCurrency } from '@/contexts/currency-context'; // Added
+import { useCurrency } from '@/contexts/currency-context';
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'spent' | 'status' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | /* 'spent' removed */ 'status' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
 
 export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsCardProps) {
   const { toast } = useToast();
-  const { markAllSubtasksAsDone } = useProjects();
-  const { selectedCurrency } = useCurrency(); // Added
+  const { markAllSubtasksAsDone, getCalculatedProjectSpent } = useProjects();
+  const { selectedCurrency } = useCurrency(); 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
@@ -40,7 +40,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [startDate, setStartDate] = useState(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
   const [dueDate, setDueDate] = useState(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
   const [budget, setBudget] = useState<string>(project.budget?.toString() || '');
-  const [spent, setSpent] = useState<string>(project.spent?.toString() || '');
+  // const [spent, setSpent] = useState<string>(project.spent?.toString() || ''); // Removed, will be calculated
   const [status, setStatus] = useState<ProjectStatus>(project.status || 'Not Started');
   const [outcomeNotes, setOutcomeNotes] = useState(project.outcomeNotes || '');
   const [projectNumber, setProjectNumber] = useState(project.projectNumber || '');
@@ -49,6 +49,10 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [coordinateSystem, setCoordinateSystem] = useState(project.coordinateSystem || '');
   const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>(project.projectTypes || []);
 
+  const calculatedSpent = useMemo(() => {
+    return getCalculatedProjectSpent(project.id);
+  }, [project.id, project.subtasks, getCalculatedProjectSpent]);
+
 
   useEffect(() => {
     setName(project.name);
@@ -56,7 +60,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
     setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
     setBudget(project.budget?.toString() || '');
-    setSpent(project.spent?.toString() || '');
+    // setSpent(project.spent?.toString() || ''); // No longer directly setting spent
     setStatus(project.status || 'Not Started');
     setOutcomeNotes(project.outcomeNotes || '');
     setProjectNumber(project.projectNumber || '');
@@ -73,13 +77,12 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const taskProgressPercentage = totalSubtasksCount > 0 ? Math.round((completedSubtasksCount / totalSubtasksCount) * 100) : 0;
 
   const budgetProgressPercentage = useMemo(() => {
-    const currentBudget = parseFloat(budget); // Use the state value for current calculation
-    const currentSpent = parseFloat(spent);
+    const currentBudget = parseFloat(budget); 
     if (currentBudget && currentBudget > 0) {
-      return Math.min(Math.round(((currentSpent || 0) / currentBudget) * 100), 100);
+      return Math.min(Math.round(((calculatedSpent || 0) / currentBudget) * 100), 100);
     }
     return 0;
-  }, [budget, spent]);
+  }, [budget, calculatedSpent]);
 
 
   const handleProjectTypeChange = (typeId: string) => {
@@ -92,7 +95,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     e.preventDefault();
     setIsLoading(true);
     const parsedBudget = budget ? parseFloat(budget) : undefined;
-    const parsedSpent = spent ? parseFloat(spent) : undefined;
+    // const parsedSpent = spent ? parseFloat(spent) : undefined; // Not needed
     const finalStartDate = startDate ? new Date(startDate).toISOString() : undefined;
     const finalDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
 
@@ -101,11 +104,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
         setIsLoading(false);
         return;
     }
-    if (parsedSpent !== undefined && isNaN(parsedSpent)) {
-        toast({ title: "Error", description: "Invalid amount spent.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-    }
+    // No longer validating direct spent input
 
     onUpdateProject({
       name,
@@ -113,7 +112,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       startDate: finalStartDate,
       dueDate: finalDueDate,
       budget: parsedBudget,
-      spent: parsedSpent,
+      // spent: parsedSpent, // Removed from updates
       status,
       outcomeNotes,
       projectNumber,
@@ -145,8 +144,10 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
   const renderField = (label: string, value: string | number | undefined | null | string[], Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholder?: string ) => {
     let displayValue: string | React.ReactNode = value || (isEditingMode ? '' : 'Not set');
-    if (typeof value === 'number') { // Specifically for currency values for display mode
-        displayValue = formatCurrency(value, selectedCurrency);
+    if (label === "Amount Spent" || (label === "Total Budget" && typeof value === 'number')) { // Special handling for currency display
+        displayValue = formatCurrency(value as number, selectedCurrency);
+    } else if (typeof value === 'number') { 
+        displayValue = value.toString();
     } else if (Array.isArray(value)) { 
       if (value.length === 0) {
         displayValue = 'Not set';
@@ -278,12 +279,10 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
             <TabsContent value="budget" className="mt-0 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {renderField("Total Budget", project.budget, Banknote, isEditing, // Pass number for display, string for edit
-                    <Input id="projectBudget" type="number" placeholder="e.g., 5000" value={budget} onChange={(e) => setBudget(e.target.value)} />
+                {renderField("Total Budget", project.budget, DollarSign, isEditing, 
+                    <Input id="projectBudget" type="number" placeholder="e.g., 5000" value={budget} onChange={(e) => setBudget(e.target.value)} step="0.01"/>
                 )}
-                {renderField("Amount Spent", project.spent, Banknote, isEditing, // Pass number for display, string for edit
-                     <Input id="projectSpent" type="number" placeholder="e.g., 1500" value={spent} onChange={(e) => setSpent(e.target.value)} />
-                )}
+                {renderField("Amount Spent", calculatedSpent, DollarSign, false)}
               </div>
               {(isEditing ? parseFloat(budget) : project.budget) && (isEditing ? parseFloat(budget) : project.budget)! > 0 && (
                 <div>
@@ -335,7 +334,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
                 setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
                 setBudget(project.budget?.toString() || '');
-                setSpent(project.spent?.toString() || '');
+                // setSpent(project.spent?.toString() || ''); // No need to reset spent, it's calculated
                 setStatus(project.status || 'Not Started');
                 setOutcomeNotes(project.outcomeNotes || '');
                 setProjectNumber(project.projectNumber || '');

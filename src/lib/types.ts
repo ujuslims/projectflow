@@ -10,6 +10,7 @@ export interface SubtaskCore {
   status?: SubtaskStatus;
   assignedPersonnel?: number;
   location?: string;
+  cost?: number; // Cost associated with this subtask
   // Industry-specific fields for Subtask
   fieldCrewLead?: string;
   equipmentUsed?: string; // Comma-separated or list
@@ -45,8 +46,7 @@ export interface Project {
   startDate?: string; // ISO date string - actual project start date
   dueDate?: string; // ISO date string
   budget?: number;
-  spent?: number;
-  status?: ProjectStatus;
+  spent?: number; // This will now be a calculated sum of subtask costs
   outcomeNotes?: string;
   // Industry-specific fields for Project
   projectNumber?: string;

@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 import { format as formatDate, parseISO, isValid, differenceInCalendarDays } from 'date-fns';
-import { useCurrency } from '@/contexts/currency-context'; // Added
+import { useCurrency } from '@/contexts/currency-context'; 
 
 
 const statusIconMapSmall: Record<SubtaskStatus, JSX.Element> = {
@@ -29,15 +29,20 @@ export default function ProjectSummaryPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
-  const { getProject } = useProjects();
+  const { getProject, getCalculatedProjectSpent } = useProjects();
   const { toast } = useToast();
-  const { selectedCurrency } = useCurrency(); // Added
+  const { selectedCurrency } = useCurrency(); 
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true); 
 
+  const projectSpent = useMemo(() => {
+    if (!project) return 0;
+    return getCalculatedProjectSpent(project.id);
+  }, [project, getCalculatedProjectSpent]);
+
   useEffect(() => {
     if (projectId) { 
-      const currentProject = getProject(projectId);
+      const currentProject = getProject(projectId); // getProject now returns spent calculated
       if (currentProject) {
         setProject(currentProject);
       } else {
@@ -56,8 +61,8 @@ export default function ProjectSummaryPage() {
 
   const remainingBudget = useMemo(() => {
     if (project?.budget === undefined) return undefined;
-    return project.budget - (project.spent || 0);
-  }, [project?.budget, project?.spent]);
+    return project.budget - projectSpent;
+  }, [project?.budget, projectSpent]);
 
   const sortedStages = useMemo(() => {
     if (!project?.stages) return [];
@@ -155,10 +160,10 @@ export default function ProjectSummaryPage() {
             <Card className="print:shadow-none print:border-0">
               <CardHeader><CardTitle className="text-xl">Financial Summary</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between"><span>Total Budget:</span> <span>{formatCurrency(project.budget, selectedCurrency)}</span></div> {/* Updated */}
-                <div className="flex justify-between"><span>Amount Spent:</span> <span>{formatCurrency(project.spent, selectedCurrency)}</span></div> {/* Updated */}
+                <div className="flex justify-between"><span>Total Budget:</span> <span>{formatCurrency(project.budget, selectedCurrency)}</span></div> 
+                <div className="flex justify-between"><span>Amount Spent:</span> <span>{formatCurrency(projectSpent, selectedCurrency)}</span></div> 
                 <Separator />
-                <div className="flex justify-between font-semibold"><span>Remaining Budget:</span> <span>{formatCurrency(remainingBudget, selectedCurrency)}</span></div> {/* Updated */}
+                <div className="flex justify-between font-semibold"><span>Remaining Budget:</span> <span>{formatCurrency(remainingBudget, selectedCurrency)}</span></div> 
               </CardContent>
             </Card>
             <Card className="print:shadow-none print:border-0">
@@ -183,16 +188,21 @@ export default function ProjectSummaryPage() {
                 <ul className="space-y-2 pl-2">
                   {project.subtasks.filter(st => st.stageId === stage.id).sort((a,b) => a.order - b.order).map(subtask => (
                     <li key={subtask.id} className="text-sm p-2 rounded-md bg-muted/30 print:bg-transparent print:p-0 print:border-b print:border-dashed last:print:border-b-0">
-                      <div className="flex justify-between items-center mb-0.5">
+                      <div className="flex justify-between items-start mb-0.5 gap-2">
                         <span className="font-medium">{subtask.name}</span>
-                        <span className={cn("text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1", 
-                          subtask.status === 'Done' ? 'bg-green-100 text-green-700 print:bg-transparent print:text-green-700' :
-                          subtask.status === 'Blocked' ? 'bg-red-100 text-red-700 print:bg-transparent print:text-red-700' :
-                          subtask.status === 'In Progress' ? 'bg-blue-100 text-blue-700 print:bg-transparent print:text-blue-700' :
-                          'bg-gray-100 text-gray-700 print:bg-transparent print:text-gray-700'
-                        )}>
-                          {statusIconMapSmall[subtask.status || 'To Do']} {subtask.status || 'To Do'}
-                        </span>
+                        <div className="flex flex-col items-end flex-shrink-0">
+                            <span className={cn("text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1 mb-1", 
+                            subtask.status === 'Done' ? 'bg-green-100 text-green-700 print:bg-transparent print:text-green-700' :
+                            subtask.status === 'Blocked' ? 'bg-red-100 text-red-700 print:bg-transparent print:text-red-700' :
+                            subtask.status === 'In Progress' ? 'bg-blue-100 text-blue-700 print:bg-transparent print:text-blue-700' :
+                            'bg-gray-100 text-gray-700 print:bg-transparent print:text-gray-700'
+                            )}>
+                            {statusIconMapSmall[subtask.status || 'To Do']} {subtask.status || 'To Do'}
+                            </span>
+                            {subtask.cost !== undefined && subtask.cost > 0 && (
+                                <span className="text-xs text-muted-foreground">{formatCurrency(subtask.cost, selectedCurrency)}</span>
+                            )}
+                        </div>
                       </div>
                       {subtask.description && <p className="text-xs text-muted-foreground mb-1 print:hidden">{subtask.description}</p>}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">

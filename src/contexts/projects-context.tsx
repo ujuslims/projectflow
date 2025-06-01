@@ -3,7 +3,7 @@
 
 import type { Project, Stage, Subtask, ProjectStatus, SubtaskStatus, SubtaskCore } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { projectStageTemplates } from '@/lib/project-templates'; // Import templates
 
 interface ProjectsContextType {
@@ -24,12 +24,19 @@ interface ProjectsContextType {
   setProjectSubtasks: (projectId: string, subtasks: Subtask[]) => void;
   setProjectStages: (projectId: string, stages: Stage[]) => void;
   markAllSubtasksAsDone: (projectId: string) => void;
+  getCalculatedProjectSpent: (projectId: string) => number;
 }
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
 
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useLocalStorage<Project[]>('projects', []);
+
+  const getCalculatedProjectSpent = (projectId: string): number => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return 0;
+    return project.subtasks.reduce((sum, subtask) => sum + (subtask.cost || 0), 0);
+  };
 
   const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectTypes'> 
                                 & { name: string; description?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; startDate?: string; dueDate?: string; }) => {
@@ -64,7 +71,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       stages: initialStages,
       subtasks: [],
       budget: projectData.budget || 0,
-      spent: 0,
+      spent: 0, // Initial spent is 0, will be calculated
       status: 'Not Started' as ProjectStatus,
       outcomeNotes: '',
       startDate: projectData.startDate, 
@@ -79,11 +86,24 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     return newProject;
   };
 
-  const getProject = (id: string) => projects.find(p => p.id === id);
-
+  const getProject = (id: string) => {
+    const project = projects.find(p => p.id === id);
+    if (project) {
+      return { ...project, spent: getCalculatedProjectSpent(id) };
+    }
+    return undefined;
+  };
+  
   const updateProject = (id: string, updates: Partial<Project>) => {
     setProjects(prevProjects =>
-      prevProjects.map(p => (p.id === id ? { ...p, ...updates } : p))
+      prevProjects.map(p => {
+        if (p.id === id) {
+          // Prevent direct update of 'spent' if it's in updates, as it's calculated
+          const { spent, ...otherUpdates } = updates;
+          return { ...p, ...otherUpdates };
+        }
+        return p;
+      })
     );
   };
 
@@ -163,6 +183,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
             fieldCrewLead: subtaskData.fieldCrewLead || '',
             equipmentUsed: subtaskData.equipmentUsed || '',
             dataDeliverables: subtaskData.dataDeliverables || '',
+            cost: subtaskData.cost || 0,
           };
           return { ...p, subtasks: [...p.subtasks, newSubtask] };
         }
@@ -180,14 +201,13 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
           const stageExists = p.stages.some(s => s.id === stageId);
           if (!stageExists) return p; // Return project unchanged if stage doesn't exist
 
-          // Get the current number of subtasks in the target stage to determine starting order
           let currentOrderInStage = p.subtasks.filter(st => st.stageId === stageId).length;
           
           const addedSubtasksForThisProject: Subtask[] = subtasksData.map((subtaskCore, index) => ({
             id: crypto.randomUUID(),
             stageId,
             createdAt: new Date().toISOString(),
-            order: currentOrderInStage + index, // Assign sequential order for the batch
+            order: currentOrderInStage + index, 
             name: subtaskCore.name,
             description: subtaskCore.description,
             startDate: subtaskCore.startDate,
@@ -198,15 +218,15 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
             fieldCrewLead: subtaskCore.fieldCrewLead || '',
             equipmentUsed: subtaskCore.equipmentUsed || '',
             dataDeliverables: subtaskCore.dataDeliverables || '',
+            cost: subtaskCore.cost || 0,
           }));
           
-          newSubtasksBatch = addedSubtasksForThisProject; // Capture the batch to be returned
+          newSubtasksBatch = addedSubtasksForThisProject; 
           return { ...p, subtasks: [...p.subtasks, ...addedSubtasksForThisProject] };
         }
         return p;
       })
     );
-    // Return the batch of newly created subtasks, or undefined if no project was matched or stage didn't exist
     return newSubtasksBatch.length > 0 ? newSubtasksBatch : undefined; 
   };
 
@@ -295,14 +315,24 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  // Memoize projects to include calculated spent amount
+  const projectsWithCalculatedSpent = useMemo(() => {
+    return projects.map(p => ({
+      ...p,
+      spent: getCalculatedProjectSpent(p.id),
+    }));
+  }, [projects]);
+
 
   return (
     <ProjectsContext.Provider value={{ 
-        projects, addProject, getProject, updateProject, deleteProject,
+        projects: projectsWithCalculatedSpent, 
+        addProject, getProject, updateProject, deleteProject,
         addStage, updateStage, deleteStage,
         addSubtask, addMultipleSubtasks, updateSubtask, moveSubtask, deleteSubtask,
         setProjectSubtasks, setProjectStages,
-        markAllSubtasksAsDone 
+        markAllSubtasksAsDone,
+        getCalculatedProjectSpent 
       }}>
       {children}
     </ProjectsContext.Provider>
@@ -316,4 +346,3 @@ export const useProjects = () => {
   }
   return context;
 };
-
