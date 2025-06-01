@@ -30,7 +30,8 @@ export default function ProjectDetailPage() {
   const { 
     getProject, addStage, updateStage, deleteStage, 
     addSubtask, updateSubtask, deleteSubtask, moveSubtask,
-    setProjectSubtasks, setProjectStages, updateProject
+    setProjectSubtasks, setProjectStages, updateProject,
+    addMultipleSubtasks // Import addMultipleSubtasks
   } = useProjects();
   const { toast } = useToast();
 
@@ -50,14 +51,8 @@ export default function ProjectDetailPage() {
     return [...stages].sort((a, b) => a.order - b.order);
   }, [project?.stages]); 
 
-  // useEffect(() => { // Protection moved to (protected)/layout.tsx
-  //   if (!authLoading && !user) {
-  //     router.replace('/auth/login');
-  //   }
-  // }, [user, authLoading, router]);
-
   useEffect(() => {
-    if (projectId) { // && user
+    if (projectId) { 
       const currentProject = getProject(projectId);
       if (currentProject) {
         setProject(currentProject);
@@ -66,7 +61,7 @@ export default function ProjectDetailPage() {
         router.push('/projects');
       }
     }
-  }, [projectId, getProject, router, toast]); // user removed from deps as auth is handled upstream
+  }, [projectId, getProject, router, toast]); 
 
   const handleUpdateProjectDetails = (updates: Partial<Project>) => {
     if (!project) return;
@@ -153,9 +148,9 @@ export default function ProjectDetailPage() {
     setDraggedSubtaskId(subtaskId);
   };
 
-  const onDragOver = (e: React.DragEvent<HTMLDivElement>, stageId?: string) => { // stageId is optional for general drag over (like trash bin)
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>, stageId?: string) => { 
     e.preventDefault(); 
-    if (stageId) { // If dragging over a stage, ensure delete area state is false
+    if (stageId) { 
       setIsDraggingOverDeleteArea(false);
     }
   };
@@ -228,15 +223,20 @@ export default function ProjectDetailPage() {
          return;
       }
 
-      const newSubtasks: Subtask[] = [];
-      result.subtasks.forEach(subtaskName => {
-        const addedSubtask = addSubtask(project.id, backlogStage.id, { name: subtaskName });
-        if (addedSubtask) newSubtasks.push(addedSubtask);
-      });
-      if (newSubtasks.length > 0) {
-        setProject(prev => prev ? {...prev, subtasks: [...prev.subtasks, ...newSubtasks]} : null);
+      const subtasksToCreate: SubtaskCore[] = result.subtasks.map(subtaskName => ({ name: subtaskName, status: 'To Do' as SubtaskStatus }));
+      const addedBatch = addMultipleSubtasks(project.id, backlogStage.id, subtasksToCreate);
+      
+      if (addedBatch && addedBatch.length > 0) {
+        setProject(prev => prev ? {...prev, subtasks: [...prev.subtasks, ...addedBatch]} : null);
+        toast({ title: "AI Suggestions Added", description: `${addedBatch.length} subtasks suggested and added to "${backlogStage.name}".` });
+      } else if (result.subtasks.length > 0) {
+        // This case might happen if addMultipleSubtasks returns undefined/empty for some reason,
+        // but the AI did suggest tasks.
+        toast({ title: "AI Error", description: "AI suggested tasks, but they could not be added to the project.", variant: "destructive" });
+      } else {
+        toast({ title: "AI Suggestions", description: "No new subtasks were suggested by the AI.", variant: "default" });
       }
-      toast({ title: "AI Suggestions Added", description: `${result.subtasks.length} subtasks suggested and added to "${backlogStage.name}".` });
+
     } catch (error) {
       console.error("AI Suggestion Error:", error);
       toast({ title: "AI Error", description: "Could not get subtask suggestions.", variant: "destructive" });
@@ -301,19 +301,9 @@ export default function ProjectDetailPage() {
       setIsAIOrganizing(false);
     }
   };
-
-  // if (authLoading) { // Loading handled by (protected)/layout.tsx
-  //   return (
-  //       <div className="flex items-center justify-center h-full">
-  //         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  //         <p className="ml-2">Authenticating...</p>
-  //       </div>
-  //   );
-  // }
   
   if (!project) {
     return (
-      // AppLayout is rendered by (protected)/layout.tsx
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="ml-2">Loading project...</p>
@@ -322,7 +312,6 @@ export default function ProjectDetailPage() {
   }
   
   return (
-    // AppLayout is rendered by (protected)/layout.tsx
     <>
       <ProjectDetailsCard project={project} onUpdateProject={handleUpdateProjectDetails} />
       <Separator className="my-8" />
@@ -412,10 +401,10 @@ export default function ProjectDetailPage() {
             e.preventDefault();
             const subtaskId = e.dataTransfer.getData("subtaskId");
             if (subtaskId) {
-              handleDeleteSubtask(subtaskId); // Existing handleDeleteSubtask includes a window.confirm
+              handleDeleteSubtask(subtaskId); 
             }
             setIsDraggingOverDeleteArea(false);
-            setDraggedSubtaskId(null); // Clear the dragged subtask ID
+            setDraggedSubtaskId(null); 
           }}
           className={cn(
             "fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-xl transition-all duration-200 ease-in-out cursor-pointer flex items-center justify-center",
@@ -431,5 +420,3 @@ export default function ProjectDetailPage() {
     </>
   );
 }
-
-

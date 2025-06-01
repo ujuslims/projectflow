@@ -17,6 +17,7 @@ interface ProjectsContextType {
   updateStage: (projectId: string, stageId: string, updates: Partial<Omit<Stage, 'id' | 'createdAt'>>) => void;
   deleteStage: (projectId: string, stageId: string) => void;
   addSubtask: (projectId: string, stageId: string, subtask: SubtaskCore) => Subtask | undefined;
+  addMultipleSubtasks: (projectId: string, stageId: string, subtasksData: SubtaskCore[]) => Subtask[] | undefined;
   updateSubtask: (projectId: string, subtaskId: string, updates: Partial<Omit<Subtask, 'id' | 'createdAt'>>) => void;
   moveSubtask: (projectId: string, subtaskId: string, newStageId: string, newOrder: number) => void;
   deleteSubtask: (projectId: string, subtaskId: string) => void;
@@ -43,7 +44,6 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
         }
       });
     }
-    // Add a default 'Backlog' stage if no types selected or no templates found
     if (initialStageNames.size === 0) {
         initialStageNames.add('Backlog');
     }
@@ -171,6 +171,45 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     );
     return newSubtask;
   };
+  
+  const addMultipleSubtasks = (projectId: string, stageId: string, subtasksData: SubtaskCore[]): Subtask[] | undefined => {
+    let newSubtasksBatch: Subtask[] = [];
+    setProjects(prevProjects =>
+      prevProjects.map(p => {
+        if (p.id === projectId) {
+          const stageExists = p.stages.some(s => s.id === stageId);
+          if (!stageExists) return p; // Return project unchanged if stage doesn't exist
+
+          // Get the current number of subtasks in the target stage to determine starting order
+          let currentOrderInStage = p.subtasks.filter(st => st.stageId === stageId).length;
+          
+          const addedSubtasksForThisProject: Subtask[] = subtasksData.map((subtaskCore, index) => ({
+            id: crypto.randomUUID(),
+            stageId,
+            createdAt: new Date().toISOString(),
+            order: currentOrderInStage + index, // Assign sequential order for the batch
+            name: subtaskCore.name,
+            description: subtaskCore.description,
+            startDate: subtaskCore.startDate,
+            endDate: subtaskCore.endDate,
+            assignedPersonnel: subtaskCore.assignedPersonnel,
+            location: subtaskCore.location,
+            status: subtaskCore.status || 'To Do' as SubtaskStatus,
+            fieldCrewLead: subtaskCore.fieldCrewLead || '',
+            equipmentUsed: subtaskCore.equipmentUsed || '',
+            dataDeliverables: subtaskCore.dataDeliverables || '',
+          }));
+          
+          newSubtasksBatch = addedSubtasksForThisProject; // Capture the batch to be returned
+          return { ...p, subtasks: [...p.subtasks, ...addedSubtasksForThisProject] };
+        }
+        return p;
+      })
+    );
+    // Return the batch of newly created subtasks, or undefined if no project was matched or stage didn't exist
+    return newSubtasksBatch.length > 0 ? newSubtasksBatch : undefined; 
+  };
+
 
   const updateSubtask = (projectId: string, subtaskId: string, updates: Partial<Omit<Subtask, 'id' | 'createdAt'>>) => {
      setProjects(prevProjects =>
@@ -261,7 +300,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     <ProjectsContext.Provider value={{ 
         projects, addProject, getProject, updateProject, deleteProject,
         addStage, updateStage, deleteStage,
-        addSubtask, updateSubtask, moveSubtask, deleteSubtask,
+        addSubtask, addMultipleSubtasks, updateSubtask, moveSubtask, deleteSubtask,
         setProjectSubtasks, setProjectStages,
         markAllSubtasksAsDone 
       }}>
@@ -277,3 +316,4 @@ export const useProjects = () => {
   }
   return context;
 };
+
