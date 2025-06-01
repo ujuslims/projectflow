@@ -45,7 +45,8 @@ export function StageColumn({
         </Button>
       </CardHeader>
       <ScrollArea className="flex-grow">
-        <CardContent className="p-4 space-y-1">
+        {/* Changed to flex flex-col items-center and gap-3 for spacing */}
+        <CardContent className="p-4 flex flex-col items-center gap-3">
           {subtasks.sort((a,b) => a.order - b.order).map((subtask) => (
             <SubtaskCard
               key={subtask.id}
