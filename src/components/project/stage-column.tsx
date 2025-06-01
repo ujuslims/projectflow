@@ -31,7 +31,7 @@ export function StageColumn({
 }: StageColumnProps) {
   return (
     <Card 
-      className="w-80 flex-shrink-0 flex flex-col bg-secondary/20 shadow-sm max-h-[calc(100vh-18rem)]" // Removed fixed height, added max-height
+      className="w-80 flex-shrink-0 flex flex-col bg-secondary/20 shadow-sm" // Removed max-h constraint
       onDragOver={(e) => onDragOver(e, stage.id)}
       onDrop={(e) => onDrop(e, stage.id)}
     >
@@ -41,7 +41,7 @@ export function StageColumn({
           {/* Stage actions (edit/delete) can be added here if needed */}
         </div>
       </CardHeader>
-      <ScrollArea className="flex-grow"> {/* This ScrollArea handles vertical scrolling within the column */}
+      <ScrollArea className="flex-grow"> {/* This ScrollArea handles vertical scrolling within the column if content overflows */}
         <CardContent className="p-4 space-y-1">
           {subtasks.sort((a,b) => a.order - b.order).map((subtask) => (
             <SubtaskCard
@@ -58,7 +58,6 @@ export function StageColumn({
             </div>
           )}
         </CardContent>
-        {/* ScrollBar for the internal ScrollArea, if needed */}
       </ScrollArea>
       <div className="p-4 border-t mt-auto sticky bottom-0 bg-secondary/20">
         <Button variant="outline" className="w-full" onClick={onAddSubtask}>
