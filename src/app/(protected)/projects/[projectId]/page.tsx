@@ -11,7 +11,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
-import type { Project, Stage, Subtask, SubtaskCore } from '@/lib/types';
+import type { Project, Stage, Subtask, SubtaskCore, SubtaskStatus } from '@/lib/types';
 import { organizeSubtasks, OrganizeSubtasksInput, OrganizeSubtasksOutput, suggestSubtasks, SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/flows';
 import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info, BarChartHorizontalBig, Printer, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -19,19 +19,27 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from '@/lib/utils';
-// import { useAuth } from '@/contexts/auth-context'; // Protection handled by (protected)/layout.tsx
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
-  // const { user, loading: authLoading } = useAuth(); // Handled by (protected)/layout.tsx
   
   const { 
     getProject, addStage, updateStage, deleteStage, 
     addSubtask, updateSubtask, deleteSubtask, moveSubtask,
     setProjectSubtasks, setProjectStages, updateProject,
-    addMultipleSubtasks // Import addMultipleSubtasks
+    addMultipleSubtasks
   } = useProjects();
   const { toast } = useToast();
 
@@ -201,40 +209,45 @@ export default function ProjectDetailPage() {
     setDraggedSubtaskId(null);
   };
 
-  const handleAISuggestSubtasks = async () => {
+  const handleAISuggestSubtasks = async (targetStageInfo?: { id: string, name: string }) => {
     if (!project || !project.description) {
       toast({ title: "Info", description: "Project scope of work is needed for AI suggestions.", variant: "default" });
       return;
     }
     if (project.stages.length === 0) {
-      toast({ title: "Info", description: "Please add at least one stage (e.g., 'Backlog') before suggesting subtasks.", variant: "default" });
+      toast({ title: "Info", description: "Please add at least one stage before suggesting subtasks.", variant: "default" });
       return;
     }
 
     setIsAISuggesting(true);
     try {
-      const input: SuggestSubtasksInput = { projectDescription: project.description };
-      const result: SuggestSubtasksOutput = await suggestSubtasks(input);
-      
-      const backlogStage = sortedStages[0]; 
-      if (!backlogStage) {
+      const stageToTargetId = targetStageInfo ? targetStageInfo.id : sortedStages[0]?.id;
+      const stageToTargetAIName = targetStageInfo ? targetStageInfo.name : undefined; // For AI prompt
+      const stageToDisplayInToast = targetStageInfo ? targetStageInfo.name : sortedStages[0]?.name;
+
+
+      if (!stageToTargetId) {
          toast({ title: "Error", description: "No stages available to add subtasks.", variant: "destructive" });
          setIsAISuggesting(false);
          return;
       }
 
+      const input: SuggestSubtasksInput = { 
+        projectDescription: project.description,
+        targetStageName: stageToTargetAIName
+      };
+      const result: SuggestSubtasksOutput = await suggestSubtasks(input);
+      
       const subtasksToCreate: SubtaskCore[] = result.subtasks.map(subtaskName => ({ name: subtaskName, status: 'To Do' as SubtaskStatus }));
-      const addedBatch = addMultipleSubtasks(project.id, backlogStage.id, subtasksToCreate);
+      const addedBatch = addMultipleSubtasks(project.id, stageToTargetId, subtasksToCreate);
       
       if (addedBatch && addedBatch.length > 0) {
         setProject(prev => prev ? {...prev, subtasks: [...prev.subtasks, ...addedBatch]} : null);
-        toast({ title: "AI Suggestions Added", description: `${addedBatch.length} subtasks suggested and added to "${backlogStage.name}".` });
+        toast({ title: "AI Suggestions Added", description: `${addedBatch.length} subtasks suggested and added to "${stageToDisplayInToast}".` });
       } else if (result.subtasks.length > 0) {
-        // This case might happen if addMultipleSubtasks returns undefined/empty for some reason,
-        // but the AI did suggest tasks.
         toast({ title: "AI Error", description: "AI suggested tasks, but they could not be added to the project.", variant: "destructive" });
       } else {
-        toast({ title: "AI Suggestions", description: "No new subtasks were suggested by the AI.", variant: "default" });
+        toast({ title: "AI Suggestions", description: `No new subtasks were suggested by the AI for stage "${stageToDisplayInToast}".`, variant: "default" });
       }
 
     } catch (error) {
@@ -266,31 +279,39 @@ export default function ProjectDetailPage() {
         const targetStage = sortedStages.find(s => s.name === stageName); 
         if (targetStage) {
           aiStageSubtasks.forEach((aiSubtask, order) => {
-            const matchedSubtaskEntry = Array.from(currentSubtasksMap.entries()).find(([id, st]) => st.name === aiSubtask.name);
+            // Try to find a subtask by name that hasn't been assigned yet
+            const matchedSubtaskEntry = Array.from(currentSubtasksMap.entries())
+                .find(([id, st]) => st.name === aiSubtask.name);
+
             if (matchedSubtaskEntry) {
               const [matchedId, matchedSubtask] = matchedSubtaskEntry;
               finalSubtasks.push({
                 ...matchedSubtask,
                 stageId: targetStage.id,
-                order,
-                description: aiSubtask.description || matchedSubtask.description,
-                endDate: aiSubtask.endDate || matchedSubtask.endDate,
+                order, // Set order as determined by AI/iteration
+                description: aiSubtask.description || matchedSubtask.description, // Prefer AI description if available
+                endDate: aiSubtask.endDate || matchedSubtask.endDate, // Prefer AI end date
               });
-              currentSubtasksMap.delete(matchedId); 
+              currentSubtasksMap.delete(matchedId); // Remove from map once assigned
             }
+            // If AI suggests a subtask name not in currentSubtasksMap, it's ignored here.
+            // This flow assumes AI organizes *existing* tasks.
           });
         }
       });
 
+      // Add any subtasks that were not matched/categorized by the AI back to their original stages or a default stage
+      // For simplicity, we'll re-sort them at the end.
       Array.from(currentSubtasksMap.values()).forEach(unmatchedSubtask => {
-        const originalStageSubtasksCount = finalSubtasks.filter(st => st.stageId === unmatchedSubtask.stageId).length;
-        finalSubtasks.push({
-            ...unmatchedSubtask,
-            order: originalStageSubtasksCount 
-        });
+          const originalStageSubtasksCount = finalSubtasks.filter(st => st.stageId === unmatchedSubtask.stageId).length;
+          finalSubtasks.push({
+              ...unmatchedSubtask,
+              order: originalStageSubtasksCount // Append to the end of its original stage
+          });
       });
       
       setProjectSubtasks(project.id, finalSubtasks);
+      // Update local state, ensuring correct sorting for display
       setProject(prev => prev ? {...prev, subtasks: finalSubtasks.sort((a,b) => (sortedStages.find(s=>s.id === a.stageId)?.order ?? 0) - (sortedStages.find(s=>s.id === b.stageId)?.order ?? 0) || a.order - b.order)} : null);
 
       toast({ title: "AI Organization Applied", description: "Subtasks have been organized." });
@@ -311,6 +332,8 @@ export default function ProjectDetailPage() {
     );
   }
   
+  const aiSuggestButtonDisabled = isAISuggesting || !project.description || project.stages.length === 0;
+
   return (
     <>
       <ProjectDetailsCard project={project} onUpdateProject={handleUpdateProjectDetails} />
@@ -322,10 +345,35 @@ export default function ProjectDetailPage() {
         onDeleteStage={handleDeleteStage}
       />
       <div className="my-8 flex flex-col sm:flex-row gap-4 justify-start items-start sm:items-center flex-wrap">
-        <Button onClick={handleAISuggestSubtasks} disabled={isAISuggesting || !project.description || project.stages.length === 0}>
-          {isAISuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-          AI Suggest Subtasks
-        </Button>
+        
+        {sortedStages.length > 1 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button disabled={aiSuggestButtonDisabled}>
+                {isAISuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                AI Suggest Subtasks
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => handleAISuggestSubtasks()}>
+                For Backlog / First Stage
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>For Specific Stage:</DropdownMenuLabel>
+              {sortedStages.map(stage => (
+                <DropdownMenuItem key={stage.id} onClick={() => handleAISuggestSubtasks({ id: stage.id, name: stage.name })}>
+                  {stage.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button onClick={() => handleAISuggestSubtasks()} disabled={aiSuggestButtonDisabled}>
+            {isAISuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            AI Suggest Subtasks
+          </Button>
+        )}
+
         <Button onClick={handleAIOrganizeSubtasks} disabled={isAIOrganizing || project.subtasks.length === 0 || project.stages.length === 0} variant="outline">
           {isAIOrganizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Brain className="mr-2 h-4 w-4" />}
           AI Organize Subtasks
@@ -420,3 +468,4 @@ export default function ProjectDetailPage() {
     </>
   );
 }
+

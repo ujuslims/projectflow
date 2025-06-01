@@ -7,7 +7,7 @@
  * with a focus on industries like topographic survey, geotechnical, geophysical, geospatial, construction,
  * and reality scanning.
  *
- * The flow takes a project's scope of work as input and returns a list of suggested subtasks.
+ * The flow can optionally target suggestions for a specific project stage.
  * @module suggest-subtasks
  */
 
@@ -15,7 +15,8 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SuggestSubtasksInputSchema = z.object({
-  projectDescription: z.string().describe("A detailed scope of work for the project."), // Changed description to reflect Scope of Work
+  projectDescription: z.string().describe("A detailed scope of work for the project."),
+  targetStageName: z.string().optional().describe('The specific project stage for which to suggest subtasks. If omitted, general subtasks for the project will be suggested.'),
 });
 
 export type SuggestSubtasksInput = z.infer<typeof SuggestSubtasksInputSchema>;
@@ -38,13 +39,18 @@ const suggestSubtasksPrompt = ai.definePrompt({
   input: {schema: SuggestSubtasksInputSchema},
   output: {schema: SuggestSubtasksOutputSchema},
   prompt: `You are an expert project planner specializing in industries like topographic survey, geotechnical, geophysical, geospatial, construction, and reality scanning.
-Based on the following project scope of work, suggest a list of subtasks that would be necessary to complete the project.
+Based on the following project scope of work: {{{projectDescription}}}
+
+{{#if targetStageName}}
+Focus on suggesting subtasks that are relevant to the "{{targetStageName}}" stage of such a project.
+{{else}}
+Suggest a general list of subtasks that would be necessary to complete the project.
+{{/if}}
+
 Consider common project phases such as planning, site assessment, fieldwork/data acquisition, data processing, analysis, reporting, and deliverables.
 Return the subtasks as a JSON array of strings.
 
-Project Scope of Work: {{{projectDescription}}}
-
-Subtasks:`, // Updated "Project Description" to "Project Scope of Work" in the prompt
+Subtasks:`,
 });
 
 const suggestSubtasksFlow = ai.defineFlow(
@@ -58,3 +64,4 @@ const suggestSubtasksFlow = ai.defineFlow(
     return output!;
   }
 );
+
