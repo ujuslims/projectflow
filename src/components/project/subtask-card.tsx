@@ -49,28 +49,24 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
     <Card
       draggable
       onDragStart={(e) => onDragStart(e, subtask.id)}
-      className="mb-3 bg-card hover:shadow-md transition-shadow duration-200 cursor-grab active:cursor-grabbing flex flex-col"
+      className="mb-3 bg-card hover:shadow-md transition-shadow duration-200 cursor-grab active:cursor-grabbing flex flex-col w-full overflow-hidden"
     >
       <CardHeader className="p-3 flex-shrink-0">
-        <div className="flex justify-between items-start">
-          <div className="flex-grow min-w-0 mr-2">
-            <CardTitle className="text-base font-medium break-words min-w-0">
-              {subtask.name}
-            </CardTitle>
-          </div>
+        <div className="flex justify-between items-start gap-2">
+          <CardTitle className="text-base font-medium break-words min-w-0 flex-grow">
+            {subtask.name}
+          </CardTitle>
           <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         </div>
       </CardHeader>
-      <CardContent className="p-3 pt-0 flex-grow flex flex-col"> {/* Manages children vertically, takes available space */}
-        
-        {/* This div will contain the description and details, and will grow */}
-        <div className="flex-grow min-h-0"> {/* Allows this section to take space and handle its own overflow if necessary */}
+      <CardContent className="p-3 pt-0 flex-grow flex flex-col">
+        <div className="flex-grow min-h-0"> 
           {subtask.description && (
             <CardDescription className="text-xs mb-2 break-words min-w-0">
               {subtask.description}
             </CardDescription>
           )}
-          <div className="flex flex-col gap-1.5 mb-2"> {/* Details list */}
+          <div className="flex flex-col gap-1.5 mb-2">
             {subtask.status && (
             <Badge variant={badgeVariant} className={cn("text-xs w-fit", isDone && "bg-accent text-accent-foreground")}>
                 {statusIconMap[subtask.status]}
@@ -86,9 +82,7 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
             {renderDetail(FileText, subtask.dataDeliverables, 'Deliver: ')}
           </div>
         </div>
-        
-        {/* Action buttons, should be at the bottom due to the flex-grow above */}
-        <div className="flex justify-end space-x-1 pt-2 flex-shrink-0"> {/* flex-shrink-0 ensures this part doesn't shrink */}
+        <div className="flex justify-end space-x-1 pt-2 flex-shrink-0">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label="Edit subtask">
             <Edit3 className="h-4 w-4" />
           </Button>
