@@ -61,31 +61,34 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
           <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         </div>
       </CardHeader>
-      <CardContent className="p-3 pt-0 flex-grow flex flex-col">
-        {/* Description and Details directly here */}
-        {subtask.description && (
-          <CardDescription className="text-xs mb-2 break-words min-w-0">
-            {subtask.description}
-          </CardDescription>
-        )}
-        <div className="flex flex-col gap-1.5 mb-2"> {/* Details list */}
-          {subtask.status && (
-          <Badge variant={badgeVariant} className={cn("text-xs w-fit", isDone && "bg-accent text-accent-foreground")}>
-              {statusIconMap[subtask.status]}
-              <span className="ml-1">{subtask.status}</span>
-          </Badge>
+      <CardContent className="p-3 pt-0 flex-grow flex flex-col"> {/* Manages children vertically, takes available space */}
+        
+        {/* This div will contain the description and details, and will grow */}
+        <div className="flex-grow min-h-0"> {/* Allows this section to take space and handle its own overflow if necessary */}
+          {subtask.description && (
+            <CardDescription className="text-xs mb-2 break-words min-w-0">
+              {subtask.description}
+            </CardDescription>
           )}
-          {subtask.startDate && isValid(parseISO(subtask.startDate)) && renderDetail(CalendarPlus, format(parseISO(subtask.startDate), 'MMM dd, yy'), 'Start: ')}
-          {subtask.endDate && isValid(parseISO(subtask.endDate)) && renderDetail(CalendarMinus, format(parseISO(subtask.endDate), 'MMM dd, yy'), 'End: ')}
-          {renderDetail(UserCog, subtask.fieldCrewLead, 'Lead: ')}
-          {renderDetail(Users, subtask.assignedPersonnel, `${subtask.assignedPersonnel === 1 ? 'Person' : 'People'}: `)}
-          {renderDetail(MapPin, subtask.location)}
-          {renderDetail(Package, subtask.equipmentUsed, 'Equip: ')}
-          {renderDetail(FileText, subtask.dataDeliverables, 'Deliver: ')}
+          <div className="flex flex-col gap-1.5 mb-2"> {/* Details list */}
+            {subtask.status && (
+            <Badge variant={badgeVariant} className={cn("text-xs w-fit", isDone && "bg-accent text-accent-foreground")}>
+                {statusIconMap[subtask.status]}
+                <span className="ml-1">{subtask.status}</span>
+            </Badge>
+            )}
+            {subtask.startDate && isValid(parseISO(subtask.startDate)) && renderDetail(CalendarPlus, format(parseISO(subtask.startDate), 'MMM dd, yy'), 'Start: ')}
+            {subtask.endDate && isValid(parseISO(subtask.endDate)) && renderDetail(CalendarMinus, format(parseISO(subtask.endDate), 'MMM dd, yy'), 'End: ')}
+            {renderDetail(UserCog, subtask.fieldCrewLead, 'Lead: ')}
+            {renderDetail(Users, subtask.assignedPersonnel, `${subtask.assignedPersonnel === 1 ? 'Person' : 'People'}: `)}
+            {renderDetail(MapPin, subtask.location)}
+            {renderDetail(Package, subtask.equipmentUsed, 'Equip: ')}
+            {renderDetail(FileText, subtask.dataDeliverables, 'Deliver: ')}
+          </div>
         </div>
         
-        {/* Action buttons, pushed to the bottom by mt-auto */}
-        <div className="flex justify-end space-x-1 pt-2 mt-auto flex-shrink-0">
+        {/* Action buttons, should be at the bottom due to the flex-grow above */}
+        <div className="flex justify-end space-x-1 pt-2 flex-shrink-0"> {/* flex-shrink-0 ensures this part doesn't shrink */}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label="Edit subtask">
             <Edit3 className="h-4 w-4" />
           </Button>
