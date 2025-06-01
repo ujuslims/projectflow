@@ -49,20 +49,21 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
     <Card
       draggable
       onDragStart={(e) => onDragStart(e, subtask.id)}
-      className="bg-card hover:shadow-md transition-shadow duration-200 cursor-grab active:cursor-grabbing flex flex-col w-64 overflow-hidden" // Fixed width w-64 (256px)
+      className="bg-card hover:shadow-md transition-shadow duration-200 cursor-grab active:cursor-grabbing flex flex-col w-64 overflow-hidden" // Fixed width w-64
     >
       <CardHeader className="p-3 flex-shrink-0">
-        <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-base font-medium break-words min-w-0 flex-grow">
+        {/* Added overflow-hidden to this div */}
+        <div className="flex justify-between items-start gap-2 overflow-hidden"> 
+          {/* Added whitespace-normal to CardTitle */}
+          <CardTitle className="text-base font-medium break-words min-w-0 flex-grow whitespace-normal">
             {subtask.name}
           </CardTitle>
           <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         </div>
       </CardHeader>
-      {/* flex-1 makes CardContent take remaining vertical space. flex-col and justify-between push content apart. */}
       <CardContent className="p-3 pt-0 flex-1 flex flex-col justify-between">
         {/* Content (description and details) */}
-        <div>
+        <div className="min-h-0"> 
           {subtask.description && (
             <CardDescription className="text-xs mb-2 break-words min-w-0">
               {subtask.description}
