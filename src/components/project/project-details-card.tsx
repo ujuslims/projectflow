@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Project, ProjectStatus, ProjectType as AppProjectType } from '@/lib/types'; // Renamed ProjectType to AppProjectType
+import type { Project, ProjectStatus, ProjectType as AppProjectType } from '@/lib/types'; 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,14 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox
+import { Checkbox } from "@/components/ui/checkbox"; 
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow } from 'lucide-react'; // Added Workflow
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow } from 'lucide-react'; 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
 import { useProjects } from '@/contexts/projects-context';
-import { projectTypes as availableProjectTypes } from '@/lib/project-templates'; // Import available project types
+import { projectTypes as availableProjectTypes } from '@/lib/project-templates'; 
+import { useCurrency } from '@/contexts/currency-context'; // Added
 
 interface ProjectDetailsCardProps {
   project: Project;
@@ -29,6 +30,7 @@ const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progres
 export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsCardProps) {
   const { toast } = useToast();
   const { markAllSubtasksAsDone } = useProjects();
+  const { selectedCurrency } = useCurrency(); // Added
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
@@ -71,11 +73,14 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const taskProgressPercentage = totalSubtasksCount > 0 ? Math.round((completedSubtasksCount / totalSubtasksCount) * 100) : 0;
 
   const budgetProgressPercentage = useMemo(() => {
-    if (project.budget && project.budget > 0) {
-      return Math.min(Math.round(((project.spent || 0) / project.budget) * 100), 100);
+    const currentBudget = parseFloat(budget); // Use the state value for current calculation
+    const currentSpent = parseFloat(spent);
+    if (currentBudget && currentBudget > 0) {
+      return Math.min(Math.round(((currentSpent || 0) / currentBudget) * 100), 100);
     }
     return 0;
-  }, [project.budget, project.spent]);
+  }, [budget, spent]);
+
 
   const handleProjectTypeChange = (typeId: string) => {
     setSelectedProjectTypes(prev =>
@@ -138,15 +143,18 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     }
   };
 
-  const renderField = (label: string, value: string | undefined | null | string[], Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholder?: string ) => {
+  const renderField = (label: string, value: string | number | undefined | null | string[], Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholder?: string ) => {
     let displayValue: string | React.ReactNode = value || (isEditingMode ? '' : 'Not set');
-    if (Array.isArray(value)) { // Handle projectTypes array
+    if (typeof value === 'number') { // Specifically for currency values for display mode
+        displayValue = formatCurrency(value, selectedCurrency);
+    } else if (Array.isArray(value)) { 
       if (value.length === 0) {
         displayValue = 'Not set';
       } else {
         displayValue = value.map(typeId => availableProjectTypes.find(pt => pt.id === typeId)?.name || typeId).join(', ');
       }
     }
+
 
     return (
       <div>
@@ -157,7 +165,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
         {isEditingMode ? (
           editComponent
         ) : (
-          <p className={cn("text-sm mt-1 whitespace-pre-wrap", (!value || (Array.isArray(value) && value.length === 0)) && "text-muted-foreground")}>{displayValue}</p>
+          <p className={cn("text-sm mt-1 whitespace-pre-wrap", (!value || (Array.isArray(value) && value.length === 0) && typeof value !== 'number') && "text-muted-foreground")}>{displayValue}</p>
         )}
       </div>
     );
@@ -270,21 +278,21 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
             <TabsContent value="budget" className="mt-0 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {renderField("Total Budget", project.budget ? formatCurrency(project.budget) : 'Not set', Banknote, isEditing,
+                {renderField("Total Budget", project.budget, Banknote, isEditing, // Pass number for display, string for edit
                     <Input id="projectBudget" type="number" placeholder="e.g., 5000" value={budget} onChange={(e) => setBudget(e.target.value)} />
                 )}
-                {renderField("Amount Spent", project.spent ? formatCurrency(project.spent) : formatCurrency(0), Banknote, isEditing,
+                {renderField("Amount Spent", project.spent, Banknote, isEditing, // Pass number for display, string for edit
                      <Input id="projectSpent" type="number" placeholder="e.g., 1500" value={spent} onChange={(e) => setSpent(e.target.value)} />
                 )}
               </div>
-              {project.budget && project.budget > 0 && (
+              {(isEditing ? parseFloat(budget) : project.budget) && (isEditing ? parseFloat(budget) : project.budget)! > 0 && (
                 <div>
                   <Label>Budget Usage</Label>
                   <Progress value={budgetProgressPercentage} className="w-full mt-1 h-3" />
                   <p className="text-sm text-muted-foreground mt-1">{budgetProgressPercentage}% of budget used.</p>
                 </div>
               )}
-              {(!project.budget || project.budget === 0) && !isEditing && (
+              {(!(isEditing ? parseFloat(budget) : project.budget) || (isEditing ? parseFloat(budget) : project.budget) === 0) && (
                   <p className="text-sm text-muted-foreground">No budget set for this project.</p>
               )}
             </TabsContent>
@@ -346,4 +354,3 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     </Card>
   );
 }
-

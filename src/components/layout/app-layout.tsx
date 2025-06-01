@@ -6,8 +6,11 @@ import { ProjectFlowLogo } from '@/components/icons/project-flow-logo';
 import type { ReactNode } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
-import { LogOut, LogIn, UserPlus, Loader2 } from 'lucide-react';
+import { LogOut, LogIn, UserPlus, Loader2, Settings2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useCurrency } from '@/contexts/currency-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -15,15 +18,15 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, signOutUser, loading } = useAuth();
+  const { selectedCurrency, setSelectedCurrency, availableCurrencies } = useCurrency();
   const router = useRouter();
 
   const handleSignOut = async () => {
     try {
       await signOutUser();
-      router.push('/'); // Redirect to homepage after sign out
+      router.push('/'); 
     } catch (error) {
       console.error("Sign out error:", error);
-      // Optionally show a toast notification for sign out error
     }
   };
 
@@ -39,9 +42,6 @@ export function AppLayout({ children }: AppLayoutProps) {
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : user ? (
               <>
-                {/* <span className="text-sm text-muted-foreground hidden sm:inline">
-                  {user.email}
-                </span> */}
                 <Button variant="outline" size="sm" onClick={handleSignOut}>
                   <LogOut className="mr-0 sm:mr-2 h-4 w-4" />
                   <span className="hidden sm:inline">Logout</span>
@@ -74,6 +74,25 @@ export function AppLayout({ children }: AppLayoutProps) {
           <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
             Built with ❤️ for project planning. &copy; {new Date().getFullYear()} ProjectFlow.
           </p>
+          <div className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="currency-select" className="text-sm text-muted-foreground sr-only">Currency:</Label>
+            <Select
+              value={selectedCurrency.code}
+              onValueChange={(value) => setSelectedCurrency(value)}
+            >
+              <SelectTrigger className="w-[130px] h-8 text-xs" id="currency-select">
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableCurrencies.map((currency) => (
+                  <SelectItem key={currency.code} value={currency.code} className="text-xs">
+                    {currency.code} ({currency.symbol})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </footer>
     </div>

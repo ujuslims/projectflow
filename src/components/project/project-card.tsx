@@ -8,6 +8,7 @@ import { ArrowRight, Briefcase, CalendarCheck2, Edit, Hourglass, InfoIcon, ListC
 import { useMemo } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
+import { useCurrency } from '@/contexts/currency-context'; // Added
 
 interface ProjectCardProps {
   project: Project;
@@ -33,6 +34,7 @@ const projectStatusColors: Record<ProjectStatus, "default" | "secondary" | "dest
 
 
 export function ProjectCard({ project }: ProjectCardProps) {
+  const { selectedCurrency } = useCurrency(); // Added
   const subtaskCount = project.subtasks?.length || 0;
   const completedSubtasks = project.subtasks?.filter(st => st.status === 'Done').length || 0;
   const progressPercentage = subtaskCount > 0 ? Math.round((completedSubtasks / subtaskCount) * 100) : 0;
@@ -63,7 +65,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </div>
         )}
         <CardDescription className="h-12 overflow-hidden text-ellipsis text-sm">
-          {project.description || "No scope of work provided."} {/* Updated fallback text */}
+          {project.description || "No scope of work provided."} 
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-2.5 text-sm">
@@ -86,7 +88,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         {project.budget !== undefined && project.budget > 0 && (
           <div className="text-muted-foreground flex items-center">
             <DollarSign className="h-4 w-4 mr-2 text-primary" />
-            <span>Budget: {formatCurrency(project.budget)}</span>
+            <span>Budget: {formatCurrency(project.budget, selectedCurrency)}</span> {/* Updated */}
           </div>
         )}
          {(project.budget === undefined || project.budget === 0) && !project.dueDate && !project.clientContact && (

@@ -1,7 +1,6 @@
 
 "use client";
 
-// AppLayout is now rendered by (protected)/layout.tsx
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -15,7 +14,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 import { format as formatDate, parseISO, isValid, differenceInCalendarDays } from 'date-fns';
-// import { useAuth } from '@/contexts/auth-context'; // Protection handled by (protected)/layout.tsx
+import { useCurrency } from '@/contexts/currency-context'; // Added
 
 
 const statusIconMapSmall: Record<SubtaskStatus, JSX.Element> = {
@@ -32,18 +31,12 @@ export default function ProjectSummaryPage() {
   const projectId = params.projectId as string;
   const { getProject } = useProjects();
   const { toast } = useToast();
-  // const { user, loading: authLoading } = useAuth(); // Handled by (protected)/layout.tsx
+  const { selectedCurrency } = useCurrency(); // Added
   const [project, setProject] = useState<Project | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Page-specific loading
-
-  // useEffect(() => { // Protection handled by (protected)/layout.tsx
-  //   if (!authLoading && !user) {
-  //     router.replace('/auth/login');
-  //   }
-  // }, [user, authLoading, router]);
+  const [isLoading, setIsLoading] = useState(true); 
 
   useEffect(() => {
-    if (projectId) { // && user
+    if (projectId) { 
       const currentProject = getProject(projectId);
       if (currentProject) {
         setProject(currentProject);
@@ -53,7 +46,7 @@ export default function ProjectSummaryPage() {
       }
       setIsLoading(false);
     }
-  }, [projectId, getProject, router, toast]); // user removed from deps
+  }, [projectId, getProject, router, toast]); 
 
   const completedSubtasksCount = useMemo(() => {
     return project?.subtasks.filter(st => st.status === 'Done').length || 0;
@@ -74,18 +67,9 @@ export default function ProjectSummaryPage() {
   const handlePrint = () => {
     window.print();
   };
-
-  // if (authLoading) { // Handled by (protected)/layout.tsx
-  //   return (
-  //     <div className="flex items-center justify-center h-full">
-  //       <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  //     </div>
-  //   );
-  // }
   
-  if (isLoading) { // Page-specific loading for project data
+  if (isLoading) { 
     return (
-      // AppLayout is rendered by (protected)/layout.tsx
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="ml-2">Loading project summary...</p>
@@ -95,7 +79,6 @@ export default function ProjectSummaryPage() {
 
   if (!project) {
     return (
-      // AppLayout is rendered by (protected)/layout.tsx
       <div className="flex items-center justify-center h-full">
         <p>Project not found.</p>
       </div>
@@ -115,12 +98,11 @@ export default function ProjectSummaryPage() {
   if (project.status && projectStatusIcons[project.status]) {
     statusIconToRender = projectStatusIcons[project.status];
   } else {
-    statusIconToRender = <InfoIcon className="h-4 w-4" />; // Default icon
+    statusIconToRender = <InfoIcon className="h-4 w-4" />; 
   }
 
 
   return (
-    // AppLayout is rendered by (protected)/layout.tsx
     <>
       <div className="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 print:hidden">
         <h1 className="text-3xl font-bold tracking-tight">Project Summary: {project.name}</h1>
@@ -173,10 +155,10 @@ export default function ProjectSummaryPage() {
             <Card className="print:shadow-none print:border-0">
               <CardHeader><CardTitle className="text-xl">Financial Summary</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between"><span>Total Budget:</span> <span>{formatCurrency(project.budget)}</span></div>
-                <div className="flex justify-between"><span>Amount Spent:</span> <span>{formatCurrency(project.spent)}</span></div>
+                <div className="flex justify-between"><span>Total Budget:</span> <span>{formatCurrency(project.budget, selectedCurrency)}</span></div> {/* Updated */}
+                <div className="flex justify-between"><span>Amount Spent:</span> <span>{formatCurrency(project.spent, selectedCurrency)}</span></div> {/* Updated */}
                 <Separator />
-                <div className="flex justify-between font-semibold"><span>Remaining Budget:</span> <span>{formatCurrency(remainingBudget)}</span></div>
+                <div className="flex justify-between font-semibold"><span>Remaining Budget:</span> <span>{formatCurrency(remainingBudget, selectedCurrency)}</span></div> {/* Updated */}
               </CardContent>
             </Card>
             <Card className="print:shadow-none print:border-0">
