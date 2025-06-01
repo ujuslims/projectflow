@@ -43,7 +43,7 @@ export function CreateProjectDialog({
   const [siteAddress, setSiteAddress] = useState('');
   const [coordinateSystem, setCoordinateSystem] = useState('');
   const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>([]);
-  const [customProjectTypesInput, setCustomProjectTypesInput] = useState(''); // New state for custom types
+  const [customProjectTypesInput, setCustomProjectTypesInput] = useState('');
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const { addProject } = useProjects();
@@ -65,7 +65,7 @@ export function CreateProjectDialog({
     setSiteAddress('');
     setCoordinateSystem('');
     setSelectedProjectTypes([]);
-    setCustomProjectTypesInput(''); // Reset custom types input
+    setCustomProjectTypesInput('');
     setStartDate('');
     setDueDate('');
   }
@@ -88,7 +88,7 @@ export function CreateProjectDialog({
       siteAddress,
       coordinateSystem,
       projectTypes: selectedProjectTypes,
-      customProjectTypes: customTypesArray.length > 0 ? customTypesArray : undefined, // Add custom types
+      customProjectTypes: customTypesArray.length > 0 ? customTypesArray : undefined,
       startDate: startDate ? new Date(startDate).toISOString() : undefined,
       dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
     });
@@ -130,8 +130,8 @@ export function CreateProjectDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
-          <ScrollArea className="flex-grow min-h-0 pr-4">
-            <div className="grid gap-4 p-6 pr-3"> {/* Adjusted pr-3 from p-6 */}
+          <ScrollArea className="flex-grow min-h-0"> {/* Removed pr-4 from ScrollArea */}
+            <div className="grid gap-4 p-6 pr-3 sm:pr-4"> {/* Adjusted right padding here */}
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="name" className="text-left sm:text-right">
                   Name
@@ -307,3 +307,4 @@ export function CreateProjectDialog({
   );
 }
 
+    
