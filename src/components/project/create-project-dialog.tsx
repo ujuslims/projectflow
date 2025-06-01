@@ -95,8 +95,8 @@ export function CreateProjectDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
-          <ScrollArea className="flex-grow min-h-0 pr-4"> {/* Added pr-4 to ScrollArea */}
-            <div className="grid gap-4 p-6"> {/* Symmetrical p-6 for content */}
+          <ScrollArea className="flex-grow min-h-0 pr-4">
+            <div className="grid gap-4 p-6">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="name" className="text-left sm:text-right">
                   Name
@@ -105,7 +105,7 @@ export function CreateProjectDialog() {
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                   required
                 />
               </div>
@@ -138,7 +138,7 @@ export function CreateProjectDialog() {
                   id="projectNumber"
                   value={projectNumber}
                   onChange={(e) => setProjectNumber(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                   placeholder="e.g., P2024-001"
                 />
               </div>
@@ -150,7 +150,7 @@ export function CreateProjectDialog() {
                   id="clientContact"
                   value={clientContact}
                   onChange={(e) => setClientContact(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                   placeholder="e.g., John Doe (Acme Corp)"
                 />
               </div>
@@ -162,7 +162,7 @@ export function CreateProjectDialog() {
                   id="siteAddress"
                   value={siteAddress}
                   onChange={(e) => setSiteAddress(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                   placeholder="e.g., 123 Main St, Anytown"
                 />
               </div>
@@ -174,7 +174,7 @@ export function CreateProjectDialog() {
                   id="coordinateSystem"
                   value={coordinateSystem}
                   onChange={(e) => setCoordinateSystem(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                   placeholder="e.g., WGS84, UTM Zone 10N"
                 />
               </div>
@@ -186,7 +186,7 @@ export function CreateProjectDialog() {
                   id="scopeOfWork"
                   value={scopeOfWork}
                   onChange={(e) => setScopeOfWork(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                   rows={3}
                   placeholder="Detailed project scope and objectives..."
                 />
@@ -199,7 +199,7 @@ export function CreateProjectDialog() {
                   id="expectedDeliverables"
                   value={expectedDeliverables}
                   onChange={(e) => setExpectedDeliverables(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                   rows={2}
                   placeholder="e.g., Final report, CAD drawings, GIS data..."
                 />
@@ -213,7 +213,7 @@ export function CreateProjectDialog() {
                   type="number"
                   value={budget}
                   onChange={(e) => setBudget(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                   placeholder="Optional (e.g., 5000)"
                 />
               </div>
@@ -226,7 +226,7 @@ export function CreateProjectDialog() {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                 />
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
@@ -238,7 +238,7 @@ export function CreateProjectDialog() {
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-5"
                 />
               </div>
             </div>
