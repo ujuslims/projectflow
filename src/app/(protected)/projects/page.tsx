@@ -17,19 +17,42 @@ type FilterStatus = 'all' | 'notStarted' | 'inProgress' | 'completed';
 
 const monthOptions = [
   { value: "all", label: "All Months" },
-  { value: "01", label: "January" },
-  { value: "02", label: "February" },
-  { value: "03", label: "March" },
-  { value: "04", label: "April" },
-  { value: "05", label: "May" },
-  { value: "06", label: "June" },
-  { value: "07", label: "July" },
-  { value: "08", label: "August" },
-  { value: "09", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
+  { value: "0", label: "January" }, // Changed to 0-indexed
+  { value: "1", label: "February" },
+  { value: "2", label: "March" },
+  { value: "3", label: "April" },
+  { value: "4", label: "May" },
+  { value: "5", label: "June" },
+  { value: "6", label: "July" },
+  { value: "7", label: "August" },
+  { value: "8", label: "September" },
+  { value: "9", label: "October" },
+  { value: "10", label: "November" },
+  { value: "11", label: "December" },
 ];
+
+// Helper function to check if a date string matches the target year and optionally month
+const dateMatchesFilter = (dateString: string | undefined, year: number, month?: number): boolean => {
+    if (!dateString) return false;
+    try {
+        const date = parseISO(dateString);
+        if (!isValid(date)) return false;
+        
+        const projectYear = getYear(date);
+        const projectMonth = getMonth(date); // 0-indexed
+
+        if (projectYear !== year) return false;
+        // If month is undefined, we are only filtering by year, so return true if years match
+        if (month === undefined) return true; 
+        // If month is defined, it must also match
+        if (projectMonth !== month) return false;
+        
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
 
 export default function ProjectsPage() {
   const { projects } = useProjects();
@@ -63,14 +86,17 @@ export default function ProjectsPage() {
     
     const yearsSet = new Set<number>();
     projects.forEach(p => {
-      if (p.createdAt) {
-        try {
-          const date = parseISO(p.createdAt);
-          if (isValid(date)) {
-            yearsSet.add(getYear(date));
-          }
-        } catch (e) { /* ignore */ }
-      }
+      const datesToConsider: (string | undefined)[] = [p.createdAt, p.startDate, p.dueDate];
+      datesToConsider.forEach(dateStr => {
+        if (dateStr) {
+          try {
+            const date = parseISO(dateStr);
+            if (isValid(date)) {
+              yearsSet.add(getYear(date));
+            }
+          } catch (e) { /* ignore */ }
+        }
+      });
     });
 
     if (yearsSet.size === 0) return [{ value: 'all', label: 'All Years' }];
@@ -104,30 +130,20 @@ export default function ProjectsPage() {
         return true; 
       });
     }
-
+    
     // Date Filter
     if (selectedYear !== 'all') {
       const targetYearNum = parseInt(selectedYear);
-      tempProjects = tempProjects.filter(p => {
-        if (!p.createdAt) return false;
-        try {
-          const projectDate = parseISO(p.createdAt);
-          if (!isValid(projectDate)) return false;
-          
-          if (getYear(projectDate) !== targetYearNum) return false;
+      const targetMonthNum = selectedMonth !== 'all' ? parseInt(selectedMonth) : undefined; // Month is 0-indexed from monthOptions
 
-          // If a specific month is also selected (and year is not 'all'), filter by month too
-          if (selectedMonth !== 'all') {
-            const targetMonthNum = parseInt(selectedMonth) - 1; // 0-indexed for getMonth()
-            if (getMonth(projectDate) !== targetMonthNum) return false;
-          }
-          return true;
-        } catch (e) { 
-          return false; 
-        }
+      tempProjects = tempProjects.filter(p => {
+        const matchesCreatedAt = dateMatchesFilter(p.createdAt, targetYearNum, targetMonthNum);
+        const matchesStartDate = dateMatchesFilter(p.startDate, targetYearNum, targetMonthNum);
+        const matchesDueDate = dateMatchesFilter(p.dueDate, targetYearNum, targetMonthNum);
+        
+        return matchesCreatedAt || matchesStartDate || matchesDueDate;
       });
     }
-    // If selectedYear is 'all', selectedMonth is effectively ignored by the logic above.
     
     return tempProjects;
   }, [projects, filterStatus, selectedYear, selectedMonth]);
