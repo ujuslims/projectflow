@@ -6,7 +6,7 @@ import { CreateProjectDialog } from '@/components/project/create-project-dialog'
 import { ProjectCard } from '@/components/project/project-card';
 import { useProjects } from '@/contexts/projects-context';
 import { FolderOpen, PackageOpen, Hourglass, CheckCircle2, Briefcase, CalendarIcon } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -15,10 +15,27 @@ import { getYear, getMonth, format, parseISO, isValid } from 'date-fns';
 
 type FilterStatus = 'all' | 'notStarted' | 'inProgress' | 'completed';
 
+const monthOptions = [
+  { value: "all", label: "All Months" },
+  { value: "01", label: "January" },
+  { value: "02", label: "February" },
+  { value: "03", label: "March" },
+  { value: "04", label: "April" },
+  { value: "05", label: "May" },
+  { value: "06", label: "June" },
+  { value: "07", label: "July" },
+  { value: "08", label: "August" },
+  { value: "09", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
+];
+
 export default function ProjectsPage() {
   const { projects } = useProjects();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  const [filterYearMonth, setFilterYearMonth] = useState<string>('all');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
 
   const projectCounts = useMemo(() => {
@@ -41,45 +58,43 @@ export default function ProjectsPage() {
     return counts;
   }, [projects]);
 
-  const availableYearMonths = useMemo(() => {
-    if (!projects || projects.length === 0) return [{ value: 'all', label: 'All Time' }];
+  const yearOptions = useMemo(() => {
+    if (!projects || projects.length === 0) return [{ value: 'all', label: 'All Years' }];
     
-    const yearMonthsSet = new Set<string>();
+    const yearsSet = new Set<number>();
     projects.forEach(p => {
       if (p.createdAt) {
         try {
           const date = parseISO(p.createdAt);
           if (isValid(date)) {
-            const year = getYear(date);
-            const month = getMonth(date); // 0-indexed
-            yearMonthsSet.add(`${year}-${String(month + 1).padStart(2, '0')}`); // Format as YYYY-MM
+            yearsSet.add(getYear(date));
           }
-        } catch (e) {
-          // console.warn("Invalid createdAt date for project:", p.name, p.createdAt);
-        }
+        } catch (e) { /* ignore */ }
       }
     });
 
-    if (yearMonthsSet.size === 0) return [{ value: 'all', label: 'All Time' }];
+    if (yearsSet.size === 0) return [{ value: 'all', label: 'All Years' }];
 
-    const sortedYearMonths = Array.from(yearMonthsSet)
-      .sort((a, b) => b.localeCompare(a)) // Sorts "YYYY-MM" descending (most recent first)
-      .map(ym => {
-        const [yearStr, monthNumStr] = ym.split('-');
-        // Create a date object for formatting the label. Month is 0-indexed for Date constructor.
-        const dateForLabel = new Date(parseInt(yearStr), parseInt(monthNumStr) - 1); 
-        return {
-          value: ym,
-          label: format(dateForLabel, 'MMMM yyyy'),
-        };
-      });
+    const sortedYears = Array.from(yearsSet)
+      .sort((a, b) => b - a) // Sort years descending
+      .map(year => ({
+          value: year.toString(),
+          label: year.toString(),
+        }));
 
-    return [{ value: 'all', label: 'All Time' }, ...sortedYearMonths];
+    return [{ value: 'all', label: 'All Years' }, ...sortedYears];
   }, [projects]);
+
+  useEffect(() => {
+    if (selectedYear === 'all') {
+      setSelectedMonth('all');
+    }
+  }, [selectedYear]);
 
   const filteredProjects = useMemo(() => {
     let tempProjects = projects;
 
+    // Status Filter
     if (filterStatus !== 'all') {
       tempProjects = tempProjects.filter(p => {
         const status = p.status || ('Not Started' as ProjectStatus);
@@ -90,28 +105,32 @@ export default function ProjectsPage() {
       });
     }
 
-    if (filterYearMonth !== 'all') {
-      const [filterYearStr, filterMonthStr] = filterYearMonth.split('-');
-      const targetYear = parseInt(filterYearStr);
-      const targetMonth = parseInt(filterMonthStr) - 1; // Convert back to 0-indexed for comparison with getMonth()
-
+    // Date Filter
+    if (selectedYear !== 'all') {
+      const targetYearNum = parseInt(selectedYear);
       tempProjects = tempProjects.filter(p => {
-        if (p.createdAt) {
-          try {
-            const projectDate = parseISO(p.createdAt);
-            if (isValid(projectDate)) {
-              return getYear(projectDate) === targetYear && getMonth(projectDate) === targetMonth;
-            }
-            return false;
-          } catch (e) {
-            return false; 
+        if (!p.createdAt) return false;
+        try {
+          const projectDate = parseISO(p.createdAt);
+          if (!isValid(projectDate)) return false;
+          
+          if (getYear(projectDate) !== targetYearNum) return false;
+
+          // If a specific month is also selected (and year is not 'all'), filter by month too
+          if (selectedMonth !== 'all') {
+            const targetMonthNum = parseInt(selectedMonth) - 1; // 0-indexed for getMonth()
+            if (getMonth(projectDate) !== targetMonthNum) return false;
           }
+          return true;
+        } catch (e) { 
+          return false; 
         }
-        return false; 
       });
     }
+    // If selectedYear is 'all', selectedMonth is effectively ignored by the logic above.
+    
     return tempProjects;
-  }, [projects, filterStatus, filterYearMonth]);
+  }, [projects, filterStatus, selectedYear, selectedMonth]);
 
   const StatCard = ({ title, count, icon: Icon, statusFilter, currentFilter, onClick }: {
     title: string;
@@ -180,27 +199,39 @@ export default function ProjectsPage() {
         />
       </div>
       
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg bg-card">
-        <h2 className="text-md font-semibold text-card-foreground whitespace-nowrap">Filter by:</h2>
-        {availableYearMonths.length > 1 && ( // Show if more than just "All Time"
+      {projects.length > 0 && (
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-2 p-4 border rounded-lg bg-card flex-wrap">
+          <h2 className="text-md font-semibold text-card-foreground whitespace-nowrap mr-2">Filter by:</h2>
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-            <Select value={filterYearMonth} onValueChange={setFilterYearMonth}>
-              <SelectTrigger className="w-full sm:w-[220px]" id="year-month-filter">
-                <SelectValue placeholder="Select month & year" />
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-full sm:w-[160px]" id="year-filter">
+                <SelectValue placeholder="Select year" />
               </SelectTrigger>
               <SelectContent>
-                {availableYearMonths.map(ym => (
-                  <SelectItem key={ym.value} value={ym.value}>{ym.label}</SelectItem>
+                {yearOptions.map(yo => (
+                  <SelectItem key={yo.value} value={yo.value}>{yo.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        )}
-        {availableYearMonths.length <= 1 && projects.length > 0 && ( // Only "All Time" is present
-             <p className="text-sm text-muted-foreground">No specific months found for filtering.</p>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            <Select value={selectedMonth} onValueChange={setSelectedMonth} disabled={selectedYear === 'all'}>
+              <SelectTrigger className="w-full sm:w-[190px]" id="month-filter">
+                <SelectValue placeholder="Select month" />
+              </SelectTrigger>
+              <SelectContent>
+                {monthOptions.map(mo => (
+                  <SelectItem key={mo.value} value={mo.value} disabled={selectedYear === 'all' && mo.value !== 'all'}>
+                    {mo.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
 
       {projects.length === 0 ? (
          <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
@@ -220,7 +251,7 @@ export default function ProjectsPage() {
             .sort((a, b) => {
                 const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : 0;
                 const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : 0;
-                return dateB - dateA;
+                return dateB - dateA; // Sort descending by creation date
              })
             .map((project) => (
               <ProjectCard key={project.id} project={project} />
@@ -230,3 +261,4 @@ export default function ProjectsPage() {
     </>
   );
 }
+
