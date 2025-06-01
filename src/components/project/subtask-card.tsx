@@ -38,9 +38,9 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
   const renderDetail = (Icon: React.ElementType, value?: string | number, labelPrefix?: string) => {
     if (!value && typeof value !== 'number') return null;
     return (
-      <div className="flex items-start text-xs text-muted-foreground min-w-0"> {/* items-start for better alignment with multiline text */}
-        <Icon className="h-3 w-3 mr-1.5 flex-shrink-0 mt-0.5" /> {/* mt-0.5 for alignment with first line */}
-        <span className="break-words min-w-0">{labelPrefix}{value}</span> {/* break-words and min-w-0 for wrapping */}
+      <div className="flex items-start text-xs text-muted-foreground min-w-0">
+        <Icon className="h-3 w-3 mr-1.5 flex-shrink-0 mt-0.5" />
+        <span className="break-words min-w-0">{labelPrefix}{value}</span>
       </div>
     );
   };
@@ -53,18 +53,17 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
     >
       <CardHeader className="p-3">
         <div className="flex justify-between items-start">
-          {/* Ensure CardTitle can wrap by giving it flex-grow and min-w-0 if its parent is flex */}
-          <div className="flex-grow min-w-0"> 
+          <div className="flex-grow min-w-0 mr-2"> {/* Added mr-2 for spacing from grip */}
             <CardTitle className="text-base font-medium break-words"> 
               {subtask.name}
             </CardTitle>
           </div>
-          <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
+          <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         </div>
       </CardHeader>
       <CardContent className="p-3 pt-0">
         {subtask.description && (
-          <CardDescription className="text-xs mb-2 break-words min-w-0"> {/* break-words and min-w-0 for wrapping */}
+          <CardDescription className="text-xs mb-2 break-words min-w-0">
             {subtask.description}
           </CardDescription>
         )}
@@ -83,7 +82,7 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
             {renderDetail(Package, subtask.equipmentUsed, 'Equip: ')}
             {renderDetail(FileText, subtask.dataDeliverables, 'Deliver: ')}
         </div>
-        <div className="flex justify-end space-x-1 mt-1"> {/* Reduced space-x-1 for tighter buttons */}
+        <div className="flex justify-end space-x-1 mt-1">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label="Edit subtask">
             <Edit3 className="h-4 w-4" />
           </Button>
