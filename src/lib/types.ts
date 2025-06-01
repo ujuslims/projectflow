@@ -48,12 +48,13 @@ export interface Project {
   budget?: number;
   spent?: number; // This will now be a calculated sum of subtask costs
   outcomeNotes?: string;
+  expectedDeliverables?: string; // Added expected deliverables
   // Industry-specific fields for Project
   projectNumber?: string;
   clientContact?: string;
   siteAddress?: string;
   coordinateSystem?: string;
-  projectTypes?: string[]; 
+  projectTypes?: string[];
   userId?: string; // To associate project with a user
 }
 

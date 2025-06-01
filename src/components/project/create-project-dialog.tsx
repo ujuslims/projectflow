@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjects } from '@/contexts/projects-context';
 import { projectTypes } from '@/lib/project-templates';
-import { PlusCircle, PlayCircle, CalendarDays, Workflow } from 'lucide-react';
+import { PlusCircle, PlayCircle, CalendarDays, Workflow, FileArchive } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScrollArea } from '../ui/scroll-area';
 
@@ -26,6 +26,7 @@ export function CreateProjectDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [scopeOfWork, setScopeOfWork] = useState('');
+  const [expectedDeliverables, setExpectedDeliverables] = useState(''); // New state
   const [budget, setBudget] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
   const [clientContact, setClientContact] = useState('');
@@ -49,9 +50,10 @@ export function CreateProjectDialog() {
       alert("Project name is required.");
       return;
     }
-    const newProject = addProject({ 
-      name, 
+    const newProject = addProject({
+      name,
       description: scopeOfWork,
+      expectedDeliverables: expectedDeliverables || undefined, // Add to project data
       budget: budget ? parseFloat(budget) : undefined,
       projectNumber,
       clientContact,
@@ -59,11 +61,12 @@ export function CreateProjectDialog() {
       coordinateSystem,
       projectTypes: selectedProjectTypes,
       startDate: startDate ? new Date(startDate).toISOString() : undefined,
-      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined, 
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
     });
     // Reset form fields
     setName('');
     setScopeOfWork('');
+    setExpectedDeliverables(''); // Reset new field
     setBudget('');
     setProjectNumber('');
     setClientContact('');
@@ -185,6 +188,19 @@ export function CreateProjectDialog() {
                   className="col-span-1 sm:col-span-3"
                   rows={3}
                   placeholder="Detailed project scope and objectives..."
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
+                <Label htmlFor="expectedDeliverables" className="text-left sm:text-right pt-0 sm:pt-2 flex items-start">
+                   <FileArchive className="h-3.5 w-3.5 mr-1 mt-0.5 text-muted-foreground" /> Deliverables
+                </Label>
+                <Textarea
+                  id="expectedDeliverables"
+                  value={expectedDeliverables}
+                  onChange={(e) => setExpectedDeliverables(e.target.value)}
+                  className="col-span-1 sm:col-span-3"
+                  rows={2}
+                  placeholder="e.g., Final report, CAD drawings, GIS data..."
                 />
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">

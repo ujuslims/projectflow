@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Project, ProjectStatus, ProjectType as AppProjectType } from '@/lib/types'; 
+import type { Project, ProjectStatus, ProjectType as AppProjectType } from '@/lib/types';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,19 +10,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox"; 
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign } from 'lucide-react'; 
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign, FileArchive } from 'lucide-react';
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
 import { useProjects } from '@/contexts/projects-context';
-import { projectTypes as availableProjectTypes } from '@/lib/project-templates'; 
+import { projectTypes as availableProjectTypes } from '@/lib/project-templates';
 import { useCurrency } from '@/contexts/currency-context';
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomeNotes' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomeNotes' | 'expectedDeliverables' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
@@ -30,13 +30,14 @@ const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progres
 export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsCardProps) {
   const { toast } = useToast();
   const { markAllSubtasksAsDone, getCalculatedProjectSpent } = useProjects();
-  const { selectedCurrency } = useCurrency(); 
+  const { selectedCurrency } = useCurrency();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
   const [name, setName] = useState(project.name);
   const [scopeOfWork, setScopeOfWork] = useState(project.description);
+  const [expectedDeliverables, setExpectedDeliverables] = useState(project.expectedDeliverables || ''); // New state
   const [startDate, setStartDate] = useState(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
   const [dueDate, setDueDate] = useState(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
   const [budget, setBudget] = useState<string>(project.budget?.toString() || '');
@@ -56,6 +57,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   useEffect(() => {
     setName(project.name);
     setScopeOfWork(project.description);
+    setExpectedDeliverables(project.expectedDeliverables || ''); // Update new state
     setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
     setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
     setBudget(project.budget?.toString() || '');
@@ -75,7 +77,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const taskProgressPercentage = totalSubtasksCount > 0 ? Math.round((completedSubtasksCount / totalSubtasksCount) * 100) : 0;
 
   const budgetProgressPercentage = useMemo(() => {
-    const currentBudget = parseFloat(budget); 
+    const currentBudget = parseFloat(budget);
     if (currentBudget && currentBudget > 0) {
       return Math.round(((calculatedSpent || 0) / currentBudget) * 100);
     }
@@ -105,6 +107,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     onUpdateProject({
       name,
       description: scopeOfWork,
+      expectedDeliverables: expectedDeliverables || undefined, // Pass new field
       startDate: finalStartDate,
       dueDate: finalDueDate,
       budget: parsedBudget,
@@ -120,7 +123,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setIsLoading(false);
     toast({ title: "Success", description: "Project details updated." });
   };
-  
+
   const projectStatusIcons: Record<ProjectStatus, JSX.Element> = {
     'Not Started': <PackageOpen className="h-4 w-4" />,
     'Planning': <Edit className="h-4 w-4" />,
@@ -139,11 +142,11 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
   const renderField = (label: string, value: string | number | undefined | null | string[], Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholder?: string ) => {
     let displayValue: string | React.ReactNode = value || (isEditingMode ? '' : 'Not set');
-    if (label === "Amount Spent" || (label === "Total Budget" && typeof value === 'number')) { 
+    if (label === "Amount Spent" || (label === "Total Budget" && typeof value === 'number')) {
         displayValue = formatCurrency(value as number, selectedCurrency);
-    } else if (typeof value === 'number') { 
+    } else if (typeof value === 'number') {
         displayValue = value.toString();
-    } else if (Array.isArray(value)) { 
+    } else if (Array.isArray(value)) {
       if (value.length === 0) {
         displayValue = 'Not set';
       } else {
@@ -214,7 +217,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
           <CardContent className="space-y-6 pt-6">
             <TabsContent value="general" className="mt-0 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {renderField("Project Name", project.name, FileText, isEditing, 
+                {renderField("Project Name", project.name, FileText, isEditing,
                     <Input id="projectName" value={name} onChange={(e) => setName(e.target.value)} />
                 )}
                 {renderField("Status", project.status, Hourglass, isEditing,
@@ -228,7 +231,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                   </Select>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {renderField("Project Number", project.projectNumber, Hash, isEditing,
                     <Input id="projectNumber" value={projectNumber} onChange={(e) => setProjectNumber(e.target.value)} placeholder="e.g., P2024-001" />
@@ -255,10 +258,15 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                   <Input id="coordinateSystem" value={coordinateSystem} onChange={(e) => setCoordinateSystem(e.target.value)} placeholder="e.g., WGS84 / UTM Zone 12N" />
                 )}
               </div>
-             
+
               {renderField("Scope of Work", project.description, undefined, isEditing,
                 <Textarea id="projectScopeOfWork" value={scopeOfWork} onChange={(e) => setScopeOfWork(e.target.value)} rows={3} placeholder="Detailed project scope and objectives..." />,
                  "No scope of work provided."
+              )}
+
+              {renderField("Expected Deliverables", project.expectedDeliverables, FileArchive, isEditing,
+                <Textarea id="projectExpectedDeliverables" value={expectedDeliverables} onChange={(e) => setExpectedDeliverables(e.target.value)} rows={2} placeholder="e.g., Final report, CAD files..." />,
+                "No expected deliverables set."
               )}
 
               {renderField("Project Types", project.projectTypes, Workflow, isEditing,
@@ -282,7 +290,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
             <TabsContent value="budget" className="mt-0 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {renderField("Total Budget", project.budget, DollarSign, isEditing, 
+                {renderField("Total Budget", project.budget, DollarSign, isEditing,
                     <Input id="projectBudget" type="number" placeholder="e.g., 5000" value={budget} onChange={(e) => setBudget(e.target.value)} step="0.01"/>
                 )}
                 {renderField("Amount Spent", calculatedSpent, DollarSign, false)}
@@ -290,8 +298,8 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
               {(isEditing ? parseFloat(budget) : project.budget) && (isEditing ? parseFloat(budget) : project.budget)! > 0 && (
                 <div>
                   <Label>Budget Usage</Label>
-                  <Progress 
-                    value={Math.min(budgetProgressPercentage, 100)} 
+                  <Progress
+                    value={Math.min(budgetProgressPercentage, 100)}
                     className={cn(
                       "w-full mt-1 h-3",
                       budgetProgressPercentage > 100 ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"
@@ -342,10 +350,11 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
         </Tabs>
         {isEditing && (
           <CardFooter className="flex justify-end gap-2 mt-0 pt-0 pb-6 px-6">
-            <Button type="button" variant="outline" onClick={() => { 
-                setIsEditing(false); 
+            <Button type="button" variant="outline" onClick={() => {
+                setIsEditing(false);
                 setName(project.name);
                 setScopeOfWork(project.description);
+                setExpectedDeliverables(project.expectedDeliverables || ''); // Reset new field
                 setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
                 setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
                 setBudget(project.budget?.toString() || '');
@@ -367,4 +376,3 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     </Card>
   );
 }
-
