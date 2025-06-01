@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign, FileArchive } from 'lucide-react';
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign, FileArchive, ListPlus } from 'lucide-react';
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
@@ -22,7 +22,7 @@ import { useCurrency } from '@/contexts/currency-context';
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomeNotes' | 'expectedDeliverables' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomeNotes' | 'expectedDeliverables' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes' | 'customProjectTypes'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
@@ -37,7 +37,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
   const [name, setName] = useState(project.name);
   const [scopeOfWork, setScopeOfWork] = useState(project.description);
-  const [expectedDeliverables, setExpectedDeliverables] = useState(project.expectedDeliverables || ''); // New state
+  const [expectedDeliverables, setExpectedDeliverables] = useState(project.expectedDeliverables || '');
   const [startDate, setStartDate] = useState(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
   const [dueDate, setDueDate] = useState(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
   const [budget, setBudget] = useState<string>(project.budget?.toString() || '');
@@ -48,6 +48,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [siteAddress, setSiteAddress] = useState(project.siteAddress || '');
   const [coordinateSystem, setCoordinateSystem] = useState(project.coordinateSystem || '');
   const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>(project.projectTypes || []);
+  const [customProjectTypesInput, setCustomProjectTypesInput] = useState(project.customProjectTypes?.join(', ') || ''); // For editing custom types
 
   const calculatedSpent = useMemo(() => {
     return getCalculatedProjectSpent(project.id);
@@ -57,7 +58,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   useEffect(() => {
     setName(project.name);
     setScopeOfWork(project.description);
-    setExpectedDeliverables(project.expectedDeliverables || ''); // Update new state
+    setExpectedDeliverables(project.expectedDeliverables || '');
     setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
     setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
     setBudget(project.budget?.toString() || '');
@@ -68,6 +69,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setSiteAddress(project.siteAddress || '');
     setCoordinateSystem(project.coordinateSystem || '');
     setSelectedProjectTypes(project.projectTypes || []);
+    setCustomProjectTypesInput(project.customProjectTypes?.join(', ') || '');
   }, [project]);
 
   const completedSubtasksCount = useMemo(() => {
@@ -97,6 +99,8 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     const parsedBudget = budget ? parseFloat(budget) : undefined;
     const finalStartDate = startDate ? new Date(startDate).toISOString() : undefined;
     const finalDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
+    const customTypesArray = customProjectTypesInput.split(',').map(s => s.trim()).filter(s => s !== '');
+
 
     if (parsedBudget !== undefined && isNaN(parsedBudget)) {
         toast({ title: "Error", description: "Invalid budget amount.", variant: "destructive" });
@@ -107,7 +111,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     onUpdateProject({
       name,
       description: scopeOfWork,
-      expectedDeliverables: expectedDeliverables || undefined, // Pass new field
+      expectedDeliverables: expectedDeliverables || undefined,
       startDate: finalStartDate,
       dueDate: finalDueDate,
       budget: parsedBudget,
@@ -118,6 +122,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       siteAddress,
       coordinateSystem,
       projectTypes: selectedProjectTypes,
+      customProjectTypes: customTypesArray.length > 0 ? customTypesArray : undefined,
     });
     setIsEditing(false);
     setIsLoading(false);
@@ -144,6 +149,8 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     let displayValue: string | React.ReactNode = value || (isEditingMode ? '' : 'Not set');
     if (label === "Amount Spent" || (label === "Total Budget" && typeof value === 'number')) {
         displayValue = formatCurrency(value as number, selectedCurrency);
+    } else if (label === "Custom Project Types") {
+        displayValue = Array.isArray(value) && value.length > 0 ? value.join(', ') : 'Not set';
     } else if (typeof value === 'number') {
         displayValue = value.toString();
     } else if (Array.isArray(value)) {
@@ -285,6 +292,11 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                     ))}
                 </div>
               )}
+               {renderField("Custom Project Types", project.customProjectTypes, ListPlus, isEditing,
+                <Textarea id="customProjectTypes" value={customProjectTypesInput} onChange={(e) => setCustomProjectTypesInput(e.target.value)} rows={2} placeholder="e.g., Specialized Survey, Feasibility Study (comma-separated)" />,
+                "Not set"
+              )}
+
 
             </TabsContent>
 
@@ -354,7 +366,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 setIsEditing(false);
                 setName(project.name);
                 setScopeOfWork(project.description);
-                setExpectedDeliverables(project.expectedDeliverables || ''); // Reset new field
+                setExpectedDeliverables(project.expectedDeliverables || '');
                 setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
                 setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
                 setBudget(project.budget?.toString() || '');
@@ -365,6 +377,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 setSiteAddress(project.siteAddress || '');
                 setCoordinateSystem(project.coordinateSystem || '');
                 setSelectedProjectTypes(project.projectTypes || []);
+                setCustomProjectTypesInput(project.customProjectTypes?.join(', ') || '');
             }}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -376,3 +389,4 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     </Card>
   );
 }
+

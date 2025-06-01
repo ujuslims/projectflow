@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjects } from '@/contexts/projects-context';
 import { projectTypes } from '@/lib/project-templates';
-import { PlusCircle, PlayCircle, CalendarDays, Workflow, FileArchive } from 'lucide-react';
+import { PlusCircle, PlayCircle, CalendarDays, Workflow, FileArchive, ListPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScrollArea } from '../ui/scroll-area';
 
@@ -43,6 +43,7 @@ export function CreateProjectDialog({
   const [siteAddress, setSiteAddress] = useState('');
   const [coordinateSystem, setCoordinateSystem] = useState('');
   const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>([]);
+  const [customProjectTypesInput, setCustomProjectTypesInput] = useState(''); // New state for custom types
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const { addProject } = useProjects();
@@ -64,6 +65,7 @@ export function CreateProjectDialog({
     setSiteAddress('');
     setCoordinateSystem('');
     setSelectedProjectTypes([]);
+    setCustomProjectTypesInput(''); // Reset custom types input
     setStartDate('');
     setDueDate('');
   }
@@ -74,6 +76,8 @@ export function CreateProjectDialog({
       alert("Project name is required.");
       return;
     }
+    const customTypesArray = customProjectTypesInput.split(',').map(s => s.trim()).filter(s => s !== '');
+
     const newProject = addProject({
       name,
       description: scopeOfWork,
@@ -84,6 +88,7 @@ export function CreateProjectDialog({
       siteAddress,
       coordinateSystem,
       projectTypes: selectedProjectTypes,
+      customProjectTypes: customTypesArray.length > 0 ? customTypesArray : undefined, // Add custom types
       startDate: startDate ? new Date(startDate).toISOString() : undefined,
       dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
     });
@@ -99,7 +104,7 @@ export function CreateProjectDialog({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       setIsOpen(open);
-      if (!open) resetForm(); // Reset form if dialog is closed without submitting
+      if (!open) resetForm(); 
     }}>
       <DialogTrigger asChild>
         {triggerButtonProps ? (
@@ -126,7 +131,7 @@ export function CreateProjectDialog({
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
           <ScrollArea className="flex-grow min-h-0 pr-4">
-            <div className="grid gap-4 p-6">
+            <div className="grid gap-4 p-6 pr-3"> {/* Adjusted pr-3 from p-6 */}
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="name" className="text-left sm:text-right">
                   Name
@@ -159,6 +164,21 @@ export function CreateProjectDialog({
                   ))}
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-start sm:gap-4">
+                <Label htmlFor="customProjectTypes" className="text-left sm:text-right pt-0 sm:pt-2 flex items-start">
+                  <ListPlus className="h-3.5 w-3.5 mr-1 mt-0.5 text-muted-foreground" /> Other/Custom
+                </Label>
+                <Textarea
+                  id="customProjectTypes"
+                  value={customProjectTypesInput}
+                  onChange={(e) => setCustomProjectTypesInput(e.target.value)}
+                  className="col-span-1 sm:col-span-3"
+                  rows={2}
+                  placeholder="e.g., Specialized Survey, Feasibility Study (comma-separated)"
+                />
+              </div>
+
 
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="projectNumber" className="text-left sm:text-right">
@@ -286,3 +306,4 @@ export function CreateProjectDialog({
     </Dialog>
   );
 }
+

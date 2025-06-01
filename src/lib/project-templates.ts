@@ -15,6 +15,8 @@ export const projectTypes: ProjectType[] = [
   { id: 'construction-monitoring', name: 'Construction Site Monitoring' },
   { id: 'reality-scan', name: 'Reality Scan / As-Built' },
   { id: 'geospatial-analysis', name: 'Geospatial Analysis Project' },
+  { id: 'site-characterization', name: 'Site Characterization' },
+  { id: 'bathymetric-survey', name: 'Bathymetric Survey' },
 ];
 
 export const projectStageTemplates: Record<string, string[]> = {
@@ -56,4 +58,19 @@ export const projectStageTemplates: Record<string, string[]> = {
     'Visualization & Map Production',
     'Reporting & Dissemination',
   ],
+  'site-characterization': [
+    'Desktop Study & Planning',
+    'Field Investigation (Geophysics, Sampling)',
+    'Laboratory Testing & Analysis',
+    'Data Interpretation & Modeling',
+    'Reporting & Recommendations',
+  ],
+  'bathymetric-survey': [
+    'Survey Planning & Mobilization',
+    'Data Acquisition (Sonar, Lidar)',
+    'Data Processing & Cleaning',
+    'Chart Production & Analysis',
+    'Deliverables & QC',
+  ],
 };
+

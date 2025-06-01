@@ -55,6 +55,7 @@ export interface Project {
   siteAddress?: string;
   coordinateSystem?: string;
   projectTypes?: string[];
+  customProjectTypes?: string[]; // New field for user-defined types
   userId?: string; // To associate project with a user
 }
 
@@ -69,3 +70,4 @@ export interface LoginFormData {
   email: string;
   password: string;
 }
+

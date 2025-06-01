@@ -8,8 +8,8 @@ import { projectStageTemplates } from '@/lib/project-templates'; // Import templ
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables'>
-                      & { name: string; description?: string; expectedDeliverables?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; startDate?: string; dueDate?: string; }) => Project;
+  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes'>
+                      & { name: string; description?: string; expectedDeliverables?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; customProjectTypes?: string[]; startDate?: string; dueDate?: string; }) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
@@ -38,8 +38,8 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     return project.subtasks.reduce((sum, subtask) => sum + (subtask.cost || 0), 0);
   };
 
-  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables'>
-                                & { name: string; description?: string; expectedDeliverables?:string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; startDate?: string; dueDate?: string; }) => {
+  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomeNotes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes'>
+                                & { name: string; description?: string; expectedDeliverables?:string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; customProjectTypes?: string[]; startDate?: string; dueDate?: string; }) => {
 
     const initialStageNames = new Set<string>();
     if (projectData.projectTypes && projectData.projectTypes.length > 0) {
@@ -71,7 +71,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       stages: initialStages,
       subtasks: [],
       budget: projectData.budget || 0,
-      spent: 0, // Initial spent is 0, will be calculated
+      spent: 0, 
       status: 'Not Started' as ProjectStatus,
       outcomeNotes: '',
       expectedDeliverables: projectData.expectedDeliverables || '',
@@ -82,6 +82,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       siteAddress: projectData.siteAddress || '',
       coordinateSystem: projectData.coordinateSystem || '',
       projectTypes: projectData.projectTypes || [],
+      customProjectTypes: projectData.customProjectTypes || [], // Save custom types
     };
     setProjects(prevProjects => [...prevProjects, newProject]);
     return newProject;
@@ -99,7 +100,6 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setProjects(prevProjects =>
       prevProjects.map(p => {
         if (p.id === id) {
-          // Prevent direct update of 'spent' if it's in updates, as it's calculated
           const { spent, ...otherUpdates } = updates;
           return { ...p, ...otherUpdates };
         }
@@ -200,7 +200,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       prevProjects.map(p => {
         if (p.id === projectId) {
           const stageExists = p.stages.some(s => s.id === stageId);
-          if (!stageExists) return p; // Return project unchanged if stage doesn't exist
+          if (!stageExists) return p; 
 
           let currentOrderInStage = p.subtasks.filter(st => st.stageId === stageId).length;
 
@@ -316,7 +316,6 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  // Memoize projects to include calculated spent amount
   const projectsWithCalculatedSpent = useMemo(() => {
     return projects.map(p => ({
       ...p,
@@ -347,3 +346,4 @@ export const useProjects = () => {
   }
   return context;
 };
+
