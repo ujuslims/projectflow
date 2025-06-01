@@ -13,11 +13,12 @@ import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskCore } from '@/lib/types';
 import { organizeSubtasks, OrganizeSubtasksInput, OrganizeSubtasksOutput, suggestSubtasks, SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/flows';
-import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info, BarChartHorizontalBig, Printer } from 'lucide-react';
+import { AlertCircle, Brain, ListChecks, Loader2, Sparkles, Info, BarChartHorizontalBig, Printer, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from '@/lib/utils';
 // import { useAuth } from '@/contexts/auth-context'; // Protection handled by (protected)/layout.tsx
 
 export default function ProjectDetailPage() {
@@ -38,6 +39,7 @@ export default function ProjectDetailPage() {
   const [editingSubtask, setEditingSubtask] = useState<Subtask | null>(null);
   const [targetStageIdForNewSubtask, setTargetStageIdForNewSubtask] = useState<string | null>(null);
   const [draggedSubtaskId, setDraggedSubtaskId] = useState<string | null>(null);
+  const [isDraggingOverDeleteArea, setIsDraggingOverDeleteArea] = useState(false);
 
   const [isAISuggesting, setIsAISuggesting] = useState(false);
   const [isAIOrganizing, setIsAIOrganizing] = useState(false);
@@ -151,12 +153,16 @@ export default function ProjectDetailPage() {
     setDraggedSubtaskId(subtaskId);
   };
 
-  const onDragOver = (e: React.DragEvent<HTMLDivElement>, stageId: string) => {
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>, stageId?: string) => { // stageId is optional for general drag over (like trash bin)
     e.preventDefault(); 
+    if (stageId) { // If dragging over a stage, ensure delete area state is false
+      setIsDraggingOverDeleteArea(false);
+    }
   };
 
   const onDrop = (e: React.DragEvent<HTMLDivElement>, targetStageId: string) => {
     e.preventDefault();
+    setIsDraggingOverDeleteArea(false); 
     if (!project || !draggedSubtaskId) return;
 
     const subtaskId = e.dataTransfer.getData("subtaskId");
@@ -373,8 +379,8 @@ export default function ProjectDetailPage() {
                 key={stage.id}
                 stage={stage}
                 subtasks={project.subtasks.filter(st => st.stageId === stage.id)}
-                onDragOver={onDragOver}
-                onDrop={onDrop}
+                onDragOver={(e) => onDragOver(e, stage.id)}
+                onDrop={(e) => onDrop(e, stage.id)}
                 onSubtaskDragStart={onSubtaskDragStart}
                 onAddSubtask={() => openNewSubtaskDialog(stage.id)}
                 onEditSubtask={openEditSubtaskDialog}
@@ -393,6 +399,37 @@ export default function ProjectDetailPage() {
         dialogTitle={editingSubtask ? "Edit Subtask" : "Add New Subtask"}
         submitButtonText={editingSubtask ? "Save Changes" : "Add Subtask"}
       />
+
+      {draggedSubtaskId && (
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDraggingOverDeleteArea(true);
+          }}
+          onDragEnter={() => setIsDraggingOverDeleteArea(true)}
+          onDragLeave={() => setIsDraggingOverDeleteArea(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            const subtaskId = e.dataTransfer.getData("subtaskId");
+            if (subtaskId) {
+              handleDeleteSubtask(subtaskId); // Existing handleDeleteSubtask includes a window.confirm
+            }
+            setIsDraggingOverDeleteArea(false);
+            setDraggedSubtaskId(null); // Clear the dragged subtask ID
+          }}
+          className={cn(
+            "fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-xl transition-all duration-200 ease-in-out cursor-pointer flex items-center justify-center",
+            isDraggingOverDeleteArea 
+              ? "bg-destructive scale-110 ring-4 ring-destructive/30" 
+              : "bg-destructive/70 hover:bg-destructive"
+          )}
+          title="Drag subtask here to delete"
+        >
+          <Trash2 className="h-7 w-7 text-destructive-foreground" />
+        </div>
+      )}
     </>
   );
 }
+
+
