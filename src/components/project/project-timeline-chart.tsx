@@ -3,7 +3,7 @@
 
 import type { Subtask, SubtaskStatus } from '@/lib/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { format, parseISO, differenceInCalendarDays, addDays } from 'date-fns';
+import { format, parseISO, differenceInCalendarDays, addDays, isValid } from 'date-fns'; // Added isValid import
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
@@ -32,10 +32,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data: ChartDataItem = payload[0].payload; // The whole data item is in payload
     const originalSubtask = data.original;
-    const startDate = originalSubtask.startDate ? format(parseISO(originalSubtask.startDate), 'PP') : 'N/A';
-    const endDate = originalSubtask.endDate ? format(parseISO(originalSubtask.endDate), 'PP') : 'N/A';
+    const startDate = originalSubtask.startDate && isValid(parseISO(originalSubtask.startDate)) ? format(parseISO(originalSubtask.startDate), 'PP') : 'N/A';
+    const endDate = originalSubtask.endDate && isValid(parseISO(originalSubtask.endDate)) ? format(parseISO(originalSubtask.endDate), 'PP') : 'N/A';
     let durationText = 'N/A';
-    if (originalSubtask.startDate && originalSubtask.endDate) {
+    if (originalSubtask.startDate && originalSubtask.endDate && isValid(parseISO(originalSubtask.startDate)) && isValid(parseISO(originalSubtask.endDate))) {
       const diffDays = differenceInCalendarDays(parseISO(originalSubtask.endDate), parseISO(originalSubtask.startDate)) + 1;
       durationText = `${diffDays} day${diffDays === 1 ? '' : 's'}`;
     }
