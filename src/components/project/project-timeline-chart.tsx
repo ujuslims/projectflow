@@ -22,10 +22,10 @@ interface ChartDataItem {
 }
 
 const statusColors: Record<SubtaskStatus, string> = {
-  'To Do': '#A1A1AA', // Muted
-  'In Progress': '#008080', // Primary
-  'Done': '#6B8E23', // Accent
-  'Blocked': '#EF4444', // Destructive
+  'To Do': 'hsl(var(--muted))', 
+  'In Progress': 'hsl(var(--primary))', 
+  'Done': 'hsl(var(--accent))', 
+  'Blocked': 'hsl(var(--destructive))',
 };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -62,7 +62,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function ProjectTimelineChart({ subtasks, projectName }: ProjectTimelineChartProps) {
   const preparedData = useMemo(() => {
-    const validSubtasks = subtasks.filter(st => st.startDate && st.endDate);
+    const validSubtasks = subtasks.filter(st => st.startDate && st.endDate && isValid(parseISO(st.startDate)) && isValid(parseISO(st.endDate)));
     return validSubtasks.map(st => {
       const sDate = parseISO(st.startDate!);
       const eDate = parseISO(st.endDate!);
@@ -73,13 +73,13 @@ export function ProjectTimelineChart({ subtasks, projectName }: ProjectTimelineC
         status: st.status || 'To Do',
         original: st,
       };
-    });
+    }).sort((a,b) => a.range[0] - b.range[0]); // Sort by start date
   }, [subtasks]);
 
   const { projectMinTs, projectMaxTs } = useMemo(() => {
     if (preparedData.length === 0) {
       const now = new Date();
-      return { projectMinTs: now.getTime(), projectMaxTs: addDays(now, 7).getTime() };
+      return { projectMinTs: now.getTime(), projectMaxTs: addDays(now, 30).getTime() }; // Default to 30 days if no data
     }
     let minTs = preparedData[0].range[0];
     let maxTs = preparedData[0].range[1];
@@ -88,9 +88,14 @@ export function ProjectTimelineChart({ subtasks, projectName }: ProjectTimelineC
       if (item.range[1] > maxTs) maxTs = item.range[1];
     });
      // Add padding if range is too small
-    if (maxTs - minTs < 24 * 60 * 60 * 1000) { // Less than a day
-        maxTs = minTs + 7 * 24 * 60 * 60 * 1000; // Pad to 7 days
+    if (maxTs - minTs < 7 * 24 * 60 * 60 * 1000) { // Less than 7 days
+        minTs = addDays(new Date(minTs), -2).getTime(); // Add padding before
+        maxTs = addDays(new Date(maxTs), 5).getTime(); // Add padding after
+    } else {
+        minTs = addDays(new Date(minTs), -3).getTime(); // Add a bit more padding for larger ranges
+        maxTs = addDays(new Date(maxTs), 3).getTime();
     }
+
 
     return { projectMinTs: minTs, projectMaxTs: maxTs };
   }, [preparedData]);
@@ -103,27 +108,27 @@ export function ProjectTimelineChart({ subtasks, projectName }: ProjectTimelineC
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-10 text-muted-foreground">
           <AlertTriangle className="h-12 w-12 mb-4" />
-          <p className="text-lg font-medium">No Subtasks with Dates</p>
+          <p className="text-lg font-medium">No Subtasks with Valid Dates</p>
           <p>Please add subtasks with both start and end dates to view the timeline.</p>
         </CardContent>
       </Card>
     );
   }
 
-  const chartHeight = Math.max(300, preparedData.length * 45 + 100); // 45px per task + 100px for axes/margins
+  const chartHeight = Math.max(400, preparedData.length * 60 + 120); // Increased vertical space per task
 
   return (
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle>Project Timeline: {projectName}</CardTitle>
       </CardHeader>
-      <CardContent className="pr-8"> {/* Added padding for Y-axis labels */}
+      <CardContent className="pr-8">
         <ResponsiveContainer width="100%" height={chartHeight}>
           <BarChart
             layout="vertical"
             data={preparedData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-            barCategoryGap="20%" // Adds gap between bars of different categories (subtasks)
+            margin={{ top: 20, right: 30, left: 20, bottom: 30 }} // Increased bottom margin
+            barCategoryGap="30%" 
           >
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis
@@ -134,17 +139,19 @@ export function ProjectTimelineChart({ subtasks, projectName }: ProjectTimelineC
               stroke="hsl(var(--foreground))"
               tick={{ fontSize: 12 }}
               allowDuplicatedCategory={false}
+              minTickGap={50} // Ensure ticks are not too close
             />
             <YAxis
               type="category"
               dataKey="name"
-              width={180} // Increased width for longer task names
+              width={300} // Increased width for longer task names
               stroke="hsl(var(--foreground))"
-              tick={{ fontSize: 12, width: 170, textOverflow: 'ellipsis' }}
-              interval={0} // Show all task names
+              tick={{ fontSize: 12, width: 290, textOverflow: 'ellipsis' }} // Match tick width
+              interval={0} 
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}/>
-            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+            {/* Legend can be removed if colors are self-explanatory or add a custom one if needed */}
+            {/* <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} /> */}
             <Bar dataKey="range" minPointSize={5} legendType="none">
               {preparedData.map((entry) => (
                 <Cell key={`cell-${entry.id}`} fill={statusColors[entry.status] || statusColors['To Do']} />
