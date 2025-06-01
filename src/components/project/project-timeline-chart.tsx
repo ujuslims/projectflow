@@ -3,7 +3,7 @@
 
 import type { Subtask, SubtaskStatus } from '@/lib/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { format, parseISO, differenceInCalendarDays, addDays, isValid } from 'date-fns'; // Added isValid import
+import { format, parseISO, differenceInCalendarDays, addDays, isValid } from 'date-fns';
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
@@ -22,7 +22,7 @@ interface ChartDataItem {
 }
 
 const statusColors: Record<SubtaskStatus, string> = {
-  'To Do': 'hsl(var(--muted))', 
+  'To Do': 'hsl(var(--border))', // Changed from --muted to --border for better visibility
   'In Progress': 'hsl(var(--primary))', 
   'Done': 'hsl(var(--accent))', 
   'Blocked': 'hsl(var(--destructive))',
