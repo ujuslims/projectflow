@@ -5,7 +5,7 @@ import type { Subtask, SubtaskStatus } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Edit3, Trash2, CalendarPlus, CalendarMinus, CheckCircle, Hourglass, ListChecks, XCircle, Users, MapPin, UserCog, Package, FileText } from 'lucide-react'; // Added UserCog, Package, FileText
+import { GripVertical, Edit3, Trash2, CalendarPlus, CalendarMinus, CheckCircle, Hourglass, ListChecks, XCircle, Users, MapPin, UserCog, Package, FileText } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -38,9 +38,9 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
   const renderDetail = (Icon: React.ElementType, value?: string | number, labelPrefix?: string) => {
     if (!value && typeof value !== 'number') return null;
     return (
-      <div className="flex items-center text-xs text-muted-foreground">
-        <Icon className="h-3 w-3 mr-1.5 flex-shrink-0" />
-        <span>{labelPrefix}{value}</span>
+      <div className="flex items-start text-xs text-muted-foreground min-w-0"> {/* items-start for better alignment with multiline text */}
+        <Icon className="h-3 w-3 mr-1.5 flex-shrink-0 mt-0.5" /> {/* mt-0.5 for alignment with first line */}
+        <span className="break-words min-w-0">{labelPrefix}{value}</span> {/* break-words and min-w-0 for wrapping */}
       </div>
     );
   };
@@ -53,19 +53,24 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
     >
       <CardHeader className="p-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-base font-medium break-words w-[calc(100%-40px)] min-w-0">{subtask.name}</CardTitle>
-          <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+          {/* Ensure CardTitle can wrap by giving it flex-grow and min-w-0 if its parent is flex */}
+          <div className="flex-grow min-w-0"> 
+            <CardTitle className="text-base font-medium break-words"> 
+              {subtask.name}
+            </CardTitle>
+          </div>
+          <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
         </div>
       </CardHeader>
       <CardContent className="p-3 pt-0">
         {subtask.description && (
-          <CardDescription className="text-xs mb-2 break-words">
+          <CardDescription className="text-xs mb-2 break-words min-w-0"> {/* break-words and min-w-0 for wrapping */}
             {subtask.description}
           </CardDescription>
         )}
         <div className="flex flex-col gap-1.5 mb-2">
             {subtask.status && (
-            <Badge variant={badgeVariant} className={cn("text-xs w-fit", isDone && "bg-accent text-accent-foreground")}> {/* Changed Done to use accent */}
+            <Badge variant={badgeVariant} className={cn("text-xs w-fit", isDone && "bg-accent text-accent-foreground")}>
                 {statusIconMap[subtask.status]}
                 <span className="ml-1">{subtask.status}</span>
             </Badge>
@@ -75,14 +80,20 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
             {renderDetail(UserCog, subtask.fieldCrewLead, 'Lead: ')}
             {renderDetail(Users, subtask.assignedPersonnel, `${subtask.assignedPersonnel === 1 ? 'Person' : 'People'}: `)}
             {renderDetail(MapPin, subtask.location)}
-            {subtask.equipmentUsed && renderDetail(Package, subtask.equipmentUsed.length > 30 ? `${subtask.equipmentUsed.substring(0,27)}...` : subtask.equipmentUsed, 'Equip: ')}
-            {subtask.dataDeliverables && renderDetail(FileText, subtask.dataDeliverables.length > 30 ? `${subtask.dataDeliverables.substring(0,27)}...` : subtask.dataDeliverables, 'Deliver: ')}
+            {renderDetail(Package, subtask.equipmentUsed, 'Equip: ')}
+            {renderDetail(FileText, subtask.dataDeliverables, 'Deliver: ')}
         </div>
-        <div className="flex justify-end space-x-2 mt-1">
+        <div className="flex justify-end space-x-1 mt-1"> {/* Reduced space-x-1 for tighter buttons */}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label="Edit subtask">
             <Edit3 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={onDelete} aria-label="Delete subtask">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" 
+            onClick={onDelete} 
+            aria-label="Delete subtask"
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -90,3 +101,4 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
     </Card>
   );
 }
+
