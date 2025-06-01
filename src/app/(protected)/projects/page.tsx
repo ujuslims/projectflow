@@ -11,34 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { ProjectStatus } from '@/lib/types';
-import { getYear } from 'date-fns';
-// import { useAuth } from '@/contexts/auth-context'; // No longer needed here for protection
-// import { useRouter } from 'next/navigation'; // No longer needed here for protection
-// import { useEffect } from 'react'; // No longer needed here for protection
+import { getYear, getMonth, format, parseISO, isValid } from 'date-fns';
 
 type FilterStatus = 'all' | 'notStarted' | 'inProgress' | 'completed';
 
 export default function ProjectsPage() {
   const { projects } = useProjects();
-  // const { user, loading } = useAuth(); // Handled by (protected)/layout.tsx
-  // const router = useRouter(); // Handled by (protected)/layout.tsx
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  const [filterYear, setFilterYear] = useState<string>('all');
-
-  // useEffect(() => { // Protection logic moved to (protected)/layout.tsx
-  //   if (!loading && !user) {
-  //     router.replace('/auth/login');
-  //   }
-  // }, [user, loading, router]);
-
-  // if (loading || !user) { // Loading and initial auth check handled by (protected)/layout.tsx
-  //   return (
-  //     <div className="flex items-center justify-center min-h-screen">
-  //       <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  //       <p className="ml-2">Loading projects...</p>
-  //     </div>
-  //   );
-  // }
+  const [filterYearMonth, setFilterYearMonth] = useState<string>('all');
 
 
   const projectCounts = useMemo(() => {
@@ -61,19 +41,40 @@ export default function ProjectsPage() {
     return counts;
   }, [projects]);
 
-  const availableYears = useMemo(() => {
-    if (!projects || projects.length === 0) return [];
-    const years = new Set<string>();
+  const availableYearMonths = useMemo(() => {
+    if (!projects || projects.length === 0) return [{ value: 'all', label: 'All Time' }];
+    
+    const yearMonthsSet = new Set<string>();
     projects.forEach(p => {
       if (p.createdAt) {
         try {
-          years.add(getYear(new Date(p.createdAt)).toString());
+          const date = parseISO(p.createdAt);
+          if (isValid(date)) {
+            const year = getYear(date);
+            const month = getMonth(date); // 0-indexed
+            yearMonthsSet.add(`${year}-${String(month + 1).padStart(2, '0')}`); // Format as YYYY-MM
+          }
         } catch (e) {
-          // console.warn("Invalid date for project:", p.name, p.createdAt);
+          // console.warn("Invalid createdAt date for project:", p.name, p.createdAt);
         }
       }
     });
-    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a)); 
+
+    if (yearMonthsSet.size === 0) return [{ value: 'all', label: 'All Time' }];
+
+    const sortedYearMonths = Array.from(yearMonthsSet)
+      .sort((a, b) => b.localeCompare(a)) // Sorts "YYYY-MM" descending (most recent first)
+      .map(ym => {
+        const [yearStr, monthNumStr] = ym.split('-');
+        // Create a date object for formatting the label. Month is 0-indexed for Date constructor.
+        const dateForLabel = new Date(parseInt(yearStr), parseInt(monthNumStr) - 1); 
+        return {
+          value: ym,
+          label: format(dateForLabel, 'MMMM yyyy'),
+        };
+      });
+
+    return [{ value: 'all', label: 'All Time' }, ...sortedYearMonths];
   }, [projects]);
 
   const filteredProjects = useMemo(() => {
@@ -89,11 +90,19 @@ export default function ProjectsPage() {
       });
     }
 
-    if (filterYear !== 'all') {
+    if (filterYearMonth !== 'all') {
+      const [filterYearStr, filterMonthStr] = filterYearMonth.split('-');
+      const targetYear = parseInt(filterYearStr);
+      const targetMonth = parseInt(filterMonthStr) - 1; // Convert back to 0-indexed for comparison with getMonth()
+
       tempProjects = tempProjects.filter(p => {
         if (p.createdAt) {
           try {
-            return getYear(new Date(p.createdAt)).toString() === filterYear;
+            const projectDate = parseISO(p.createdAt);
+            if (isValid(projectDate)) {
+              return getYear(projectDate) === targetYear && getMonth(projectDate) === targetMonth;
+            }
+            return false;
           } catch (e) {
             return false; 
           }
@@ -102,7 +111,7 @@ export default function ProjectsPage() {
       });
     }
     return tempProjects;
-  }, [projects, filterStatus, filterYear]);
+  }, [projects, filterStatus, filterYearMonth]);
 
   const StatCard = ({ title, count, icon: Icon, statusFilter, currentFilter, onClick }: {
     title: string;
@@ -130,7 +139,6 @@ export default function ProjectsPage() {
   );
 
   return (
-    // AppLayout is now rendered by (protected)/layout.tsx
     <> 
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -174,24 +182,23 @@ export default function ProjectsPage() {
       
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg bg-card">
         <h2 className="text-md font-semibold text-card-foreground whitespace-nowrap">Filter by:</h2>
-        {availableYears.length > 0 && (
+        {availableYearMonths.length > 1 && ( // Show if more than just "All Time"
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-            <Select value={filterYear} onValueChange={setFilterYear}>
-              <SelectTrigger className="w-full sm:w-[180px]" id="year-filter">
-                <SelectValue placeholder="Select year" />
+            <Select value={filterYearMonth} onValueChange={setFilterYearMonth}>
+              <SelectTrigger className="w-full sm:w-[220px]" id="year-month-filter">
+                <SelectValue placeholder="Select month & year" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Years</SelectItem>
-                {availableYears.map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                {availableYearMonths.map(ym => (
+                  <SelectItem key={ym.value} value={ym.value}>{ym.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         )}
-        {availableYears.length === 0 && projects.length > 0 && (
-             <p className="text-sm text-muted-foreground">No specific years found for filtering.</p>
+        {availableYearMonths.length <= 1 && projects.length > 0 && ( // Only "All Time" is present
+             <p className="text-sm text-muted-foreground">No specific months found for filtering.</p>
         )}
       </div>
 
@@ -205,12 +212,16 @@ export default function ProjectsPage() {
         <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
           <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2 text-muted-foreground">No Projects Match Filters</h2>
-          <p className="text-muted-foreground mb-4">Try adjusting your status or year filter.</p>
+          <p className="text-muted-foreground mb-4">Try adjusting your status or date filter.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .sort((a, b) => {
+                const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : 0;
+                return dateB - dateA;
+             })
             .map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
