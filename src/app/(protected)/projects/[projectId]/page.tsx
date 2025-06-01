@@ -409,8 +409,12 @@ export default function ProjectDetailPage() {
             <p className="text-muted-foreground mb-4">Add stages above to start organizing your subtasks.</p>
         </div>
       ) : (
-        <ScrollArea className="w-full whitespace-nowrap pb-4">
-            <div className="flex gap-6">
+        <ScrollArea className="w-full whitespace-nowrap pb-4 relative">
+            <ScrollBar
+              orientation="horizontal"
+              className="absolute top-0 left-0 right-0 z-10 h-2.5"
+            />
+            <div className="flex gap-6 pt-4"> {/* Added pt-4 for top scrollbar space */}
             {sortedStages.map(stage => ( 
                 <StageColumn
                 key={stage.id}
