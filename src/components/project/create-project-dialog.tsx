@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, type FormEvent } from 'react';
-import { Button } from "@/components/ui/button";
+import { useState, type FormEvent, type ReactNode } from 'react';
+import { Button, type ButtonProps } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,17 @@ import { PlusCircle, PlayCircle, CalendarDays, Workflow, FileArchive } from 'luc
 import { useRouter } from 'next/navigation';
 import { ScrollArea } from '../ui/scroll-area';
 
-export function CreateProjectDialog() {
+interface CreateProjectDialogProps {
+  triggerButtonProps?: ButtonProps;
+  triggerButtonContent?: ReactNode;
+  onProjectCreated?: (projectId: string) => void;
+}
+
+export function CreateProjectDialog({ 
+  triggerButtonProps, 
+  triggerButtonContent,
+  onProjectCreated
+}: CreateProjectDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [scopeOfWork, setScopeOfWork] = useState('');
@@ -44,6 +54,20 @@ export function CreateProjectDialog() {
     );
   };
 
+  const resetForm = () => {
+    setName('');
+    setScopeOfWork('');
+    setExpectedDeliverables('');
+    setBudget('');
+    setProjectNumber('');
+    setClientContact('');
+    setSiteAddress('');
+    setCoordinateSystem('');
+    setSelectedProjectTypes([]);
+    setStartDate('');
+    setDueDate('');
+  }
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -63,28 +87,34 @@ export function CreateProjectDialog() {
       startDate: startDate ? new Date(startDate).toISOString() : undefined,
       dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
     });
-    // Reset form fields
-    setName('');
-    setScopeOfWork('');
-    setExpectedDeliverables('');
-    setBudget('');
-    setProjectNumber('');
-    setClientContact('');
-    setSiteAddress('');
-    setCoordinateSystem('');
-    setSelectedProjectTypes([]);
-    setStartDate('');
-    setDueDate('');
+    
+    resetForm();
     setIsOpen(false);
+    if (onProjectCreated) {
+      onProjectCreated(newProject.id);
+    }
     router.push(`/projects/${newProject.id}`);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open);
+      if (!open) resetForm(); // Reset form if dialog is closed without submitting
+    }}>
       <DialogTrigger asChild>
-        <Button variant="destructive">
-          <PlusCircle className="mr-2 h-4 w-4" /> New Project
-        </Button>
+        {triggerButtonProps ? (
+          <Button {...triggerButtonProps}>
+            {triggerButtonContent || (
+              <>
+                <PlusCircle className="mr-2 h-4 w-4" /> New Project
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button variant="destructive">
+            <PlusCircle className="mr-2 h-4 w-4" /> New Project
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-4 border-b">
@@ -245,7 +275,10 @@ export function CreateProjectDialog() {
           </ScrollArea>
 
           <DialogFooter className="p-6 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => {
+              setIsOpen(false);
+              resetForm();
+            }}>Cancel</Button>
             <Button type="submit">Save Project</Button>
           </DialogFooter>
         </form>

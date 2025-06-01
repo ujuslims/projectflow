@@ -1,8 +1,8 @@
 
 "use client";
 
-import { AppLayout } from '@/components/layout/app-layout'; // This will be provided by (protected)/layout.tsx
-import { CreateProjectDialog } from '@/components/project/create-project-dialog';
+// AppLayout is now rendered by (protected)/layout.tsx
+// CreateProjectDialog is now in AppLayout
 import { ProjectCard } from '@/components/project/project-card';
 import { useProjects } from '@/contexts/projects-context';
 import { FolderOpen, PackageOpen, Hourglass, CheckCircle2, Briefcase, CalendarIcon } from 'lucide-react';
@@ -134,18 +134,17 @@ export default function ProjectsPage() {
     // Date Filter
     if (selectedYear !== 'all') {
       const targetYearNum = parseInt(selectedYear);
-      const targetMonthNum = selectedMonth !== 'all' ? parseInt(selectedMonth) : undefined; // Month is 0-indexed from monthOptions
+      const targetMonthNum = selectedMonth !== 'all' ? parseInt(selectedMonth) : undefined;
 
       tempProjects = tempProjects.filter(p => {
-        const matchesStartDate = dateMatchesFilter(p.startDate, targetYearNum, targetMonthNum);
-        const matchesDueDate = dateMatchesFilter(p.dueDate, targetYearNum, targetMonthNum);
-        
-        // If the project has defined start or due dates, prioritize those for filtering.
+        // Prioritize startDate or dueDate if they exist
         if (p.startDate || p.dueDate) {
-          return matchesStartDate || matchesDueDate;
+            const matchesStartDate = dateMatchesFilter(p.startDate, targetYearNum, targetMonthNum);
+            const matchesDueDate = dateMatchesFilter(p.dueDate, targetYearNum, targetMonthNum);
+            return matchesStartDate || matchesDueDate;
         } else {
-          // If no start or due date, fall back to createdAt.
-          return dateMatchesFilter(p.createdAt, targetYearNum, targetMonthNum);
+            // Fallback to createdAt if no start or due date
+            return dateMatchesFilter(p.createdAt, targetYearNum, targetMonthNum);
         }
       });
     }
@@ -182,7 +181,7 @@ export default function ProjectsPage() {
     <> 
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <CreateProjectDialog />
+        {/* CreateProjectDialog has been moved to AppLayout */}
       </div>
 
       <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -258,7 +257,7 @@ export default function ProjectsPage() {
          <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
           <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2 text-muted-foreground">No Projects Yet</h2>
-          <p className="text-muted-foreground mb-4">Click on "New Project" to get started.</p>
+          <p className="text-muted-foreground mb-4">Click on "New Project" in the header to get started.</p>
         </div>
       ) : filteredProjects.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed border-muted-foreground/30 rounded-lg">
