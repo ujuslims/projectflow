@@ -275,43 +275,42 @@ export default function ProjectDetailPage() {
       let currentSubtasksMap = new Map(project.subtasks.map(st => [st.id, {...st}]));
       const finalSubtasks: Subtask[] = [];
       
-      Object.entries(result.categorizedSubtasks).forEach(([stageName, aiStageSubtasks]) => {
-        const targetStage = sortedStages.find(s => s.name === stageName); 
-        if (targetStage) {
-          aiStageSubtasks.forEach((aiSubtask, order) => {
-            // Try to find a subtask by name that hasn't been assigned yet
-            const matchedSubtaskEntry = Array.from(currentSubtasksMap.entries())
-                .find(([id, st]) => st.name === aiSubtask.name);
+      if (result.organizedStages) {
+        result.organizedStages.forEach(organizedStage => {
+          const stageName = organizedStage.stageName;
+          const aiStageSubtasks = organizedStage.subtasks;
+          const targetStage = sortedStages.find(s => s.name === stageName); 
 
-            if (matchedSubtaskEntry) {
-              const [matchedId, matchedSubtask] = matchedSubtaskEntry;
-              finalSubtasks.push({
-                ...matchedSubtask,
-                stageId: targetStage.id,
-                order, // Set order as determined by AI/iteration
-                description: aiSubtask.description || matchedSubtask.description, // Prefer AI description if available
-                endDate: aiSubtask.endDate || matchedSubtask.endDate, // Prefer AI end date
-              });
-              currentSubtasksMap.delete(matchedId); // Remove from map once assigned
-            }
-            // If AI suggests a subtask name not in currentSubtasksMap, it's ignored here.
-            // This flow assumes AI organizes *existing* tasks.
-          });
-        }
-      });
+          if (targetStage) {
+            aiStageSubtasks.forEach((aiSubtask, order) => {
+              const matchedSubtaskEntry = Array.from(currentSubtasksMap.entries())
+                  .find(([id, st]) => st.name === aiSubtask.name);
 
-      // Add any subtasks that were not matched/categorized by the AI back to their original stages or a default stage
-      // For simplicity, we'll re-sort them at the end.
+              if (matchedSubtaskEntry) {
+                const [matchedId, matchedSubtask] = matchedSubtaskEntry;
+                finalSubtasks.push({
+                  ...matchedSubtask,
+                  stageId: targetStage.id,
+                  order, 
+                  description: aiSubtask.description || matchedSubtask.description,
+                  endDate: aiSubtask.endDate || matchedSubtask.endDate, 
+                });
+                currentSubtasksMap.delete(matchedId); 
+              }
+            });
+          }
+        });
+      }
+
       Array.from(currentSubtasksMap.values()).forEach(unmatchedSubtask => {
           const originalStageSubtasksCount = finalSubtasks.filter(st => st.stageId === unmatchedSubtask.stageId).length;
           finalSubtasks.push({
               ...unmatchedSubtask,
-              order: originalStageSubtasksCount // Append to the end of its original stage
+              order: originalStageSubtasksCount 
           });
       });
       
       setProjectSubtasks(project.id, finalSubtasks);
-      // Update local state, ensuring correct sorting for display
       setProject(prev => prev ? {...prev, subtasks: finalSubtasks.sort((a,b) => (sortedStages.find(s=>s.id === a.stageId)?.order ?? 0) - (sortedStages.find(s=>s.id === b.stageId)?.order ?? 0) || a.order - b.order)} : null);
 
       toast({ title: "AI Organization Applied", description: "Subtasks have been organized." });
