@@ -61,14 +61,15 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
           <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         </div>
       </CardHeader>
-      <CardContent className="p-3 pt-0 flex-grow flex flex-col">
-        <div className="flex-grow min-h-0"> {/* Added min-h-0 for proper flex child sizing */}
+      <CardContent className="p-3 pt-0 flex-grow flex flex-col justify-between">
+        {/* Main content area (description, details) */}
+        <div className="min-h-0"> {/* This div allows content to shrink if necessary, preventing overflow */}
           {subtask.description && (
             <CardDescription className="text-xs mb-2 break-words min-w-0">
               {subtask.description}
             </CardDescription>
           )}
-          <div className="flex flex-col gap-1.5 mb-2">
+          <div className="flex flex-col gap-1.5 mb-2"> {/* Details list */}
             {subtask.status && (
             <Badge variant={badgeVariant} className={cn("text-xs w-fit", isDone && "bg-accent text-accent-foreground")}>
                 {statusIconMap[subtask.status]}
@@ -84,7 +85,8 @@ export function SubtaskCard({ subtask, onDragStart, onEdit, onDelete }: SubtaskC
             {renderDetail(FileText, subtask.dataDeliverables, 'Deliver: ')}
           </div>
         </div>
-        <div className="flex justify-end space-x-1 mt-1 flex-shrink-0">
+        {/* Action buttons, pushed to the bottom */}
+        <div className="flex justify-end space-x-1 mt-auto pt-2 flex-shrink-0">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label="Edit subtask">
             <Edit3 className="h-4 w-4" />
           </Button>
