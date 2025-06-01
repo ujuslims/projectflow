@@ -86,15 +86,7 @@ export function CreateProjectDialog() {
           <PlusCircle className="mr-2 h-4 w-4" /> New Project
         </Button>
       </DialogTrigger>
-      {/*
-        DialogContent:
-        - sm:max-w-md: Standard width constraint.
-        - max-h-[90vh]: Limits dialog height to 90% of viewport height.
-        - flex flex-col: Enables flex layout for direct children (Header, Form).
-        - p-0: Removes default padding, managed by children now.
-      */}
       <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0">
-        {/* DialogHeader: Fixed at the top of the DialogContent. */}
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
@@ -102,23 +94,10 @@ export function CreateProjectDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        {/*
-          Form:
-          - flex flex-col: Manages its children (ScrollArea, Footer) in a column.
-          - flex-grow: Takes available vertical space from DialogContent.
-          - overflow-hidden: Important for flex-grow to work correctly with ScrollArea.
-        */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
-          {/*
-            ScrollArea:
-            - flex-grow: Takes available space within the form for scrolling content.
-            - min-h-0: Allows the ScrollArea to shrink if needed.
-            - pr-1: To avoid content touching the edge of the scrollbar track if it's on the right.
-          */}
-          <ScrollArea className="flex-grow min-h-0 pr-1">
-            {/* Content wrapper for padding inside the scrollable area */}
-            <div className="p-6">
-              <div className="grid gap-4"> {/* Removed py-4, p-6 on parent handles spacing */}
+          <ScrollArea className="flex-grow min-h-0 pr-4"> {/* Added pr-4 to ScrollArea itself */}
+            <div className="p-6"> {/* Symmetrical padding for content */}
+              <div className="grid gap-4">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                   <Label htmlFor="name" className="text-left sm:text-right">
                     Name
@@ -267,7 +246,6 @@ export function CreateProjectDialog() {
             </div>
           </ScrollArea>
 
-          {/* DialogFooter: Fixed at the bottom of the form. */}
           <DialogFooter className="p-6 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
             <Button type="submit">Save Project</Button>
@@ -277,3 +255,5 @@ export function CreateProjectDialog() {
     </Dialog>
   );
 }
+
+    
