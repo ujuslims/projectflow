@@ -308,6 +308,9 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
               <TabsTrigger value="general" className="rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
                 <Info className="mr-2 h-4 w-4"/>General
               </TabsTrigger>
+              <TabsTrigger value="resources" className="rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <Wrench className="mr-2 h-4 w-4"/>Resources
+              </TabsTrigger>
               <TabsTrigger value="budget" className="rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
                 <Banknote className="mr-2 h-4 w-4"/>Budget
               </TabsTrigger>
@@ -316,9 +319,6 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
               </TabsTrigger>
               <TabsTrigger value="outcomes" className="rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
                 <Award className="mr-2 h-4 w-4"/>Outcomes
-              </TabsTrigger>
-              <TabsTrigger value="resources" className="rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
-                <Wrench className="mr-2 h-4 w-4"/>Resources
               </TabsTrigger>
             </TabsList>
           </CardContent>
@@ -398,69 +398,6 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 <Textarea id="customProjectTypes" value={customProjectTypesInput} onChange={(e) => setCustomProjectTypesInput(e.target.value)} rows={2} placeholder="e.g., Specialized Survey, Feasibility Study (comma-separated)" />,
                 "Not set"
               )}
-
-
-            </TabsContent>
-
-            <TabsContent value="budget" className="mt-0 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {renderField("Total Budget", project.budget, DollarSign, isEditing,
-                    <Input id="projectBudget" type="number" placeholder="e.g., 5000" value={budget} onChange={(e) => setBudget(e.target.value)} step="0.01"/>
-                )}
-                {renderField("Amount Spent", calculatedSpent, DollarSign, false)}
-              </div>
-              {(isEditing ? parseFloat(budget) : project.budget) && (isEditing ? parseFloat(budget) : project.budget)! > 0 && (
-                <div>
-                  <Label>Budget Usage</Label>
-                  <Progress
-                    value={Math.min(budgetProgressPercentage, 100)}
-                    className={cn(
-                      "w-full mt-1 h-3",
-                      budgetProgressPercentage > 100 ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"
-                    )}
-                  />
-                  <p className={cn(
-                      "text-sm text-muted-foreground mt-1",
-                      budgetProgressPercentage > 100 && "text-destructive font-medium"
-                    )}
-                  >
-                    {getBudgetUsageText()}
-                  </p>
-                </div>
-              )}
-              {(!(isEditing ? parseFloat(budget) : project.budget) || (isEditing ? parseFloat(budget) : project.budget) === 0) && (
-                  <p className="text-sm text-muted-foreground">No budget set for this project.</p>
-              )}
-            </TabsContent>
-
-            <TabsContent value="progress" className="mt-0 space-y-4">
-              <div>
-                <Label>Overall Task Progress</Label>
-                <Progress value={taskProgressPercentage} className="w-full mt-1 h-3" />
-                <p className="text-sm text-muted-foreground mt-1">
-                  {completedSubtasksCount} of {totalSubtasksCount} tasks completed ({taskProgressPercentage}%).
-                </p>
-              </div>
-              {project.status === 'Completed' && !isEditing && (
-                <div className="pt-4">
-                  <Button type="button" variant="outline" onClick={handleMarkAllTasksDone}>
-                    <CheckSquare className="mr-2 h-4 w-4" />
-                    Finalize: Mark all tasks as Done
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    This action will set the status of all subtasks for this project to 'Done'.
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="outcomes" className="mt-0 space-y-6">
-              {renderOutcomeField("Key Findings", project.outcomes?.keyFindings, Lightbulb, isEditing, keyFindings, setKeyFindings, "What were the primary discoveries or results?")}
-              {renderOutcomeField("Conclusions", project.outcomes?.conclusions, Target, isEditing, conclusions, setConclusions, "What interpretations or judgments were made based on the findings?")}
-              {renderOutcomeField("Recommendations", project.outcomes?.recommendations, TrendingUp, isEditing, recommendations, setRecommendations, "What future actions or suggestions arise from this project?")}
-              {renderOutcomeField("Achievements", project.outcomes?.achievements, Star, isEditing, achievements, setAchievements, "What were the notable successes or positive outcomes?")}
-              {renderOutcomeField("Challenges", project.outcomes?.challenges, AlertTriangle, isEditing, challenges, setChallenges, "What obstacles or difficulties were encountered?")}
-              {renderOutcomeField("Lessons Learned", project.outcomes?.lessonsLearned, BookOpen, isEditing, lessonsLearned, setLessonsLearned, "What new knowledge or insights were gained?")}
             </TabsContent>
 
             <TabsContent value="resources" className="mt-0 space-y-6">
@@ -602,6 +539,66 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
               )}
             </TabsContent>
 
+            <TabsContent value="budget" className="mt-0 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {renderField("Total Budget", project.budget, DollarSign, isEditing,
+                    <Input id="projectBudget" type="number" placeholder="e.g., 5000" value={budget} onChange={(e) => setBudget(e.target.value)} step="0.01"/>
+                )}
+                {renderField("Amount Spent", calculatedSpent, DollarSign, false)}
+              </div>
+              {(isEditing ? parseFloat(budget) : project.budget) && (isEditing ? parseFloat(budget) : project.budget)! > 0 && (
+                <div>
+                  <Label>Budget Usage</Label>
+                  <Progress
+                    value={Math.min(budgetProgressPercentage, 100)}
+                    className={cn(
+                      "w-full mt-1 h-3",
+                      budgetProgressPercentage > 100 ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"
+                    )}
+                  />
+                  <p className={cn(
+                      "text-sm text-muted-foreground mt-1",
+                      budgetProgressPercentage > 100 && "text-destructive font-medium"
+                    )}
+                  >
+                    {getBudgetUsageText()}
+                  </p>
+                </div>
+              )}
+              {(!(isEditing ? parseFloat(budget) : project.budget) || (isEditing ? parseFloat(budget) : project.budget) === 0) && (
+                  <p className="text-sm text-muted-foreground">No budget set for this project.</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="progress" className="mt-0 space-y-4">
+              <div>
+                <Label>Overall Task Progress</Label>
+                <Progress value={taskProgressPercentage} className="w-full mt-1 h-3" />
+                <p className="text-sm text-muted-foreground mt-1">
+                  {completedSubtasksCount} of {totalSubtasksCount} tasks completed ({taskProgressPercentage}%).
+                </p>
+              </div>
+              {project.status === 'Completed' && !isEditing && (
+                <div className="pt-4">
+                  <Button type="button" variant="outline" onClick={handleMarkAllTasksDone}>
+                    <CheckSquare className="mr-2 h-4 w-4" />
+                    Finalize: Mark all tasks as Done
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    This action will set the status of all subtasks for this project to 'Done'.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="outcomes" className="mt-0 space-y-6">
+              {renderOutcomeField("Key Findings", project.outcomes?.keyFindings, Lightbulb, isEditing, keyFindings, setKeyFindings, "What were the primary discoveries or results?")}
+              {renderOutcomeField("Conclusions", project.outcomes?.conclusions, Target, isEditing, conclusions, setConclusions, "What interpretations or judgments were made based on the findings?")}
+              {renderOutcomeField("Recommendations", project.outcomes?.recommendations, TrendingUp, isEditing, recommendations, setRecommendations, "What future actions or suggestions arise from this project?")}
+              {renderOutcomeField("Achievements", project.outcomes?.achievements, Star, isEditing, achievements, setAchievements, "What were the notable successes or positive outcomes?")}
+              {renderOutcomeField("Challenges", project.outcomes?.challenges, AlertTriangle, isEditing, challenges, setChallenges, "What obstacles or difficulties were encountered?")}
+              {renderOutcomeField("Lessons Learned", project.outcomes?.lessonsLearned, BookOpen, isEditing, lessonsLearned, setLessonsLearned, "What new knowledge or insights were gained?")}
+            </TabsContent>
           </CardContent>
         </Tabs>
         {isEditing && (
