@@ -9,7 +9,7 @@ import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskStatus, ProjectStatus, ProjectOutcomes } from '@/lib/types';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle, Loader2, Lightbulb, Target, TrendingUp, Star, AlertTriangle, BookOpen, Brain } from 'lucide-react';
+import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2 as LucideUsers2, UserCog, PlayCircle, Loader2, Lightbulb, Target, TrendingUp, Star, AlertTriangle, BookOpen, Brain, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -241,6 +241,14 @@ export default function ProjectSummaryPage() {
             <CardContent><p className="text-sm whitespace-pre-wrap">{project.description}</p></CardContent>
           </Card>
         )}
+        
+        {project.expectedDeliverables && (
+          <Card className="print:shadow-none print:border-0">
+            <CardHeader><CardTitle className="text-xl">Expected Deliverables</CardTitle></CardHeader>
+            <CardContent><p className="text-sm whitespace-pre-wrap">{project.expectedDeliverables}</p></CardContent>
+          </Card>
+        )}
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="print:shadow-none print:border-0">
@@ -295,7 +303,7 @@ export default function ProjectSummaryPage() {
                         <span><strong>Start:</strong> {subtask.startDate && isValid(parseISO(subtask.startDate)) ? formatDate(parseISO(subtask.startDate), 'PP') : 'N/A'}</span>
                         <span><strong>End:</strong> {subtask.endDate && isValid(parseISO(subtask.endDate)) ? formatDate(parseISO(subtask.endDate), 'PP') : 'N/A'}</span>
                         {subtask.fieldCrewLead && <span><UserCog className="inline h-3 w-3 mr-1"/><strong>Lead:</strong> {subtask.fieldCrewLead}</span>}
-                        {subtask.assignedPersonnel !== undefined && <span><Users2 className="inline h-3 w-3 mr-1"/><strong>Personnel:</strong> {subtask.assignedPersonnel}</span>}
+                        {subtask.assignedPersonnel !== undefined && <span><LucideUsers2 className="inline h-3 w-3 mr-1"/><strong>Personnel:</strong> {subtask.assignedPersonnel}</span>}
                       </div>
                     </li>
                   ))}
@@ -307,6 +315,29 @@ export default function ProjectSummaryPage() {
             )) : <p className="text-sm text-muted-foreground">No stages defined for this project.</p>}
           </CardContent>
         </Card>
+        
+        {(project.equipmentList && project.equipmentList.length > 0) && (
+            <Card className="print:shadow-none print:border-0">
+                <CardHeader><CardTitle className="text-xl flex items-center"><Wrench className="mr-2 h-5 w-5 text-primary"/>Equipment List</CardTitle></CardHeader>
+                <CardContent>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                        {project.equipmentList.map((item, index) => <li key={index}>{item}</li>)}
+                    </ul>
+                </CardContent>
+            </Card>
+        )}
+
+        {(project.personnelList && project.personnelList.length > 0) && (
+            <Card className="print:shadow-none print:border-0">
+                <CardHeader><CardTitle className="text-xl flex items-center"><LucideUsers2 className="mr-2 h-5 w-5 text-primary"/>Personnel List</CardTitle></CardHeader>
+                <CardContent>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                        {project.personnelList.map((item, index) => <li key={index}>{item}</li>)}
+                    </ul>
+                </CardContent>
+            </Card>
+        )}
+
 
         {outcomeSections.length > 0 && (
           <Card className="print:shadow-none print:border-0">
@@ -355,3 +386,4 @@ export default function ProjectSummaryPage() {
     </>
   );
 }
+

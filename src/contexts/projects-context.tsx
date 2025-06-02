@@ -8,7 +8,7 @@ import { projectStageTemplates } from '@/lib/project-templates'; // Import templ
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes'>
+  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes' | 'equipmentList' | 'personnelList'>
                       & { name: string; description?: string; expectedDeliverables?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; customProjectTypes?: string[]; startDate?: string; dueDate?: string; }) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
@@ -40,7 +40,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     return project.subtasks.reduce((sum, subtask) => sum + (subtask.cost || 0), 0);
   };
 
-  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes'>
+  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes' | 'equipmentList' | 'personnelList'>
                                 & { name: string; description?: string; expectedDeliverables?:string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; customProjectTypes?: string[]; startDate?: string; dueDate?: string; }) => {
 
     const initialStageNames = new Set<string>();
@@ -75,7 +75,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       budget: projectData.budget || 0,
       spent: 0, 
       status: 'Not Started' as ProjectStatus,
-      outcomes: {}, // Initialize outcomes as an empty object
+      outcomes: {},
       expectedDeliverables: projectData.expectedDeliverables || '',
       startDate: projectData.startDate,
       dueDate: projectData.dueDate,
@@ -85,6 +85,8 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       coordinateSystem: projectData.coordinateSystem || '',
       projectTypes: projectData.projectTypes || [],
       customProjectTypes: projectData.customProjectTypes || [],
+      equipmentList: [], // Initialize new field
+      personnelList: [], // Initialize new field
     };
     setProjects(prevProjects => [...prevProjects, newProject]);
     return newProject;
@@ -102,7 +104,6 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setProjects(prevProjects =>
       prevProjects.map(p => {
         if (p.id === id) {
-          // Special handling for outcomes to merge deeply
           const newUpdates = { ...updates };
           if (updates.outcomes && p.outcomes) {
             newUpdates.outcomes = { ...p.outcomes, ...updates.outcomes };
@@ -110,7 +111,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
             newUpdates.outcomes = updates.outcomes;
           }
           
-          const { spent, ...otherUpdates } = newUpdates; // spent is calculated, don't store it directly from updates
+          const { spent, ...otherUpdates } = newUpdates;
           return { ...p, ...otherUpdates };
         }
         return p;
@@ -404,3 +405,4 @@ export const useProjects = () => {
   }
   return context;
 };
+

@@ -12,8 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign, FileArchive, ListPlus, Lightbulb, Target, Star, AlertTriangle, BookOpen, TrendingUp } from 'lucide-react';
-import { useState, useEffect, useMemo, type FormEvent } from 'react';
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign, FileArchive, ListPlus, Lightbulb, Target, Star, AlertTriangle, BookOpen, TrendingUp, Wrench, Users2, Trash2, PlusCircle } from 'lucide-react';
+import { useState, useEffect, useMemo, type FormEvent, useCallback } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
 import { useProjects } from '@/contexts/projects-context';
@@ -22,7 +22,7 @@ import { useCurrency } from '@/contexts/currency-context';
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomes' | 'expectedDeliverables' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes' | 'customProjectTypes'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomes' | 'expectedDeliverables' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes' | 'customProjectTypes' | 'equipmentList' | 'personnelList'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
@@ -58,13 +58,19 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [challenges, setChallenges] = useState(project.outcomes?.challenges || '');
   const [lessonsLearned, setLessonsLearned] = useState(project.outcomes?.lessonsLearned || '');
 
+  // Resources Fields
+  const [currentEquipmentList, setCurrentEquipmentList] = useState<string[]>(project.equipmentList || []);
+  const [newEquipmentItem, setNewEquipmentItem] = useState('');
+  const [currentPersonnelList, setCurrentPersonnelList] = useState<string[]>(project.personnelList || []);
+  const [newPersonnelItem, setNewPersonnelItem] = useState('');
+
 
   const calculatedSpent = useMemo(() => {
     return getCalculatedProjectSpent(project.id);
   }, [project.id, project.subtasks, getCalculatedProjectSpent]);
 
 
-  useEffect(() => {
+  const resetFormFields = useCallback(() => {
     setName(project.name);
     setScopeOfWork(project.description);
     setExpectedDeliverables(project.expectedDeliverables || '');
@@ -85,7 +91,16 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setAchievements(project.outcomes?.achievements || '');
     setChallenges(project.outcomes?.challenges || '');
     setLessonsLearned(project.outcomes?.lessonsLearned || '');
+
+    setCurrentEquipmentList(project.equipmentList || []);
+    setNewEquipmentItem('');
+    setCurrentPersonnelList(project.personnelList || []);
+    setNewPersonnelItem('');
   }, [project]);
+
+  useEffect(() => {
+    resetFormFields();
+  }, [project, resetFormFields]);
 
   const completedSubtasksCount = useMemo(() => {
     return project.subtasks.filter(st => st.status === 'Done').length;
@@ -107,6 +122,29 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       prev.includes(typeId) ? prev.filter(id => id !== typeId) : [...prev, typeId]
     );
   };
+
+  const handleAddEquipmentItem = () => {
+    if (newEquipmentItem.trim()) {
+      setCurrentEquipmentList(prev => [...prev, newEquipmentItem.trim()]);
+      setNewEquipmentItem('');
+    }
+  };
+
+  const handleDeleteEquipmentItem = (itemIndex: number) => {
+    setCurrentEquipmentList(prev => prev.filter((_, index) => index !== itemIndex));
+  };
+
+  const handleAddPersonnelItem = () => {
+    if (newPersonnelItem.trim()) {
+      setCurrentPersonnelList(prev => [...prev, newPersonnelItem.trim()]);
+      setNewPersonnelItem('');
+    }
+  };
+
+  const handleDeletePersonnelItem = (itemIndex: number) => {
+    setCurrentPersonnelList(prev => prev.filter((_, index) => index !== itemIndex));
+  };
+
 
   const handleSave = (e: FormEvent) => {
     e.preventDefault();
@@ -146,6 +184,8 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       coordinateSystem,
       projectTypes: selectedProjectTypes,
       customProjectTypes: customTypesArray.length > 0 ? customTypesArray : undefined,
+      equipmentList: currentEquipmentList.length > 0 ? currentEquipmentList : undefined,
+      personnelList: currentPersonnelList.length > 0 ? currentPersonnelList : undefined,
     });
     setIsEditing(false);
     setIsLoading(false);
@@ -254,7 +294,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       <form onSubmit={handleSave}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <CardContent className="p-0">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-0 rounded-none border-b">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-0 rounded-none border-b">
               <TabsTrigger value="general" className="rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
                 <Info className="mr-2 h-4 w-4"/>General
               </TabsTrigger>
@@ -266,6 +306,9 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
               </TabsTrigger>
               <TabsTrigger value="outcomes" className="rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
                 <Award className="mr-2 h-4 w-4"/>Outcomes
+              </TabsTrigger>
+              <TabsTrigger value="resources" className="rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <Wrench className="mr-2 h-4 w-4"/>Resources
               </TabsTrigger>
             </TabsList>
           </CardContent>
@@ -409,33 +452,127 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
               {renderOutcomeField("Challenges", project.outcomes?.challenges, AlertTriangle, isEditing, challenges, setChallenges, "What obstacles or difficulties were encountered?")}
               {renderOutcomeField("Lessons Learned", project.outcomes?.lessonsLearned, BookOpen, isEditing, lessonsLearned, setLessonsLearned, "What new knowledge or insights were gained?")}
             </TabsContent>
+
+            <TabsContent value="resources" className="mt-0 space-y-6">
+              {isEditing ? (
+                <>
+                  {/* Equipment List Management */}
+                  <div>
+                    <Label htmlFor="equipment-item" className="text-base font-semibold mb-1 flex items-center">
+                      <Wrench className="mr-2 h-5 w-5 text-primary" /> Equipment List
+                    </Label>
+                    <div className="flex gap-2 mb-2">
+                      <Input
+                        id="equipment-item"
+                        value={newEquipmentItem}
+                        onChange={(e) => setNewEquipmentItem(e.target.value)}
+                        placeholder="Enter equipment name"
+                        className="text-sm"
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEquipmentItem();}}}
+                      />
+                      <Button type="button" onClick={handleAddEquipmentItem} variant="secondary" size="sm">
+                        <PlusCircle className="mr-2 h-4 w-4"/>Add
+                      </Button>
+                    </div>
+                    {currentEquipmentList.length > 0 ? (
+                      <ul className="space-y-1 text-sm list-disc pl-5 bg-muted/30 p-3 rounded-md">
+                        {currentEquipmentList.map((item, index) => (
+                          <li key={index} className="flex justify-between items-center">
+                            <span>{item}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteEquipmentItem(index)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No equipment added yet.</p>
+                    )}
+                  </div>
+
+                  {/* Personnel List Management */}
+                  <div>
+                    <Label htmlFor="personnel-item" className="text-base font-semibold mb-1 flex items-center">
+                      <Users2 className="mr-2 h-5 w-5 text-primary" /> Personnel List
+                    </Label>
+                    <div className="flex gap-2 mb-2">
+                      <Input
+                        id="personnel-item"
+                        value={newPersonnelItem}
+                        onChange={(e) => setNewPersonnelItem(e.target.value)}
+                        placeholder="Enter personnel name/role"
+                        className="text-sm"
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddPersonnelItem();}}}
+                      />
+                      <Button type="button" onClick={handleAddPersonnelItem} variant="secondary" size="sm">
+                         <PlusCircle className="mr-2 h-4 w-4"/>Add
+                      </Button>
+                    </div>
+                     {currentPersonnelList.length > 0 ? (
+                      <ul className="space-y-1 text-sm list-disc pl-5 bg-muted/30 p-3 rounded-md">
+                        {currentPersonnelList.map((item, index) => (
+                          <li key={index} className="flex justify-between items-center">
+                            <span>{item}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-destructive hover:text-destructive"
+                              onClick={() => handleDeletePersonnelItem(index)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No personnel added yet.</p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                 <>
+                  <div>
+                    <h3 className="text-base font-semibold mb-1 flex items-center">
+                       <Wrench className="mr-2 h-5 w-5 text-primary" /> Equipment List
+                    </h3>
+                    {(project.equipmentList && project.equipmentList.length > 0) ? (
+                        <ul className="text-sm list-disc pl-7 space-y-0.5 bg-muted/30 p-3 rounded-md">
+                            {project.equipmentList.map((item, index) => <li key={index}>{item}</li>)}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No equipment listed for this project.</p>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold mb-1 flex items-center">
+                       <Users2 className="mr-2 h-5 w-5 text-primary" /> Personnel List
+                    </h3>
+                    {(project.personnelList && project.personnelList.length > 0) ? (
+                        <ul className="text-sm list-disc pl-7 space-y-0.5 bg-muted/30 p-3 rounded-md">
+                            {project.personnelList.map((item, index) => <li key={index}>{item}</li>)}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No personnel listed for this project.</p>
+                    )}
+                  </div>
+                </>
+              )}
+            </TabsContent>
+
           </CardContent>
         </Tabs>
         {isEditing && (
           <CardFooter className="flex justify-end gap-2 mt-0 pt-0 pb-6 px-6">
             <Button type="button" variant="outline" onClick={() => {
                 setIsEditing(false);
-                // Reset general fields
-                setName(project.name);
-                setScopeOfWork(project.description);
-                setExpectedDeliverables(project.expectedDeliverables || '');
-                setStartDate(project.startDate && isValid(parseISO(project.startDate)) ? formatDate(parseISO(project.startDate), 'yyyy-MM-dd') : '');
-                setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
-                setBudget(project.budget?.toString() || '');
-                setStatus(project.status || 'Not Started');
-                setProjectNumber(project.projectNumber || '');
-                setClientContact(project.clientContact || '');
-                setSiteAddress(project.siteAddress || '');
-                setCoordinateSystem(project.coordinateSystem || '');
-                setSelectedProjectTypes(project.projectTypes || []);
-                setCustomProjectTypesInput(project.customProjectTypes?.join(', ') || '');
-                // Reset outcomes fields
-                setKeyFindings(project.outcomes?.keyFindings || '');
-                setConclusions(project.outcomes?.conclusions || '');
-                setRecommendations(project.outcomes?.recommendations || '');
-                setAchievements(project.outcomes?.achievements || '');
-                setChallenges(project.outcomes?.challenges || '');
-                setLessonsLearned(project.outcomes?.lessonsLearned || '');
+                resetFormFields();
             }}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -447,3 +584,4 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     </Card>
   );
 }
+

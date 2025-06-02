@@ -56,15 +56,17 @@ export interface Project {
   dueDate?: string; // ISO date string
   budget?: number;
   spent?: number; // This will now be a calculated sum of subtask costs
-  outcomes?: ProjectOutcomes; // Changed from outcomeNotes
-  expectedDeliverables?: string; // Added expected deliverables
+  outcomes?: ProjectOutcomes;
+  expectedDeliverables?: string;
   // Industry-specific fields for Project
   projectNumber?: string;
   clientContact?: string;
   siteAddress?: string;
   coordinateSystem?: string;
   projectTypes?: string[];
-  customProjectTypes?: string[]; // New field for user-defined types
+  customProjectTypes?: string[];
+  equipmentList?: string[]; // New field for equipment
+  personnelList?: string[]; // New field for personnel
   userId?: string; // To associate project with a user
 }
 
@@ -79,3 +81,4 @@ export interface LoginFormData {
   email: string;
   password: string;
 }
+
