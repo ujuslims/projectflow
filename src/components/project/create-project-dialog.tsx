@@ -140,7 +140,7 @@ export function CreateProjectDialog({
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-[1.125rem]"
                   required
                 />
               </div>
@@ -188,7 +188,7 @@ export function CreateProjectDialog({
                   id="projectNumber"
                   value={projectNumber}
                   onChange={(e) => setProjectNumber(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-[1.125rem]"
                   placeholder="e.g., P2024-001"
                 />
               </div>
@@ -200,7 +200,7 @@ export function CreateProjectDialog({
                   id="clientContact"
                   value={clientContact}
                   onChange={(e) => setClientContact(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-[1.125rem]"
                   placeholder="e.g., John Doe (Acme Corp)"
                 />
               </div>
@@ -212,7 +212,7 @@ export function CreateProjectDialog({
                   id="siteAddress"
                   value={siteAddress}
                   onChange={(e) => setSiteAddress(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-[1.125rem]"
                   placeholder="e.g., 123 Main St, Anytown"
                 />
               </div>
@@ -224,7 +224,7 @@ export function CreateProjectDialog({
                   id="coordinateSystem"
                   value={coordinateSystem}
                   onChange={(e) => setCoordinateSystem(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-[1.125rem]"
                   placeholder="e.g., WGS84, UTM Zone 10N"
                 />
               </div>
@@ -236,7 +236,7 @@ export function CreateProjectDialog({
                   id="scopeOfWork"
                   value={scopeOfWork}
                   onChange={(e) => setScopeOfWork(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-[1.125rem]"
                   rows={3}
                   placeholder="Detailed project scope and objectives..."
                 />
@@ -263,7 +263,7 @@ export function CreateProjectDialog({
                   type="number"
                   value={budget}
                   onChange={(e) => setBudget(e.target.value)}
-                  className="col-span-1 sm:col-span-3"
+                  className="col-span-1 sm:col-span-3 sm:ml-[1.125rem]"
                   placeholder="Optional (e.g., 5000)"
                 />
               </div>
