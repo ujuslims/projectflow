@@ -18,6 +18,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -52,6 +62,13 @@ export default function ProjectDetailPage() {
 
   const [isAISuggesting, setIsAISuggesting] = useState(false);
   const [isAIOrganizing, setIsAIOrganizing] = useState(false);
+
+  // State for delete confirmation dialogs
+  const [isStageDeleteAlertOpen, setIsStageDeleteAlertOpen] = useState(false);
+  const [stageToDeleteInfo, setStageToDeleteInfo] = useState<{ id: string; name: string } | null>(null);
+  const [isSubtaskDeleteAlertOpen, setIsSubtaskDeleteAlertOpen] = useState(false);
+  const [subtaskToDeleteInfo, setSubtaskToDeleteInfo] = useState<{ id: string; name: string } | null>(null);
+
 
   const sortedStages = useMemo(() => {
     const stages = project?.stages;
@@ -92,23 +109,32 @@ export default function ProjectDetailPage() {
     toast({ title: "Success", description: `Stage updated.` });
   };
 
-  const handleDeleteStage = (id: string) => {
+  const requestDeleteStage = (id: string) => {
     if (!project) return;
     const stageToDelete = project.stages.find(s => s.id === id);
-    if (window.confirm(`Are you sure you want to delete stage "${stageToDelete?.name}" and all its subtasks?`)) {
-      deleteStage(project.id, id);
-      setProject(prev => {
-        if (!prev) return null;
-        const updatedStages = prev.stages.filter(s => s.id !== id);
-        return {
-          ...prev,
-          stages: updatedStages.sort((a,b)=>a.order-b.order),
-          subtasks: prev.subtasks.filter(st => st.stageId !== id),
-        };
-      });
-      toast({ title: "Success", description: `Stage "${stageToDelete?.name}" deleted.` });
+    if (stageToDelete) {
+      setStageToDeleteInfo({ id: stageToDelete.id, name: stageToDelete.name });
+      setIsStageDeleteAlertOpen(true);
     }
   };
+
+  const confirmDeleteStage = () => {
+    if (!project || !stageToDeleteInfo) return;
+    deleteStage(project.id, stageToDeleteInfo.id);
+    setProject(prev => {
+      if (!prev) return null;
+      const updatedStages = prev.stages.filter(s => s.id !== stageToDeleteInfo.id);
+      return {
+        ...prev,
+        stages: updatedStages.sort((a,b)=>a.order-b.order),
+        subtasks: prev.subtasks.filter(st => st.stageId !== stageToDeleteInfo.id),
+      };
+    });
+    toast({ title: "Success", description: `Stage "${stageToDeleteInfo.name}" deleted.` });
+    setIsStageDeleteAlertOpen(false);
+    setStageToDeleteInfo(null);
+  };
+
 
   const openNewSubtaskDialog = (stageId: string) => {
     setEditingSubtask(null);
@@ -141,14 +167,22 @@ export default function ProjectDetailPage() {
     setTargetStageIdForNewSubtask(null);
   };
 
-  const handleDeleteSubtask = (subtaskId: string) => {
+  const requestDeleteSubtask = (subtaskId: string) => {
     if (!project) return;
     const subtaskToDelete = project.subtasks.find(st => st.id === subtaskId);
-    if (window.confirm(`Are you sure you want to delete subtask "${subtaskToDelete?.name}"?`)) {
-      deleteSubtask(project.id, subtaskId);
-      setProject(prev => prev ? {...prev, subtasks: prev.subtasks.filter(st => st.id !== subtaskId)} : null);
-      toast({ title: "Success", description: `Subtask "${subtaskToDelete?.name}" deleted.` });
+    if (subtaskToDelete) {
+      setSubtaskToDeleteInfo({ id: subtaskToDelete.id, name: subtaskToDelete.name });
+      setIsSubtaskDeleteAlertOpen(true);
     }
+  };
+
+  const confirmDeleteSubtask = () => {
+    if (!project || !subtaskToDeleteInfo) return;
+    deleteSubtask(project.id, subtaskToDeleteInfo.id);
+    setProject(prev => prev ? {...prev, subtasks: prev.subtasks.filter(st => st.id !== subtaskToDeleteInfo.id)} : null);
+    toast({ title: "Success", description: `Subtask "${subtaskToDeleteInfo.name}" deleted.` });
+    setIsSubtaskDeleteAlertOpen(false);
+    setSubtaskToDeleteInfo(null);
   };
   
   const onSubtaskDragStart = (e: React.DragEvent<HTMLDivElement>, subtaskId: string) => {
@@ -341,7 +375,7 @@ export default function ProjectDetailPage() {
         stages={sortedStages} 
         onAddStage={handleAddStage}
         onUpdateStage={handleUpdateStage}
-        onDeleteStage={handleDeleteStage}
+        onDeleteStage={requestDeleteStage} // Changed to requestDeleteStage
       />
       <div className="my-8 flex flex-col sm:flex-row gap-4 justify-start items-start sm:items-center flex-wrap">
         
@@ -424,7 +458,7 @@ export default function ProjectDetailPage() {
                 onSubtaskDragStart={onSubtaskDragStart}
                 onAddSubtask={() => openNewSubtaskDialog(stage.id)}
                 onEditSubtask={openEditSubtaskDialog}
-                onDeleteSubtask={handleDeleteSubtask}
+                onDeleteSubtask={requestDeleteSubtask} // Changed to requestDeleteSubtask
                 />
             ))}
             </div>
@@ -452,7 +486,7 @@ export default function ProjectDetailPage() {
             e.preventDefault();
             const subtaskId = e.dataTransfer.getData("subtaskId");
             if (subtaskId) {
-              handleDeleteSubtask(subtaskId); 
+              requestDeleteSubtask(subtaskId); // Changed to requestDeleteSubtask
             }
             setIsDraggingOverDeleteArea(false);
             setDraggedSubtaskId(null); 
@@ -468,6 +502,56 @@ export default function ProjectDetailPage() {
           <Trash2 className="h-7 w-7 text-destructive-foreground" />
         </div>
       )}
+
+      {/* Stage Delete Confirmation Dialog */}
+      <AlertDialog open={isStageDeleteAlertOpen} onOpenChange={setIsStageDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+               <Trash2 className="h-5 w-5 mr-2 text-destructive" />
+              Confirm Stage Deletion
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the stage "{stageToDeleteInfo?.name}"? 
+              This action cannot be undone and will permanently remove all associated subtasks.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsStageDeleteAlertOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteStage}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Delete Stage
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Subtask Delete Confirmation Dialog */}
+      <AlertDialog open={isSubtaskDeleteAlertOpen} onOpenChange={setIsSubtaskDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+             <AlertDialogTitle className="flex items-center">
+               <Trash2 className="h-5 w-5 mr-2 text-destructive" />
+              Confirm Subtask Deletion
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the subtask "{subtaskToDeleteInfo?.name}"? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsSubtaskDeleteAlertOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteSubtask}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Delete Subtask
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
