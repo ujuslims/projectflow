@@ -116,13 +116,12 @@ export function CreateProjectDialog({
             )}
           </Button>
         ) : (
-          // Default trigger if none provided via props - useful for direct use
           <Button variant="ghost"> 
             <PlusCircle className="mr-2 h-4 w-4" /> New Project
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
@@ -130,8 +129,8 @@ export function CreateProjectDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden min-h-0">
-          <ScrollArea className="flex-grow min-h-0">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <ScrollArea className="flex-1 overflow-y-auto">
             <div className="grid gap-4 p-6">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="name" className="text-left sm:text-right">
@@ -307,3 +306,5 @@ export function CreateProjectDialog({
     </Dialog>
   );
 }
+
+    

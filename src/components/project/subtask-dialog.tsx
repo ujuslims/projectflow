@@ -59,8 +59,6 @@ export function SubtaskDialog({
       setDataDeliverables(initialData?.dataDeliverables || '');
       setCost(initialData?.cost?.toString() || '');
     } else {
-      // Optionally reset form fields when dialog is closed and not just on initial open
-      // This can be useful if the dialog is re-used without changing initialData
       setName('');
       setDescription('');
       setStartDate('');
@@ -105,13 +103,13 @@ export function SubtaskDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden min-h-0">
-          <ScrollArea className="flex-grow min-h-0">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <ScrollArea className="flex-1 overflow-y-auto">
             <div className="grid gap-4 p-6">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="subtask-name" className="text-left sm:text-right">
@@ -264,3 +262,5 @@ export function SubtaskDialog({
     </Dialog>
   );
 }
+
+    
