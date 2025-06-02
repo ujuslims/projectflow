@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect, type FormEvent } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DollarSign } from 'lucide-react'; // Import DollarSign
+import { DollarSign } from 'lucide-react';
 
 interface SubtaskDialogProps {
   isOpen: boolean;
@@ -43,7 +43,7 @@ export function SubtaskDialog({
   const [fieldCrewLead, setFieldCrewLead] = useState('');
   const [equipmentUsed, setEquipmentUsed] = useState('');
   const [dataDeliverables, setDataDeliverables] = useState('');
-  const [cost, setCost] = useState(''); // New state for cost
+  const [cost, setCost] = useState('');
 
   useEffect(() => {
     if (isOpen) { 
@@ -57,7 +57,21 @@ export function SubtaskDialog({
       setFieldCrewLead(initialData?.fieldCrewLead || '');
       setEquipmentUsed(initialData?.equipmentUsed || '');
       setDataDeliverables(initialData?.dataDeliverables || '');
-      setCost(initialData?.cost?.toString() || ''); // Set cost
+      setCost(initialData?.cost?.toString() || '');
+    } else {
+      // Optionally reset form fields when dialog is closed and not just on initial open
+      // This can be useful if the dialog is re-used without changing initialData
+      setName('');
+      setDescription('');
+      setStartDate('');
+      setEndDate('');
+      setAssignedPersonnel('');
+      setLocation('');
+      setStatus('To Do');
+      setFieldCrewLead('');
+      setEquipmentUsed('');
+      setDataDeliverables('');
+      setCost('');
     }
   }, [initialData, isOpen]);
 
@@ -75,7 +89,7 @@ export function SubtaskDialog({
 
     onSubmit({ 
       name, 
-      description, 
+      description: description || undefined, 
       startDate: startDate ? new Date(startDate).toISOString() : undefined,
       endDate: endDate ? new Date(endDate).toISOString() : undefined,
       assignedPersonnel: assignedPersonnel ? parseInt(assignedPersonnel, 10) : undefined,
@@ -84,21 +98,21 @@ export function SubtaskDialog({
       fieldCrewLead: fieldCrewLead || undefined,
       equipmentUsed: equipmentUsed || undefined,
       dataDeliverables: dataDeliverables || undefined,
-      cost: parsedCost, // Pass cost
+      cost: parsedCost,
     });
     onOpenChange(false); 
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <ScrollArea className="max-h-[70vh] pr-4">
-            <div className="grid gap-4 py-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden min-h-0">
+          <ScrollArea className="flex-grow min-h-0">
+            <div className="grid gap-4 p-6">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="subtask-name" className="text-left sm:text-right">
                   Name
@@ -241,7 +255,7 @@ export function SubtaskDialog({
               </div>
             </div>
           </ScrollArea>
-          <DialogFooter className="pt-4">
+          <DialogFooter className="p-6 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit">{submitButtonText}</Button>
           </DialogFooter>
