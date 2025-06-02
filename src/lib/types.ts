@@ -2,6 +2,16 @@
 export type ProjectStatus = 'Not Started' | 'Planning' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled';
 export type SubtaskStatus = 'To Do' | 'In Progress' | 'Done' | 'Blocked';
 
+export interface EquipmentItem {
+  name: string;
+  model: string;
+}
+
+export interface PersonnelItem {
+  name: string;
+  role: string;
+}
+
 export interface ProjectOutcomes {
   keyFindings?: string;
   conclusions?: string;
@@ -65,8 +75,8 @@ export interface Project {
   coordinateSystem?: string;
   projectTypes?: string[];
   customProjectTypes?: string[];
-  equipmentList?: string[]; // New field for equipment
-  personnelList?: string[]; // New field for personnel
+  equipmentList?: EquipmentItem[]; // Updated
+  personnelList?: PersonnelItem[]; // Updated
   userId?: string; // To associate project with a user
 }
 
@@ -81,4 +91,3 @@ export interface LoginFormData {
   email: string;
   password: string;
 }
-

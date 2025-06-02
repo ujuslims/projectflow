@@ -11,6 +11,16 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+const EquipmentItemSchema = z.object({
+  name: z.string().describe('The name of the equipment.'),
+  model: z.string().describe('The model or type of the equipment.'),
+});
+
+const PersonnelItemSchema = z.object({
+  name: z.string().describe('The name of the personnel.'),
+  role: z.string().describe('The role or title of the personnel.'),
+});
+
 const GenerateExecutiveSummaryInputSchema = z.object({
   projectName: z.string().describe('The name of the project.'),
   projectDescription: z.string().optional().describe('The scope of work or detailed description of the project.'),
@@ -29,6 +39,8 @@ const GenerateExecutiveSummaryInputSchema = z.object({
     challenges: z.string().optional().describe('Challenges encountered during the project.'),
     lessonsLearned: z.string().optional().describe('Lessons learned from the project execution.'),
   }).describe('Structured outcomes of the project.'),
+  equipmentList: z.array(EquipmentItemSchema).optional().describe('List of key equipment used in the project.'),
+  personnelList: z.array(PersonnelItemSchema).optional().describe('List of key personnel involved in the project.'),
 });
 
 export type GenerateExecutiveSummaryInput = z.infer<typeof GenerateExecutiveSummaryInputSchema>;
@@ -65,12 +77,27 @@ Project Outcomes:
 {{#if outcomes.challenges}}- Challenges: {{{outcomes.challenges}}}{{/if}}
 {{#if outcomes.lessonsLearned}}- Lessons Learned: {{{outcomes.lessonsLearned}}}{{/if}}
 
+{{#if equipmentList.length}}
+Equipment Utilized:
+{{#each equipmentList}}
+- {{{name}}} ({{model}})
+{{/each}}
+{{/if}}
+
+{{#if personnelList.length}}
+Key Personnel Involved:
+{{#each personnelList}}
+- {{{name}}} - {{{role}}}
+{{/each}}
+{{/if}}
+
 Based on the information above, generate a concise and informative executive summary (2-4 paragraphs). The summary should:
 1. Briefly introduce the project and its main objectives.
 2. Highlight key progress, including task completion and adherence to schedule (if dates are available).
 3. Summarize the financial status (budget vs. spent).
 4. Integrate the most important aspects from the Project Outcomes (achievements, key findings, challenges, and key recommendations).
-5. Conclude with an overall assessment or outlook.
+5. If provided and relevant, briefly mention key equipment or the nature of the team involved, but keep it concise.
+6. Conclude with an overall assessment or outlook.
 
 Ensure the tone is professional and suitable for stakeholders.
 Focus on clarity and conciseness.

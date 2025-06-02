@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Project, Stage, Subtask, ProjectStatus, SubtaskStatus, SubtaskCore, ProjectOutcomes } from '@/lib/types';
+import type { Project, Stage, Subtask, ProjectStatus, SubtaskStatus, SubtaskCore, ProjectOutcomes, EquipmentItem, PersonnelItem } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { projectStageTemplates } from '@/lib/project-templates'; // Import templates
@@ -85,8 +85,8 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       coordinateSystem: projectData.coordinateSystem || '',
       projectTypes: projectData.projectTypes || [],
       customProjectTypes: projectData.customProjectTypes || [],
-      equipmentList: [], // Initialize new field
-      personnelList: [], // Initialize new field
+      equipmentList: [] as EquipmentItem[], // Initialize new field
+      personnelList: [] as PersonnelItem[], // Initialize new field
     };
     setProjects(prevProjects => [...prevProjects, newProject]);
     return newProject;
@@ -111,7 +111,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
             newUpdates.outcomes = updates.outcomes;
           }
           
-          const { spent, ...otherUpdates } = newUpdates;
+          const { spent, ...otherUpdates } = newUpdates; // spent is calculated, remove if passed in updates
           return { ...p, ...otherUpdates };
         }
         return p;
@@ -405,4 +405,3 @@ export const useProjects = () => {
   }
   return context;
 };
-

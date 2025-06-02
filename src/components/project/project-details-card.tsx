@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Project, ProjectStatus, ProjectOutcomes } from '@/lib/types';
+import type { Project, ProjectStatus, ProjectOutcomes, EquipmentItem, PersonnelItem } from '@/lib/types';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,10 +59,12 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [lessonsLearned, setLessonsLearned] = useState(project.outcomes?.lessonsLearned || '');
 
   // Resources Fields
-  const [currentEquipmentList, setCurrentEquipmentList] = useState<string[]>(project.equipmentList || []);
-  const [newEquipmentItem, setNewEquipmentItem] = useState('');
-  const [currentPersonnelList, setCurrentPersonnelList] = useState<string[]>(project.personnelList || []);
-  const [newPersonnelItem, setNewPersonnelItem] = useState('');
+  const [currentEquipmentList, setCurrentEquipmentList] = useState<EquipmentItem[]>(project.equipmentList || []);
+  const [newEquipmentItemName, setNewEquipmentItemName] = useState('');
+  const [newEquipmentItemModel, setNewEquipmentItemModel] = useState('');
+  const [currentPersonnelList, setCurrentPersonnelList] = useState<PersonnelItem[]>(project.personnelList || []);
+  const [newPersonnelItemName, setNewPersonnelItemName] = useState('');
+  const [newPersonnelItemRole, setNewPersonnelItemRole] = useState('');
 
 
   const calculatedSpent = useMemo(() => {
@@ -93,9 +95,11 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setLessonsLearned(project.outcomes?.lessonsLearned || '');
 
     setCurrentEquipmentList(project.equipmentList || []);
-    setNewEquipmentItem('');
+    setNewEquipmentItemName('');
+    setNewEquipmentItemModel('');
     setCurrentPersonnelList(project.personnelList || []);
-    setNewPersonnelItem('');
+    setNewPersonnelItemName('');
+    setNewPersonnelItemRole('');
   }, [project]);
 
   useEffect(() => {
@@ -124,9 +128,12 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   };
 
   const handleAddEquipmentItem = () => {
-    if (newEquipmentItem.trim()) {
-      setCurrentEquipmentList(prev => [...prev, newEquipmentItem.trim()]);
-      setNewEquipmentItem('');
+    if (newEquipmentItemName.trim() && newEquipmentItemModel.trim()) {
+      setCurrentEquipmentList(prev => [...prev, { name: newEquipmentItemName.trim(), model: newEquipmentItemModel.trim() }]);
+      setNewEquipmentItemName('');
+      setNewEquipmentItemModel('');
+    } else {
+      toast({ title: "Info", description: "Equipment name and model are required.", variant: "default" });
     }
   };
 
@@ -135,9 +142,12 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   };
 
   const handleAddPersonnelItem = () => {
-    if (newPersonnelItem.trim()) {
-      setCurrentPersonnelList(prev => [...prev, newPersonnelItem.trim()]);
-      setNewPersonnelItem('');
+    if (newPersonnelItemName.trim() && newPersonnelItemRole.trim()) {
+      setCurrentPersonnelList(prev => [...prev, { name: newPersonnelItemName.trim(), role: newPersonnelItemRole.trim() }]);
+      setNewPersonnelItemName('');
+      setNewPersonnelItemRole('');
+    } else {
+      toast({ title: "Info", description: "Personnel name and role are required.", variant: "default" });
     }
   };
 
@@ -458,27 +468,40 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 <>
                   {/* Equipment List Management */}
                   <div>
-                    <Label htmlFor="equipment-item" className="text-base font-semibold mb-1 flex items-center">
+                    <Label htmlFor="equipment-item-name" className="text-base font-semibold mb-1 flex items-center">
                       <Wrench className="mr-2 h-5 w-5 text-primary" /> Equipment List
                     </Label>
-                    <div className="flex gap-2 mb-2">
-                      <Input
-                        id="equipment-item"
-                        value={newEquipmentItem}
-                        onChange={(e) => setNewEquipmentItem(e.target.value)}
-                        placeholder="Enter equipment name"
-                        className="text-sm"
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEquipmentItem();}}}
-                      />
-                      <Button type="button" onClick={handleAddEquipmentItem} variant="secondary" size="sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2 items-end">
+                      <div className="sm:col-span-1">
+                        <Label htmlFor="equipment-item-name" className="text-xs">Name</Label>
+                        <Input
+                          id="equipment-item-name"
+                          value={newEquipmentItemName}
+                          onChange={(e) => setNewEquipmentItemName(e.target.value)}
+                          placeholder="Equipment Name"
+                          className="text-sm h-9"
+                        />
+                      </div>
+                      <div className="sm:col-span-1">
+                        <Label htmlFor="equipment-item-model" className="text-xs">Model/Type</Label>
+                        <Input
+                          id="equipment-item-model"
+                          value={newEquipmentItemModel}
+                          onChange={(e) => setNewEquipmentItemModel(e.target.value)}
+                          placeholder="Model or Type"
+                          className="text-sm h-9"
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEquipmentItem();}}}
+                        />
+                      </div>
+                      <Button type="button" onClick={handleAddEquipmentItem} variant="secondary" size="sm" className="h-9 sm:self-end">
                         <PlusCircle className="mr-2 h-4 w-4"/>Add
                       </Button>
                     </div>
                     {currentEquipmentList.length > 0 ? (
-                      <ul className="space-y-1 text-sm list-disc pl-5 bg-muted/30 p-3 rounded-md">
+                      <ul className="space-y-1 text-sm list-disc pl-5 bg-muted/30 p-3 rounded-md max-h-48 overflow-y-auto">
                         {currentEquipmentList.map((item, index) => (
                           <li key={index} className="flex justify-between items-center">
-                            <span>{item}</span>
+                            <span>{item.name} ({item.model})</span>
                             <Button
                               type="button"
                               variant="ghost"
@@ -498,27 +521,40 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
                   {/* Personnel List Management */}
                   <div>
-                    <Label htmlFor="personnel-item" className="text-base font-semibold mb-1 flex items-center">
+                    <Label htmlFor="personnel-item-name" className="text-base font-semibold mb-1 flex items-center">
                       <Users2 className="mr-2 h-5 w-5 text-primary" /> Personnel List
                     </Label>
-                    <div className="flex gap-2 mb-2">
-                      <Input
-                        id="personnel-item"
-                        value={newPersonnelItem}
-                        onChange={(e) => setNewPersonnelItem(e.target.value)}
-                        placeholder="Enter personnel name/role"
-                        className="text-sm"
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddPersonnelItem();}}}
-                      />
-                      <Button type="button" onClick={handleAddPersonnelItem} variant="secondary" size="sm">
+                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2 items-end">
+                       <div className="sm:col-span-1">
+                        <Label htmlFor="personnel-item-name" className="text-xs">Name</Label>
+                        <Input
+                          id="personnel-item-name"
+                          value={newPersonnelItemName}
+                          onChange={(e) => setNewPersonnelItemName(e.target.value)}
+                          placeholder="Personnel Name"
+                          className="text-sm h-9"
+                        />
+                       </div>
+                       <div className="sm:col-span-1">
+                          <Label htmlFor="personnel-item-role" className="text-xs">Role</Label>
+                          <Input
+                            id="personnel-item-role"
+                            value={newPersonnelItemRole}
+                            onChange={(e) => setNewPersonnelItemRole(e.target.value)}
+                            placeholder="Role/Title"
+                            className="text-sm h-9"
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddPersonnelItem();}}}
+                          />
+                       </div>
+                      <Button type="button" onClick={handleAddPersonnelItem} variant="secondary" size="sm" className="h-9 sm:self-end">
                          <PlusCircle className="mr-2 h-4 w-4"/>Add
                       </Button>
                     </div>
                      {currentPersonnelList.length > 0 ? (
-                      <ul className="space-y-1 text-sm list-disc pl-5 bg-muted/30 p-3 rounded-md">
+                      <ul className="space-y-1 text-sm list-disc pl-5 bg-muted/30 p-3 rounded-md max-h-48 overflow-y-auto">
                         {currentPersonnelList.map((item, index) => (
                           <li key={index} className="flex justify-between items-center">
-                            <span>{item}</span>
+                            <span>{item.name} - {item.role}</span>
                             <Button
                               type="button"
                               variant="ghost"
@@ -544,7 +580,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                     </h3>
                     {(project.equipmentList && project.equipmentList.length > 0) ? (
                         <ul className="text-sm list-disc pl-7 space-y-0.5 bg-muted/30 p-3 rounded-md">
-                            {project.equipmentList.map((item, index) => <li key={index}>{item}</li>)}
+                            {project.equipmentList.map((item, index) => <li key={index}>{item.name} ({item.model})</li>)}
                         </ul>
                     ) : (
                         <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No equipment listed for this project.</p>
@@ -556,7 +592,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                     </h3>
                     {(project.personnelList && project.personnelList.length > 0) ? (
                         <ul className="text-sm list-disc pl-7 space-y-0.5 bg-muted/30 p-3 rounded-md">
-                            {project.personnelList.map((item, index) => <li key={index}>{item}</li>)}
+                            {project.personnelList.map((item, index) => <li key={index}>{item.name} - {item.role}</li>)}
                         </ul>
                     ) : (
                         <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No personnel listed for this project.</p>
@@ -584,4 +620,3 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     </Card>
   );
 }
-

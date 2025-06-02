@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
-import type { Project, Stage, Subtask, SubtaskStatus, ProjectStatus, ProjectOutcomes } from '@/lib/types';
+import type { Project, Stage, Subtask, SubtaskStatus, ProjectStatus, ProjectOutcomes, EquipmentItem, PersonnelItem } from '@/lib/types';
 import { formatCurrency, cn } from '@/lib/utils';
 import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2 as LucideUsers2, UserCog, PlayCircle, Loader2, Lightbulb, Target, TrendingUp, Star, AlertTriangle, BookOpen, Brain, Wrench } from 'lucide-react';
 import Link from 'next/link';
@@ -78,7 +78,7 @@ export default function ProjectSummaryPage() {
   };
 
   const handleGenerateSummary = async () => {
-    if (!project || !project.outcomes || Object.values(project.outcomes).every(val => !val || val.trim() === '')) {
+    if (!project || !project.outcomes || Object.values(project.outcomes).every(val => !val || (typeof val === 'string' && val.trim() === ''))) {
       toast({ title: "Info", description: "Please define project outcomes before generating an executive summary.", variant: "default" });
       return;
     }
@@ -102,7 +102,9 @@ export default function ProjectSummaryPage() {
           achievements: project.outcomes.achievements,
           challenges: project.outcomes.challenges,
           lessonsLearned: project.outcomes.lessonsLearned,
-        }
+        },
+        equipmentList: project.equipmentList,
+        personnelList: project.personnelList,
       };
       const result = await generateExecutiveSummary(input);
       setGeneratedExecutiveSummary(result.executiveSummary);
@@ -157,7 +159,7 @@ export default function ProjectSummaryPage() {
     { key: 'lessonsLearned', title: 'Lessons Learned', icon: <BookOpen className="h-5 w-5 text-primary mr-2 flex-shrink-0" />, content: project.outcomes.lessonsLearned },
   ].filter(section => section.content && section.content.trim() !== '') : [];
 
-  const hasOutcomes = project.outcomes && Object.values(project.outcomes).some(val => val && val.trim() !== '');
+  const hasOutcomes = project.outcomes && Object.values(project.outcomes).some(val => val && (typeof val === 'string' && val.trim() !== ''));
 
   return (
     <>
@@ -321,7 +323,7 @@ export default function ProjectSummaryPage() {
                 <CardHeader><CardTitle className="text-xl flex items-center"><Wrench className="mr-2 h-5 w-5 text-primary"/>Equipment List</CardTitle></CardHeader>
                 <CardContent>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
-                        {project.equipmentList.map((item, index) => <li key={index}>{item}</li>)}
+                        {project.equipmentList.map((item, index) => <li key={index}>{item.name} ({item.model})</li>)}
                     </ul>
                 </CardContent>
             </Card>
@@ -332,7 +334,7 @@ export default function ProjectSummaryPage() {
                 <CardHeader><CardTitle className="text-xl flex items-center"><LucideUsers2 className="mr-2 h-5 w-5 text-primary"/>Personnel List</CardTitle></CardHeader>
                 <CardContent>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
-                        {project.personnelList.map((item, index) => <li key={index}>{item}</li>)}
+                        {project.personnelList.map((item, index) => <li key={index}>{item.name} - {item.role}</li>)}
                     </ul>
                 </CardContent>
             </Card>
@@ -386,4 +388,3 @@ export default function ProjectSummaryPage() {
     </>
   );
 }
-
