@@ -46,7 +46,7 @@ export default function ProjectDetailPage() {
   const projectId = params.projectId as string;
   
   const { 
-    getProject, addStage, updateStage, deleteStage, clearStageSubtasks,
+    getProject, addStage, updateStage, deleteStage, reorderStages, clearStageSubtasks,
     addSubtask, updateSubtask, deleteSubtask, moveSubtask,
     setProjectSubtasks, setProjectStages, updateProject,
     addMultipleSubtasks
@@ -123,18 +123,21 @@ export default function ProjectDetailPage() {
   const confirmDeleteStage = () => {
     if (!project || !stageToDeleteInfo) return;
     deleteStage(project.id, stageToDeleteInfo.id);
-    setProject(prev => {
-      if (!prev) return null;
-      const updatedStages = prev.stages.filter(s => s.id !== stageToDeleteInfo.id);
-      return {
-        ...prev,
-        stages: updatedStages.sort((a,b)=>a.order-b.order),
-        subtasks: prev.subtasks.filter(st => st.stageId !== stageToDeleteInfo.id),
-      };
-    });
+    // Re-fetch or update project state to reflect new stage order and removal
+    const updatedProject = getProject(project.id);
+    if (updatedProject) setProject(updatedProject);
     toast({ title: "Success", description: `Stage "${stageToDeleteInfo.name}" deleted.` });
     setIsStageDeleteAlertOpen(false);
     setStageToDeleteInfo(null);
+  };
+  
+  const handleReorderStages = (projId: string, sourceStageId: string, targetStageId: string | null) => {
+    if (!project) return;
+    reorderStages(projId, sourceStageId, targetStageId);
+    // Re-fetch or update project state to reflect new stage order
+    const updatedProject = getProject(project.id);
+    if (updatedProject) setProject(updatedProject);
+    toast({ title: "Success", description: "Stages reordered."});
   };
 
 
@@ -388,10 +391,12 @@ export default function ProjectDetailPage() {
       <ProjectDetailsCard project={project} onUpdateProject={handleUpdateProjectDetails} />
       <Separator className="my-8" />
       <DefineStages
+        projectId={project.id}
         stages={sortedStages} 
         onAddStage={handleAddStage}
         onUpdateStage={handleUpdateStage}
         onDeleteStage={requestDeleteStage}
+        onReorderStages={handleReorderStages}
       />
       <div className="my-8 flex flex-col sm:flex-row gap-4 justify-start items-start sm:items-center flex-wrap">
         

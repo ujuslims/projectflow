@@ -16,6 +16,7 @@ interface ProjectsContextType {
   addStage: (projectId: string, stageData: Omit<Stage, 'id' | 'createdAt' | 'order'>) => Stage | undefined;
   updateStage: (projectId: string, stageId: string, updates: Partial<Omit<Stage, 'id' | 'createdAt'>>) => void;
   deleteStage: (projectId: string, stageId: string) => void;
+  reorderStages: (projectId: string, sourceStageId: string, targetStageId: string | null) => void;
   clearStageSubtasks: (projectId: string, stageId: string) => void; // New function
   addSubtask: (projectId: string, stageId: string, subtask: SubtaskCore) => Subtask | undefined;
   addMultipleSubtasks: (projectId: string, stageId: string, subtasksData: SubtaskCore[]) => Subtask[] | undefined;
@@ -150,10 +151,12 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setProjects(prevProjects =>
       prevProjects.map(p => {
         if (p.id === projectId) {
+          const remainingStages = p.stages.filter(s => s.id !== stageId);
+          const updatedStages = remainingStages.map((stage, index) => ({ ...stage, order: index }));
           const updatedSubtasks = p.subtasks.filter(st => st.stageId !== stageId);
           return {
             ...p,
-            stages: p.stages.filter(s => s.id !== stageId),
+            stages: updatedStages,
             subtasks: updatedSubtasks,
           };
         }
@@ -161,6 +164,40 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       })
     );
   };
+  
+  const reorderStages = (projectId: string, sourceStageId: string, targetStageId: string | null) => {
+    setProjects(prevProjects => 
+      prevProjects.map(p => {
+        if (p.id === projectId) {
+          const projectStages = [...p.stages];
+          const sourceIndex = projectStages.findIndex(s => s.id === sourceStageId);
+          if (sourceIndex === -1) return p; // Source stage not found
+
+          const [sourceStage] = projectStages.splice(sourceIndex, 1); // Remove source stage
+
+          if (targetStageId === null) { // Dropped at the end
+            projectStages.push(sourceStage);
+          } else {
+            const targetIndex = projectStages.findIndex(s => s.id === targetStageId);
+            if (targetIndex === -1) { // Target stage not found (should not happen if UI is correct)
+              projectStages.push(sourceStage); // Add to end as fallback
+            } else {
+              projectStages.splice(targetIndex, 0, sourceStage); // Insert before target
+            }
+          }
+          
+          const updatedOrderedStages = projectStages.map((stage, index) => ({
+            ...stage,
+            order: index,
+          }));
+
+          return { ...p, stages: updatedOrderedStages };
+        }
+        return p;
+      })
+    );
+  };
+
 
   const clearStageSubtasks = (projectId: string, stageId: string) => {
     setProjects(prevProjects =>
@@ -341,7 +378,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     <ProjectsContext.Provider value={{
         projects: projectsWithCalculatedSpent,
         addProject, getProject, updateProject, deleteProject,
-        addStage, updateStage, deleteStage, clearStageSubtasks,
+        addStage, updateStage, deleteStage, reorderStages, clearStageSubtasks,
         addSubtask, addMultipleSubtasks, updateSubtask, moveSubtask, deleteSubtask,
         setProjectSubtasks, setProjectStages,
         markAllSubtasksAsDone,
