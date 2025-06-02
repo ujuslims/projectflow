@@ -441,7 +441,7 @@ export default function ProjectDetailPage() {
         <Button asChild variant="outline">
           <Link href={`/projects/${project.id}/summary`}>
             <Printer className="mr-2 h-4 w-4" />
-            View Project Summary
+            Project Report
           </Link>
         </Button>
       </div>
@@ -603,3 +603,5 @@ export default function ProjectDetailPage() {
   );
 }
 
+
+    
