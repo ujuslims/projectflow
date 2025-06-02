@@ -13,7 +13,7 @@ export const projectTypes: ProjectType[] = [
   { id: 'topographic-survey', name: 'Topographic Survey' },
   { id: 'geotechnical-investigation', name: 'Geotechnical Investigation' },
   { id: 'construction-monitoring', name: 'Construction Site Monitoring' },
-  { id: 'reality-scan', name: 'Reality Scan / As-Built' },
+  { id: 'reality-scan', name: '3D Laser Scanning / As-Built' },
   { id: 'geospatial-analysis', name: 'Geospatial Analysis Project' },
   { id: 'site-characterization', name: 'Site Characterization' },
   { id: 'bathymetric-survey', name: 'Bathymetric Survey' },
