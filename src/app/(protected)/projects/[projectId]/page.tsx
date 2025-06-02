@@ -46,7 +46,7 @@ export default function ProjectDetailPage() {
   const projectId = params.projectId as string;
   
   const { 
-    getProject, addStage, updateStage, deleteStage, 
+    getProject, addStage, updateStage, deleteStage, clearStageSubtasks,
     addSubtask, updateSubtask, deleteSubtask, moveSubtask,
     setProjectSubtasks, setProjectStages, updateProject,
     addMultipleSubtasks
@@ -68,6 +68,8 @@ export default function ProjectDetailPage() {
   const [stageToDeleteInfo, setStageToDeleteInfo] = useState<{ id: string; name: string } | null>(null);
   const [isSubtaskDeleteAlertOpen, setIsSubtaskDeleteAlertOpen] = useState(false);
   const [subtaskToDeleteInfo, setSubtaskToDeleteInfo] = useState<{ id: string; name: string } | null>(null);
+  const [isClearSubtasksAlertOpen, setIsClearSubtasksAlertOpen] = useState(false);
+  const [stageToClearSubtasksInfo, setStageToClearSubtasksInfo] = useState<{ id: string; name: string } | null>(null);
 
 
   const sortedStages = useMemo(() => {
@@ -355,6 +357,20 @@ export default function ProjectDetailPage() {
       setIsAIOrganizing(false);
     }
   };
+
+  const requestClearStageSubtasks = (stageId: string, stageName: string) => {
+    setStageToClearSubtasksInfo({ id: stageId, name: stageName });
+    setIsClearSubtasksAlertOpen(true);
+  };
+
+  const confirmClearStageSubtasks = () => {
+    if (!project || !stageToClearSubtasksInfo) return;
+    clearStageSubtasks(project.id, stageToClearSubtasksInfo.id);
+    setProject(prev => prev ? {...prev, subtasks: prev.subtasks.filter(st => st.stageId !== stageToClearSubtasksInfo.id)} : null);
+    toast({ title: "Success", description: `All subtasks in stage "${stageToClearSubtasksInfo.name}" cleared.` });
+    setIsClearSubtasksAlertOpen(false);
+    setStageToClearSubtasksInfo(null);
+  };
   
   if (!project) {
     return (
@@ -375,7 +391,7 @@ export default function ProjectDetailPage() {
         stages={sortedStages} 
         onAddStage={handleAddStage}
         onUpdateStage={handleUpdateStage}
-        onDeleteStage={requestDeleteStage} // Changed to requestDeleteStage
+        onDeleteStage={requestDeleteStage}
       />
       <div className="my-8 flex flex-col sm:flex-row gap-4 justify-start items-start sm:items-center flex-wrap">
         
@@ -458,7 +474,8 @@ export default function ProjectDetailPage() {
                 onSubtaskDragStart={onSubtaskDragStart}
                 onAddSubtask={() => openNewSubtaskDialog(stage.id)}
                 onEditSubtask={openEditSubtaskDialog}
-                onDeleteSubtask={requestDeleteSubtask} // Changed to requestDeleteSubtask
+                onDeleteSubtask={requestDeleteSubtask}
+                onRequestClearSubtasks={requestClearStageSubtasks}
                 />
             ))}
             </div>
@@ -486,7 +503,7 @@ export default function ProjectDetailPage() {
             e.preventDefault();
             const subtaskId = e.dataTransfer.getData("subtaskId");
             if (subtaskId) {
-              requestDeleteSubtask(subtaskId); // Changed to requestDeleteSubtask
+              requestDeleteSubtask(subtaskId); 
             }
             setIsDraggingOverDeleteArea(false);
             setDraggedSubtaskId(null); 
@@ -548,6 +565,31 @@ export default function ProjectDetailPage() {
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               Delete Subtask
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear Stage Subtasks Confirmation Dialog */}
+      <AlertDialog open={isClearSubtasksAlertOpen} onOpenChange={setIsClearSubtasksAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+              <Trash2 className="h-5 w-5 mr-2 text-destructive" />
+              Confirm Clear All Subtasks
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete ALL subtasks in the stage "{stageToClearSubtasksInfo?.name}"?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsClearSubtasksAlertOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmClearStageSubtasks}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Clear All Subtasks
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

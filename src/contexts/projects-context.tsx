@@ -16,6 +16,7 @@ interface ProjectsContextType {
   addStage: (projectId: string, stageData: Omit<Stage, 'id' | 'createdAt' | 'order'>) => Stage | undefined;
   updateStage: (projectId: string, stageId: string, updates: Partial<Omit<Stage, 'id' | 'createdAt'>>) => void;
   deleteStage: (projectId: string, stageId: string) => void;
+  clearStageSubtasks: (projectId: string, stageId: string) => void; // New function
   addSubtask: (projectId: string, stageId: string, subtask: SubtaskCore) => Subtask | undefined;
   addMultipleSubtasks: (projectId: string, stageId: string, subtasksData: SubtaskCore[]) => Subtask[] | undefined;
   updateSubtask: (projectId: string, subtaskId: string, updates: Partial<Omit<Subtask, 'id' | 'createdAt'>>) => void;
@@ -155,6 +156,18 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
             stages: p.stages.filter(s => s.id !== stageId),
             subtasks: updatedSubtasks,
           };
+        }
+        return p;
+      })
+    );
+  };
+
+  const clearStageSubtasks = (projectId: string, stageId: string) => {
+    setProjects(prevProjects =>
+      prevProjects.map(p => {
+        if (p.id === projectId) {
+          const updatedSubtasks = p.subtasks.filter(st => st.stageId !== stageId);
+          return { ...p, subtasks: updatedSubtasks };
         }
         return p;
       })
@@ -328,7 +341,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     <ProjectsContext.Provider value={{
         projects: projectsWithCalculatedSpent,
         addProject, getProject, updateProject, deleteProject,
-        addStage, updateStage, deleteStage,
+        addStage, updateStage, deleteStage, clearStageSubtasks,
         addSubtask, addMultipleSubtasks, updateSubtask, moveSubtask, deleteSubtask,
         setProjectSubtasks, setProjectStages,
         markAllSubtasksAsDone,

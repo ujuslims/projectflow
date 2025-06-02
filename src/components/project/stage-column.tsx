@@ -17,6 +17,7 @@ interface StageColumnProps {
   onAddSubtask: () => void;
   onEditSubtask: (subtask: Subtask) => void;
   onDeleteSubtask: (subtaskId: string) => void;
+  onRequestClearSubtasks: (stageId: string, stageName: string) => void;
 }
 
 export function StageColumn({
@@ -28,7 +29,10 @@ export function StageColumn({
   onAddSubtask,
   onEditSubtask,
   onDeleteSubtask,
+  onRequestClearSubtasks,
 }: StageColumnProps) {
+  const hasSubtasks = subtasks.length > 0;
+
   return (
     <Card 
       className="w-80 flex-shrink-0 flex flex-col bg-secondary/20 shadow-sm"
@@ -36,16 +40,26 @@ export function StageColumn({
       onDrop={(e) => onDrop(e, stage.id)}
     >
       <CardHeader className="p-4 border-b sticky top-0 bg-secondary/20 z-10">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-semibold">{stage.name}</CardTitle>
-          {/* Stage actions (edit/delete) can be added here if needed */}
         </div>
-        <Button variant="outline" size="sm" className="w-full" onClick={onAddSubtask}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Subtask
-        </Button>
+        <div className="flex gap-2 mt-2">
+          <Button variant="outline" size="sm" className="flex-grow" onClick={onAddSubtask}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Subtask
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 flex-shrink-0"
+            onClick={() => onRequestClearSubtasks(stage.id, stage.name)}
+            title="Clear all subtasks in this stage"
+            disabled={!hasSubtasks}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
       <ScrollArea className="flex-grow">
-        {/* Changed to flex flex-col items-center and gap-3 for spacing */}
         <CardContent className="p-4 flex flex-col items-center gap-3">
           {subtasks.sort((a,b) => a.order - b.order).map((subtask) => (
             <SubtaskCard
@@ -64,9 +78,21 @@ export function StageColumn({
         </CardContent>
       </ScrollArea>
       <div className="p-4 border-t mt-auto sticky bottom-0 bg-secondary/20">
-        <Button variant="outline" className="w-full" onClick={onAddSubtask}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Subtask
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="flex-grow" onClick={onAddSubtask}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Subtask
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 flex-shrink-0"
+            onClick={() => onRequestClearSubtasks(stage.id, stage.name)}
+            title="Clear all subtasks in this stage"
+            disabled={!hasSubtasks}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </Card>
   );
