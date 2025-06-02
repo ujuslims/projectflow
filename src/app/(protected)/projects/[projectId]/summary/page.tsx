@@ -118,7 +118,7 @@ export default function ProjectSummaryPage() {
               Back to Project Board
             </Link>
           </Button>
-          <Button onClick={handlePrint}>
+          <Button onClick={handlePrint} title="Print this project summary">
             <Printer className="mr-2 h-4 w-4" />
             Print Summary
           </Button>
@@ -251,3 +251,4 @@ export default function ProjectSummaryPage() {
     </>
   );
 }
+
