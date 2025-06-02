@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Project, ProjectStatus, ProjectType as AppProjectType } from '@/lib/types';
+import type { Project, ProjectStatus, ProjectOutcomes } from '@/lib/types';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign, FileArchive, ListPlus } from 'lucide-react';
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign, FileArchive, ListPlus, Lightbulb, Target, Star, AlertTriangle, BookOpen, TrendingUp } from 'lucide-react';
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
@@ -22,7 +22,7 @@ import { useCurrency } from '@/contexts/currency-context';
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomeNotes' | 'expectedDeliverables' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes' | 'customProjectTypes'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomes' | 'expectedDeliverables' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes' | 'customProjectTypes'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
@@ -35,6 +35,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
+  // General Fields
   const [name, setName] = useState(project.name);
   const [scopeOfWork, setScopeOfWork] = useState(project.description);
   const [expectedDeliverables, setExpectedDeliverables] = useState(project.expectedDeliverables || '');
@@ -42,13 +43,21 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [dueDate, setDueDate] = useState(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
   const [budget, setBudget] = useState<string>(project.budget?.toString() || '');
   const [status, setStatus] = useState<ProjectStatus>(project.status || 'Not Started');
-  const [outcomeNotes, setOutcomeNotes] = useState(project.outcomeNotes || '');
   const [projectNumber, setProjectNumber] = useState(project.projectNumber || '');
   const [clientContact, setClientContact] = useState(project.clientContact || '');
   const [siteAddress, setSiteAddress] = useState(project.siteAddress || '');
   const [coordinateSystem, setCoordinateSystem] = useState(project.coordinateSystem || '');
   const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>(project.projectTypes || []);
-  const [customProjectTypesInput, setCustomProjectTypesInput] = useState(project.customProjectTypes?.join(', ') || ''); // For editing custom types
+  const [customProjectTypesInput, setCustomProjectTypesInput] = useState(project.customProjectTypes?.join(', ') || '');
+
+  // Outcomes Fields
+  const [keyFindings, setKeyFindings] = useState(project.outcomes?.keyFindings || '');
+  const [conclusions, setConclusions] = useState(project.outcomes?.conclusions || '');
+  const [recommendations, setRecommendations] = useState(project.outcomes?.recommendations || '');
+  const [achievements, setAchievements] = useState(project.outcomes?.achievements || '');
+  const [challenges, setChallenges] = useState(project.outcomes?.challenges || '');
+  const [lessonsLearned, setLessonsLearned] = useState(project.outcomes?.lessonsLearned || '');
+
 
   const calculatedSpent = useMemo(() => {
     return getCalculatedProjectSpent(project.id);
@@ -63,13 +72,19 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
     setBudget(project.budget?.toString() || '');
     setStatus(project.status || 'Not Started');
-    setOutcomeNotes(project.outcomeNotes || '');
     setProjectNumber(project.projectNumber || '');
     setClientContact(project.clientContact || '');
     setSiteAddress(project.siteAddress || '');
     setCoordinateSystem(project.coordinateSystem || '');
     setSelectedProjectTypes(project.projectTypes || []);
     setCustomProjectTypesInput(project.customProjectTypes?.join(', ') || '');
+
+    setKeyFindings(project.outcomes?.keyFindings || '');
+    setConclusions(project.outcomes?.conclusions || '');
+    setRecommendations(project.outcomes?.recommendations || '');
+    setAchievements(project.outcomes?.achievements || '');
+    setChallenges(project.outcomes?.challenges || '');
+    setLessonsLearned(project.outcomes?.lessonsLearned || '');
   }, [project]);
 
   const completedSubtasksCount = useMemo(() => {
@@ -101,12 +116,20 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     const finalDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
     const customTypesArray = customProjectTypesInput.split(',').map(s => s.trim()).filter(s => s !== '');
 
-
     if (parsedBudget !== undefined && isNaN(parsedBudget)) {
         toast({ title: "Error", description: "Invalid budget amount.", variant: "destructive" });
         setIsLoading(false);
         return;
     }
+
+    const projectOutcomes: ProjectOutcomes = {
+        keyFindings: keyFindings || undefined,
+        conclusions: conclusions || undefined,
+        recommendations: recommendations || undefined,
+        achievements: achievements || undefined,
+        challenges: challenges || undefined,
+        lessonsLearned: lessonsLearned || undefined,
+    };
 
     onUpdateProject({
       name,
@@ -116,7 +139,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       dueDate: finalDueDate,
       budget: parsedBudget,
       status,
-      outcomeNotes,
+      outcomes: projectOutcomes,
       projectNumber,
       clientContact,
       siteAddress,
@@ -144,18 +167,44 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       toast({ title: "Success", description: "All subtasks marked as Done." });
     }
   };
+  
+  const renderOutcomeField = (label: string, value: string | undefined, Icon: React.ElementType, isEditingMode: boolean, textareaValue: string, setTextareaValue: (val: string) => void, placeholder: string) => {
+    return (
+      <div>
+        <Label htmlFor={`outcome-${label.toLowerCase().replace(/\s+/g, '-')}`} className="flex items-center text-base font-semibold mb-1">
+          <Icon className="mr-2 h-5 w-5 text-primary" />
+          {label}
+        </Label>
+        {isEditingMode ? (
+          <Textarea 
+            id={`outcome-${label.toLowerCase().replace(/\s+/g, '-')}`} 
+            value={textareaValue} 
+            onChange={(e) => setTextareaValue(e.target.value)} 
+            rows={3} 
+            placeholder={placeholder}
+            className="text-sm"
+          />
+        ) : (
+          <p className={cn("text-sm mt-1 whitespace-pre-wrap bg-muted/30 p-3 rounded-md min-h-[40px]", !value && "text-muted-foreground italic")}>
+            {value || "Not set"}
+          </p>
+        )}
+      </div>
+    );
+  };
 
-  const renderField = (label: string, value: string | number | undefined | null | string[], Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholder?: string ) => {
-    let displayValue: string | React.ReactNode = value || (isEditingMode ? '' : 'Not set');
+
+  const renderField = (label: string, value: string | number | undefined | null | string[], Icon?: React.ElementType, isEditingMode?: boolean, editComponent?: React.ReactNode, placeholderText?: string ) => {
+    let displayValue: string | React.ReactNode = value || (isEditingMode ? '' : (placeholderText || 'Not set'));
     if (label === "Amount Spent" || (label === "Total Budget" && typeof value === 'number')) {
         displayValue = formatCurrency(value as number, selectedCurrency);
     } else if (label === "Custom Project Types") {
-        displayValue = Array.isArray(value) && value.length > 0 ? value.join(', ') : 'Not set';
+        displayValue = Array.isArray(value) && value.length > 0 ? value.join(', ') : (placeholderText || 'Not set');
     } else if (typeof value === 'number') {
         displayValue = value.toString();
     } else if (Array.isArray(value)) {
       if (value.length === 0) {
-        displayValue = 'Not set';
+        displayValue = (placeholderText || 'Not set');
       } else {
         displayValue = value.map(typeId => availableProjectTypes.find(pt => pt.id === typeId)?.name || typeId).join(', ');
       }
@@ -352,11 +401,13 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
               )}
             </TabsContent>
 
-            <TabsContent value="outcomes" className="mt-0 space-y-4">
-               {renderField("Evaluation / Lessons Learned", project.outcomeNotes, Award, isEditing,
-                <Textarea id="outcomeNotes" placeholder="e.g., Key findings, conclusions, recommendations, achievements, challenges..." value={outcomeNotes} onChange={(e) => setOutcomeNotes(e.target.value)} rows={4} />,
-                 "No outcome notes yet."
-              )}
+            <TabsContent value="outcomes" className="mt-0 space-y-6">
+              {renderOutcomeField("Key Findings", project.outcomes?.keyFindings, Lightbulb, isEditing, keyFindings, setKeyFindings, "What were the primary discoveries or results?")}
+              {renderOutcomeField("Conclusions", project.outcomes?.conclusions, Target, isEditing, conclusions, setConclusions, "What interpretations or judgments were made based on the findings?")}
+              {renderOutcomeField("Recommendations", project.outcomes?.recommendations, TrendingUp, isEditing, recommendations, setRecommendations, "What future actions or suggestions arise from this project?")}
+              {renderOutcomeField("Achievements", project.outcomes?.achievements, Star, isEditing, achievements, setAchievements, "What were the notable successes or positive outcomes?")}
+              {renderOutcomeField("Challenges", project.outcomes?.challenges, AlertTriangle, isEditing, challenges, setChallenges, "What obstacles or difficulties were encountered?")}
+              {renderOutcomeField("Lessons Learned", project.outcomes?.lessonsLearned, BookOpen, isEditing, lessonsLearned, setLessonsLearned, "What new knowledge or insights were gained?")}
             </TabsContent>
           </CardContent>
         </Tabs>
@@ -364,6 +415,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
           <CardFooter className="flex justify-end gap-2 mt-0 pt-0 pb-6 px-6">
             <Button type="button" variant="outline" onClick={() => {
                 setIsEditing(false);
+                // Reset general fields
                 setName(project.name);
                 setScopeOfWork(project.description);
                 setExpectedDeliverables(project.expectedDeliverables || '');
@@ -371,13 +423,19 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                 setDueDate(project.dueDate && isValid(parseISO(project.dueDate)) ? formatDate(parseISO(project.dueDate), 'yyyy-MM-dd') : '');
                 setBudget(project.budget?.toString() || '');
                 setStatus(project.status || 'Not Started');
-                setOutcomeNotes(project.outcomeNotes || '');
                 setProjectNumber(project.projectNumber || '');
                 setClientContact(project.clientContact || '');
                 setSiteAddress(project.siteAddress || '');
                 setCoordinateSystem(project.coordinateSystem || '');
                 setSelectedProjectTypes(project.projectTypes || []);
                 setCustomProjectTypesInput(project.customProjectTypes?.join(', ') || '');
+                // Reset outcomes fields
+                setKeyFindings(project.outcomes?.keyFindings || '');
+                setConclusions(project.outcomes?.conclusions || '');
+                setRecommendations(project.outcomes?.recommendations || '');
+                setAchievements(project.outcomes?.achievements || '');
+                setChallenges(project.outcomes?.challenges || '');
+                setLessonsLearned(project.outcomes?.lessonsLearned || '');
             }}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -389,4 +447,3 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     </Card>
   );
 }
-

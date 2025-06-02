@@ -2,6 +2,15 @@
 export type ProjectStatus = 'Not Started' | 'Planning' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled';
 export type SubtaskStatus = 'To Do' | 'In Progress' | 'Done' | 'Blocked';
 
+export interface ProjectOutcomes {
+  keyFindings?: string;
+  conclusions?: string;
+  recommendations?: string;
+  achievements?: string;
+  challenges?: string;
+  lessonsLearned?: string;
+}
+
 export interface SubtaskCore {
   name: string;
   description?: string;
@@ -47,7 +56,7 @@ export interface Project {
   dueDate?: string; // ISO date string
   budget?: number;
   spent?: number; // This will now be a calculated sum of subtask costs
-  outcomeNotes?: string;
+  outcomes?: ProjectOutcomes; // Changed from outcomeNotes
   expectedDeliverables?: string; // Added expected deliverables
   // Industry-specific fields for Project
   projectNumber?: string;
@@ -70,4 +79,3 @@ export interface LoginFormData {
   email: string;
   password: string;
 }
-

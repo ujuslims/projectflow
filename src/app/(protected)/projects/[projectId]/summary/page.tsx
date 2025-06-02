@@ -7,9 +7,9 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
-import type { Project, Stage, Subtask, SubtaskStatus, ProjectStatus } from '@/lib/types';
+import type { Project, Stage, Subtask, SubtaskStatus, ProjectStatus, ProjectOutcomes } from '@/lib/types';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle, Loader2, Lightbulb, Target, TrendingUp, Star, AlertTriangle, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -42,7 +42,7 @@ export default function ProjectSummaryPage() {
 
   useEffect(() => {
     if (projectId) { 
-      const currentProject = getProject(projectId); // getProject now returns spent calculated
+      const currentProject = getProject(projectId); 
       if (currentProject) {
         setProject(currentProject);
       } else {
@@ -106,11 +106,20 @@ export default function ProjectSummaryPage() {
     statusIconToRender = <InfoIcon className="h-4 w-4" />; 
   }
 
+  const outcomeSections: Array<{key: keyof ProjectOutcomes; title: string; icon: JSX.Element, content?: string}> = project?.outcomes ? [
+    { key: 'keyFindings', title: 'Key Findings', icon: <Lightbulb className="h-5 w-5 text-primary mr-2 flex-shrink-0" />, content: project.outcomes.keyFindings },
+    { key: 'conclusions', title: 'Conclusions', icon: <Target className="h-5 w-5 text-primary mr-2 flex-shrink-0" />, content: project.outcomes.conclusions },
+    { key: 'recommendations', title: 'Recommendations', icon: <TrendingUp className="h-5 w-5 text-primary mr-2 flex-shrink-0" />, content: project.outcomes.recommendations },
+    { key: 'achievements', title: 'Achievements', icon: <Star className="h-5 w-5 text-primary mr-2 flex-shrink-0" />, content: project.outcomes.achievements },
+    { key: 'challenges', title: 'Challenges', icon: <AlertTriangle className="h-5 w-5 text-primary mr-2 flex-shrink-0" />, content: project.outcomes.challenges },
+    { key: 'lessonsLearned', title: 'Lessons Learned', icon: <BookOpen className="h-5 w-5 text-primary mr-2 flex-shrink-0" />, content: project.outcomes.lessonsLearned },
+  ].filter(section => section.content && section.content.trim() !== '') : [];
+
 
   return (
     <>
       <div className="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 print:hidden">
-        <h1 className="text-3xl font-bold tracking-tight">Project Summary: {project.name}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Project Report: {project.name}</h1>
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link href={`/projects/${projectId}`}>
@@ -126,7 +135,7 @@ export default function ProjectSummaryPage() {
       </div>
       
       <div className="hidden print:block mb-8">
-        <h1 className="text-2xl font-bold">Project Summary: {project.name}</h1>
+        <h1 className="text-2xl font-bold">Project Report: {project.name}</h1>
         <p className="text-sm text-muted-foreground">Generated on: {formatDate(new Date(), 'PPP p')}</p>
       </div>
 
@@ -222,10 +231,28 @@ export default function ProjectSummaryPage() {
           </CardContent>
         </Card>
 
-        {project.outcomeNotes && (
+        {outcomeSections.length > 0 && (
           <Card className="print:shadow-none print:border-0">
-            <CardHeader><CardTitle className="text-xl">Outcomes & Lessons Learned</CardTitle></CardHeader>
-            <CardContent><p className="text-sm whitespace-pre-wrap">{project.outcomeNotes}</p></CardContent>
+            <CardHeader><CardTitle className="text-xl">Project Outcomes</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {outcomeSections.map((section) => (
+                <div key={section.key}>
+                  <h3 className="text-md font-semibold mb-1 flex items-center">
+                    {section.icon}
+                    {section.title}
+                  </h3>
+                  <p className="text-sm whitespace-pre-wrap pl-7">{section.content}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+        {(project?.outcomes && Object.values(project.outcomes).every(val => !val || val.trim() === '')) && (
+          <Card className="print:shadow-none print:border-0">
+            <CardHeader><CardTitle className="text-xl">Project Outcomes</CardTitle></CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground">No outcome details have been recorded for this project.</p>
+            </CardContent>
           </Card>
         )}
       </div>
@@ -251,4 +278,3 @@ export default function ProjectSummaryPage() {
     </>
   );
 }
-
