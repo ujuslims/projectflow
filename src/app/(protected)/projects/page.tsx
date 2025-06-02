@@ -1,17 +1,27 @@
 
 "use client";
 
-// AppLayout is now rendered by (protected)/layout.tsx
-// CreateProjectDialog is now in AppLayout
 import { ProjectCard } from '@/components/project/project-card';
 import { useProjects } from '@/contexts/projects-context';
-import { FolderOpen, PackageOpen, Hourglass, CheckCircle2, Briefcase, CalendarIcon } from 'lucide-react';
+import { FolderOpen, PackageOpen, Hourglass, CheckCircle2, Briefcase, CalendarIcon, Trash2 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { ProjectStatus } from '@/lib/types';
 import { getYear, getMonth, format, parseISO, isValid } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 type FilterStatus = 'all' | 'notStarted' | 'inProgress' | 'completed';
 
@@ -31,7 +41,6 @@ const monthOptions = [
   { value: "11", label: "December" },
 ];
 
-// Helper function to check if a date string matches the target year and optionally month
 const dateMatchesFilter = (dateString: string | undefined, year: number, month?: number): boolean => {
     if (!dateString) return false;
     try {
@@ -39,12 +48,10 @@ const dateMatchesFilter = (dateString: string | undefined, year: number, month?:
         if (!isValid(date)) return false;
         
         const projectYear = getYear(date);
-        const projectMonth = getMonth(date); // 0-indexed
+        const projectMonth = getMonth(date);
 
         if (projectYear !== year) return false;
-        // If month is undefined, we are only filtering by year, so return true if years match
         if (month === undefined) return true; 
-        // If month is defined, it must also match
         if (projectMonth !== month) return false;
         
         return true;
@@ -55,11 +62,14 @@ const dateMatchesFilter = (dateString: string | undefined, year: number, month?:
 
 
 export default function ProjectsPage() {
-  const { projects } = useProjects();
+  const { projects, deleteProject, getProject: findProjectForDeletion } = useProjects();
+  const { toast } = useToast();
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string, name: string } | null>(null);
 
   const projectCounts = useMemo(() => {
     const counts = {
@@ -102,7 +112,7 @@ export default function ProjectsPage() {
     if (yearsSet.size === 0) return [{ value: 'all', label: 'All Years' }];
 
     const sortedYears = Array.from(yearsSet)
-      .sort((a, b) => b - a) // Sort years descending
+      .sort((a, b) => b - a)
       .map(year => ({
           value: year.toString(),
           label: year.toString(),
@@ -120,7 +130,6 @@ export default function ProjectsPage() {
   const filteredProjects = useMemo(() => {
     let tempProjects = projects;
 
-    // Status Filter
     if (filterStatus !== 'all') {
       tempProjects = tempProjects.filter(p => {
         const status = p.status || ('Not Started' as ProjectStatus);
@@ -131,19 +140,16 @@ export default function ProjectsPage() {
       });
     }
     
-    // Date Filter
     if (selectedYear !== 'all') {
       const targetYearNum = parseInt(selectedYear);
       const targetMonthNum = selectedMonth !== 'all' ? parseInt(selectedMonth) : undefined;
 
       tempProjects = tempProjects.filter(p => {
-        // Prioritize startDate or dueDate if they exist
         if (p.startDate || p.dueDate) {
             const matchesStartDate = dateMatchesFilter(p.startDate, targetYearNum, targetMonthNum);
             const matchesDueDate = dateMatchesFilter(p.dueDate, targetYearNum, targetMonthNum);
             return matchesStartDate || matchesDueDate;
         } else {
-            // Fallback to createdAt if no start or due date
             return dateMatchesFilter(p.createdAt, targetYearNum, targetMonthNum);
         }
       });
@@ -151,6 +157,27 @@ export default function ProjectsPage() {
     
     return tempProjects;
   }, [projects, filterStatus, selectedYear, selectedMonth]);
+
+  const handleDeleteRequest = (projectId: string) => {
+    const project = findProjectForDeletion(projectId);
+    if (project) {
+      setProjectToDelete({ id: project.id, name: project.name });
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (projectToDelete) {
+      deleteProject(projectToDelete.id);
+      toast({
+        title: "Project Deleted",
+        description: `Project "${projectToDelete.name}" has been successfully deleted.`,
+        variant: "default",
+      });
+      setProjectToDelete(null);
+      setIsDeleteDialogOpen(false);
+    }
+  };
 
   const StatCard = ({ title, count, icon: Icon, statusFilter, currentFilter, onClick }: {
     title: string;
@@ -181,7 +208,6 @@ export default function ProjectsPage() {
     <> 
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        {/* CreateProjectDialog has been moved to AppLayout */}
       </div>
 
       <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -271,13 +297,42 @@ export default function ProjectsPage() {
             .sort((a, b) => {
                 const dateA = a.createdAt ? parseISO(a.createdAt).getTime() : 0;
                 const dateB = b.createdAt ? parseISO(b.createdAt).getTime() : 0;
-                return dateB - dateA; // Sort descending by creation date
+                return dateB - dateA; 
              })
             .map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard 
+                key={project.id} 
+                project={project}
+                onDeleteRequest={handleDeleteRequest} 
+              />
             ))}
         </div>
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+              <Trash2 className="h-5 w-5 mr-2 text-destructive" />
+              Confirm Deletion
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the project "{projectToDelete?.name}"? 
+              This action cannot be undone and will permanently remove all associated stages and subtasks.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
+
