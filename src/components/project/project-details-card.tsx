@@ -354,7 +354,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
 
             <TabsContent value="outcomes" className="mt-0 space-y-4">
                {renderField("Evaluation / Lessons Learned", project.outcomeNotes, Award, isEditing,
-                <Textarea id="outcomeNotes" placeholder="e.g., Key achievements, challenges, future recommendations..." value={outcomeNotes} onChange={(e) => setOutcomeNotes(e.target.value)} rows={4} />,
+                <Textarea id="outcomeNotes" placeholder="e.g., Key findings, conclusions, recommendations, achievements, challenges..." value={outcomeNotes} onChange={(e) => setOutcomeNotes(e.target.value)} rows={4} />,
                  "No outcome notes yet."
               )}
             </TabsContent>
