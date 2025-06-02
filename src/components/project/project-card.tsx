@@ -19,7 +19,7 @@ import {
 
 interface ProjectCardProps {
   project: Project;
-  onDeleteRequest: (projectId: string) => void; // New prop for delete action
+  onDeleteRequest: (projectId: string) => void;
 }
 
 const projectStatusIconsSm: Record<ProjectStatus, JSX.Element | null> = {
@@ -130,12 +130,18 @@ export function ProjectCard({ project, onDeleteRequest }: ProjectCardProps) {
             </div>
          )}
       </CardContent>
-      <CardFooter>
-        {/* "Open Project" button is now in the dropdown menu */}
-        <p className="text-xs text-muted-foreground w-full text-center">
+      <CardFooter className="flex-col items-stretch gap-2">
+        <Button asChild className="w-full">
+          <Link href={`/projects/${project.id}`}>
+            Open Project
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+        <p className="text-xs text-muted-foreground w-full text-center pt-1">
           Created: {project.createdAt ? formatDate(parseISO(project.createdAt), 'PP') : 'N/A'}
         </p>
       </CardFooter>
     </Card>
   );
 }
+
