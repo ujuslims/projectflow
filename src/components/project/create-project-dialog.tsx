@@ -116,7 +116,8 @@ export function CreateProjectDialog({
             )}
           </Button>
         ) : (
-          <Button variant="ghost">
+          // Default trigger if none provided via props - useful for direct use
+          <Button variant="ghost"> 
             <PlusCircle className="mr-2 h-4 w-4" /> New Project
           </Button>
         )}
@@ -129,8 +130,8 @@ export function CreateProjectDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
-          <ScrollArea className="flex-grow min-h-0 pr-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden min-h-0">
+          <ScrollArea className="flex-grow min-h-0">
             <div className="grid gap-4 p-6">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
                 <Label htmlFor="name" className="text-left sm:text-right">
