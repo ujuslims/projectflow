@@ -41,6 +41,7 @@ const GenerateExecutiveSummaryInputSchema = z.object({
   }).describe('Structured outcomes of the project.'),
   equipmentList: z.array(EquipmentItemSchema).optional().describe('List of key equipment used in the project.'),
   personnelList: z.array(PersonnelItemSchema).optional().describe('List of key personnel involved in the project.'),
+  otherResourcesList: z.array(z.string()).optional().describe('List of other key materials or resources used in the project (e.g., specific vehicles, consumables).'),
 });
 
 export type GenerateExecutiveSummaryInput = z.infer<typeof GenerateExecutiveSummaryInputSchema>;
@@ -91,12 +92,19 @@ Key Personnel Involved:
 {{/each}}
 {{/if}}
 
+{{#if otherResourcesList.length}}
+Other Key Resources:
+{{#each otherResourcesList}}
+- {{{this}}}
+{{/each}}
+{{/if}}
+
 Based on the information above, generate a concise and informative executive summary (2-4 paragraphs). The summary should:
 1. Briefly introduce the project and its main objectives.
 2. Highlight key progress, including task completion and adherence to schedule (if dates are available).
 3. Summarize the financial status (budget vs. spent).
 4. Integrate the most important aspects from the Project Outcomes (achievements, key findings, challenges, and key recommendations).
-5. If provided and relevant, briefly mention key equipment or the nature of the team involved, but keep it concise.
+5. If provided and relevant, briefly mention key equipment, personnel, or other resources, but keep it concise and integrated naturally.
 6. Conclude with an overall assessment or outlook.
 
 Ensure the tone is professional and suitable for stakeholders.

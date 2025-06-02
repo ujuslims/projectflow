@@ -75,8 +75,9 @@ export interface Project {
   coordinateSystem?: string;
   projectTypes?: string[];
   customProjectTypes?: string[];
-  equipmentList?: EquipmentItem[]; // Updated
-  personnelList?: PersonnelItem[]; // Updated
+  equipmentList?: EquipmentItem[];
+  personnelList?: PersonnelItem[];
+  otherResources?: string[]; // New field for other resources
   userId?: string; // To associate project with a user
 }
 
@@ -91,3 +92,4 @@ export interface LoginFormData {
   email: string;
   password: string;
 }
+

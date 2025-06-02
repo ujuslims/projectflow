@@ -9,12 +9,12 @@ import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskStatus, ProjectStatus, ProjectOutcomes, EquipmentItem, PersonnelItem } from '@/lib/types';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2 as LucideUsers2, UserCog, PlayCircle, Loader2, Lightbulb, Target, TrendingUp, Star, AlertTriangle, BookOpen, Brain, Wrench } from 'lucide-react';
+import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2 as LucideUsers2, UserCog, PlayCircle, Loader2, Lightbulb, Target, TrendingUp, Star, AlertTriangle, BookOpen, Brain, Wrench, Box } from 'lucide-react'; // Added Box icon
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 import { format as formatDate, parseISO, isValid, differenceInCalendarDays } from 'date-fns';
-import { useCurrency } from '@/contexts/currency-context'; 
+import { useCurrency } from '@/contexts/currency-context';
 import { generateExecutiveSummary, type GenerateExecutiveSummaryInput, type GenerateExecutiveSummaryOutput } from '@/ai/flows';
 
 
@@ -32,9 +32,9 @@ export default function ProjectSummaryPage() {
   const projectId = params.projectId as string;
   const { getProject, getCalculatedProjectSpent } = useProjects();
   const { toast } = useToast();
-  const { selectedCurrency } = useCurrency(); 
+  const { selectedCurrency } = useCurrency();
   const [project, setProject] = useState<Project | null>(null);
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [generatedExecutiveSummary, setGeneratedExecutiveSummary] = useState<string | null>(null);
 
@@ -45,8 +45,8 @@ export default function ProjectSummaryPage() {
   }, [project, getCalculatedProjectSpent]);
 
   useEffect(() => {
-    if (projectId) { 
-      const currentProject = getProject(projectId); 
+    if (projectId) {
+      const currentProject = getProject(projectId);
       if (currentProject) {
         setProject(currentProject);
       } else {
@@ -55,7 +55,7 @@ export default function ProjectSummaryPage() {
       }
       setIsLoading(false);
     }
-  }, [projectId, getProject, router, toast]); 
+  }, [projectId, getProject, router, toast]);
 
   const completedSubtasksCount = useMemo(() => {
     return project?.subtasks.filter(st => st.status === 'Done').length || 0;
@@ -105,6 +105,7 @@ export default function ProjectSummaryPage() {
         },
         equipmentList: project.equipmentList,
         personnelList: project.personnelList,
+        otherResourcesList: project.otherResources,
       };
       const result = await generateExecutiveSummary(input);
       setGeneratedExecutiveSummary(result.executiveSummary);
@@ -116,8 +117,8 @@ export default function ProjectSummaryPage() {
       setIsGeneratingSummary(false);
     }
   };
-  
-  if (isLoading) { 
+ 
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -142,12 +143,12 @@ export default function ProjectSummaryPage() {
     'Completed': <CalendarCheck2 className="h-4 w-4" />,
     'Cancelled': <XCircle className="h-4 w-4" />,
   };
-  
+ 
   let statusIconToRender: JSX.Element;
   if (project.status && projectStatusIcons[project.status]) {
     statusIconToRender = projectStatusIcons[project.status];
   } else {
-    statusIconToRender = <InfoIcon className="h-4 w-4" />; 
+    statusIconToRender = <InfoIcon className="h-4 w-4" />;
   }
 
   const outcomeSections: Array<{key: keyof ProjectOutcomes; title: string; icon: JSX.Element, content?: string}> = project?.outcomes ? [
@@ -182,7 +183,7 @@ export default function ProjectSummaryPage() {
           </Button>
         </div>
       </div>
-      
+     
       <div className="hidden print:block mb-8">
         <h1 className="text-2xl font-bold">Project Report: {project.name}</h1>
         <p className="text-sm text-muted-foreground">Generated on: {formatDate(new Date(), 'PPP p')}</p>
@@ -243,7 +244,7 @@ export default function ProjectSummaryPage() {
             <CardContent><p className="text-sm whitespace-pre-wrap">{project.description}</p></CardContent>
           </Card>
         )}
-        
+       
         {project.expectedDeliverables && (
           <Card className="print:shadow-none print:border-0">
             <CardHeader><CardTitle className="text-xl">Expected Deliverables</CardTitle></CardHeader>
@@ -256,17 +257,17 @@ export default function ProjectSummaryPage() {
             <Card className="print:shadow-none print:border-0">
               <CardHeader><CardTitle className="text-xl">Financial Summary</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between"><span>Total Budget:</span> <span>{formatCurrency(project.budget, selectedCurrency)}</span></div> 
-                <div className="flex justify-between"><span>Amount Spent:</span> <span>{formatCurrency(projectSpent, selectedCurrency)}</span></div> 
+                <div className="flex justify-between"><span>Total Budget:</span> <span>{formatCurrency(project.budget, selectedCurrency)}</span></div>
+                <div className="flex justify-between"><span>Amount Spent:</span> <span>{formatCurrency(projectSpent, selectedCurrency)}</span></div>
                 <Separator />
-                <div className="flex justify-between font-semibold"><span>Remaining Budget:</span> <span>{formatCurrency(remainingBudget, selectedCurrency)}</span></div> 
+                <div className="flex justify-between font-semibold"><span>Remaining Budget:</span> <span>{formatCurrency(remainingBudget, selectedCurrency)}</span></div>
               </CardContent>
             </Card>
             <Card className="print:shadow-none print:border-0">
               <CardHeader><CardTitle className="text-xl">Progress Summary</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between items-center">
-                  <span>Tasks Completed:</span> 
+                  <span>Tasks Completed:</span>
                   <span>{completedSubtasksCount} / {totalSubtasksCount}</span>
                 </div>
                 <Progress value={taskProgressPercentage} className="h-3" />
@@ -274,7 +275,7 @@ export default function ProjectSummaryPage() {
               </CardContent>
             </Card>
         </div>
-        
+       
         <Card className="print:shadow-none print:border-0">
           <CardHeader><CardTitle className="text-xl">Stages & Subtasks</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -287,7 +288,7 @@ export default function ProjectSummaryPage() {
                       <div className="flex justify-between items-start mb-0.5 gap-2">
                         <span className="font-medium">{subtask.name}</span>
                         <div className="flex flex-col items-end flex-shrink-0">
-                            <span className={cn("text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1 mb-1", 
+                            <span className={cn("text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1 mb-1",
                             subtask.status === 'Done' ? 'bg-green-100 text-green-700 print:bg-transparent print:text-green-700' :
                             subtask.status === 'Blocked' ? 'bg-red-100 text-red-700 print:bg-transparent print:text-red-700' :
                             subtask.status === 'In Progress' ? 'bg-blue-100 text-blue-700 print:bg-transparent print:text-blue-700' :
@@ -317,7 +318,7 @@ export default function ProjectSummaryPage() {
             )) : <p className="text-sm text-muted-foreground">No stages defined for this project.</p>}
           </CardContent>
         </Card>
-        
+       
         {(project.equipmentList && project.equipmentList.length > 0) && (
             <Card className="print:shadow-none print:border-0">
                 <CardHeader><CardTitle className="text-xl flex items-center"><Wrench className="mr-2 h-5 w-5 text-primary"/>Equipment List</CardTitle></CardHeader>
@@ -335,6 +336,17 @@ export default function ProjectSummaryPage() {
                 <CardContent>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                         {project.personnelList.map((item, index) => <li key={index}>{item.name} - {item.role}</li>)}
+                    </ul>
+                </CardContent>
+            </Card>
+        )}
+
+        {(project.otherResources && project.otherResources.length > 0) && (
+            <Card className="print:shadow-none print:border-0">
+                <CardHeader><CardTitle className="text-xl flex items-center"><Box className="mr-2 h-5 w-5 text-primary"/>Other Resources</CardTitle></CardHeader>
+                <CardContent>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                        {project.otherResources.map((item, index) => <li key={index}>{item}</li>)}
                     </ul>
                 </CardContent>
             </Card>

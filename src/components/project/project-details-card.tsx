@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
-import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign, FileArchive, ListPlus, Lightbulb, Target, Star, AlertTriangle, BookOpen, TrendingUp, Wrench, Users2, Trash2, PlusCircle } from 'lucide-react';
+import { Banknote, BarChart3, CalendarCheck2, Edit, FileText, Hourglass, Info, ListTodo, Loader2, PackageOpen, Percent, Save, XCircle, Award, CalendarDays, CheckSquare, User, Building, Hash, Globe, PlayCircle, Workflow, DollarSign, FileArchive, ListPlus, Lightbulb, Target, Star, AlertTriangle, BookOpen, TrendingUp, Wrench, Users2, Trash2, PlusCircle, Box } from 'lucide-react'; // Added Box icon
 import { useState, useEffect, useMemo, type FormEvent, useCallback } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format as formatDate, parseISO, isValid } from 'date-fns';
@@ -22,7 +22,7 @@ import { useCurrency } from '@/contexts/currency-context';
 
 interface ProjectDetailsCardProps {
   project: Project;
-  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomes' | 'expectedDeliverables' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes' | 'customProjectTypes' | 'equipmentList' | 'personnelList'>>) => void;
+  onUpdateProject: (updates: Partial<Pick<Project, 'name' | 'description' | 'budget' | 'status' | 'outcomes' | 'expectedDeliverables' | 'startDate' | 'dueDate' | 'projectNumber' | 'clientContact' | 'siteAddress' | 'coordinateSystem' | 'projectTypes' | 'customProjectTypes' | 'equipmentList' | 'personnelList' | 'otherResources'>>) => void;
 }
 
 const projectStatuses: ProjectStatus[] = ['Not Started', 'Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
@@ -65,6 +65,8 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
   const [currentPersonnelList, setCurrentPersonnelList] = useState<PersonnelItem[]>(project.personnelList || []);
   const [newPersonnelItemName, setNewPersonnelItemName] = useState('');
   const [newPersonnelItemRole, setNewPersonnelItemRole] = useState('');
+  const [currentOtherResourcesList, setCurrentOtherResourcesList] = useState<string[]>(project.otherResources || []);
+  const [newOtherResourceItem, setNewOtherResourceItem] = useState('');
 
 
   const calculatedSpent = useMemo(() => {
@@ -100,6 +102,8 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setCurrentPersonnelList(project.personnelList || []);
     setNewPersonnelItemName('');
     setNewPersonnelItemRole('');
+    setCurrentOtherResourcesList(project.otherResources || []);
+    setNewOtherResourceItem('');
   }, [project]);
 
   useEffect(() => {
@@ -155,6 +159,18 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
     setCurrentPersonnelList(prev => prev.filter((_, index) => index !== itemIndex));
   };
 
+  const handleAddOtherResourceItem = () => {
+    if (newOtherResourceItem.trim()) {
+      setCurrentOtherResourcesList(prev => [...prev, newOtherResourceItem.trim()]);
+      setNewOtherResourceItem('');
+    } else {
+      toast({ title: "Info", description: "Resource name/description is required.", variant: "default" });
+    }
+  };
+
+  const handleDeleteOtherResourceItem = (itemIndex: number) => {
+    setCurrentOtherResourcesList(prev => prev.filter((_, index) => index !== itemIndex));
+  };
 
   const handleSave = (e: FormEvent) => {
     e.preventDefault();
@@ -196,6 +212,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       customProjectTypes: customTypesArray.length > 0 ? customTypesArray : undefined,
       equipmentList: currentEquipmentList.length > 0 ? currentEquipmentList : undefined,
       personnelList: currentPersonnelList.length > 0 ? currentPersonnelList : undefined,
+      otherResources: currentOtherResourcesList.length > 0 ? currentOtherResourcesList : undefined,
     });
     setIsEditing(false);
     setIsLoading(false);
@@ -217,7 +234,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
       toast({ title: "Success", description: "All subtasks marked as Done." });
     }
   };
-  
+ 
   const renderOutcomeField = (label: string, value: string | undefined, Icon: React.ElementType, isEditingMode: boolean, textareaValue: string, setTextareaValue: (val: string) => void, placeholder: string) => {
     return (
       <div>
@@ -226,11 +243,11 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
           {label}
         </Label>
         {isEditingMode ? (
-          <Textarea 
-            id={`outcome-${label.toLowerCase().replace(/\s+/g, '-')}`} 
-            value={textareaValue} 
-            onChange={(e) => setTextareaValue(e.target.value)} 
-            rows={3} 
+          <Textarea
+            id={`outcome-${label.toLowerCase().replace(/\s+/g, '-')}`}
+            value={textareaValue}
+            onChange={(e) => setTextareaValue(e.target.value)}
+            rows={3}
             placeholder={placeholder}
             className="text-sm"
           />
@@ -508,6 +525,49 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                       <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No personnel added yet.</p>
                     )}
                   </div>
+
+                  {/* Other Resources Management */}
+                  <div>
+                    <Label htmlFor="other-resource-item" className="text-base font-semibold mb-1 flex items-center">
+                      <Box className="mr-2 h-5 w-5 text-primary" /> Other Resources
+                    </Label>
+                    <div className="flex gap-2 mb-2 items-end">
+                      <div className="flex-grow">
+                        <Label htmlFor="other-resource-item" className="text-xs">Resource Name/Description</Label>
+                        <Input
+                          id="other-resource-item"
+                          value={newOtherResourceItem}
+                          onChange={(e) => setNewOtherResourceItem(e.target.value)}
+                          placeholder="e.g., Diesel, Survey Stakes"
+                          className="text-sm h-9"
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddOtherResourceItem();}}}
+                        />
+                      </div>
+                      <Button type="button" onClick={handleAddOtherResourceItem} variant="secondary" size="sm" className="h-9 self-end">
+                         <PlusCircle className="mr-2 h-4 w-4"/>Add
+                      </Button>
+                    </div>
+                     {currentOtherResourcesList.length > 0 ? (
+                      <ul className="space-y-1 text-sm list-disc pl-5 bg-muted/30 p-3 rounded-md max-h-48 overflow-y-auto">
+                        {currentOtherResourcesList.map((item, index) => (
+                          <li key={index} className="flex justify-between items-center">
+                            <span>{item}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteOtherResourceItem(index)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No other resources added yet.</p>
+                    )}
+                  </div>
                 </>
               ) : (
                  <>
@@ -520,7 +580,7 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                             {project.equipmentList.map((item, index) => <li key={index}>{item.name} ({item.model})</li>)}
                         </ul>
                     ) : (
-                        <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No equipment listed for this project.</p>
+                        <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No equipment listed.</p>
                     )}
                   </div>
                   <div>
@@ -532,7 +592,19 @@ export function ProjectDetailsCard({ project, onUpdateProject }: ProjectDetailsC
                             {project.personnelList.map((item, index) => <li key={index}>{item.name} - {item.role}</li>)}
                         </ul>
                     ) : (
-                        <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No personnel listed for this project.</p>
+                        <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No personnel listed.</p>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold mb-1 flex items-center">
+                       <Box className="mr-2 h-5 w-5 text-primary" /> Other Resources
+                    </h3>
+                    {(project.otherResources && project.otherResources.length > 0) ? (
+                        <ul className="text-sm list-disc pl-7 space-y-0.5 bg-muted/30 p-3 rounded-md">
+                            {project.otherResources.map((item, index) => <li key={index}>{item}</li>)}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">No other resources listed.</p>
                     )}
                   </div>
                 </>

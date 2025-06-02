@@ -8,7 +8,7 @@ import { projectStageTemplates } from '@/lib/project-templates'; // Import templ
 
 interface ProjectsContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes' | 'equipmentList' | 'personnelList'>
+  addProject: (project: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes' | 'equipmentList' | 'personnelList' | 'otherResources'>
                       & { name: string; description?: string; expectedDeliverables?: string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; customProjectTypes?: string[]; startDate?: string; dueDate?: string; }) => Project;
   getProject: (id: string) => Project | undefined;
   updateProject: (id: string, updates: Partial<Project>) => void;
@@ -40,7 +40,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     return project.subtasks.reduce((sum, subtask) => sum + (subtask.cost || 0), 0);
   };
 
-  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes' | 'equipmentList' | 'personnelList'>
+  const addProject = (projectData: Omit<Project, 'id' | 'stages' | 'subtasks' | 'status' | 'spent' | 'outcomes' | 'createdAt' | 'projectTypes' | 'expectedDeliverables' | 'customProjectTypes' | 'equipmentList' | 'personnelList' | 'otherResources'>
                                 & { name: string; description?: string; expectedDeliverables?:string; budget?: number; projectNumber?: string; clientContact?: string; siteAddress?: string; coordinateSystem?: string; projectTypes?: string[]; customProjectTypes?: string[]; startDate?: string; dueDate?: string; }) => {
 
     const initialStageNames = new Set<string>();
@@ -73,7 +73,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       stages: initialStages,
       subtasks: [],
       budget: projectData.budget || 0,
-      spent: 0, 
+      spent: 0,
       status: 'Not Started' as ProjectStatus,
       outcomes: {},
       expectedDeliverables: projectData.expectedDeliverables || '',
@@ -85,8 +85,10 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       coordinateSystem: projectData.coordinateSystem || '',
       projectTypes: projectData.projectTypes || [],
       customProjectTypes: projectData.customProjectTypes || [],
-      equipmentList: [] as EquipmentItem[], // Initialize new field
-      personnelList: [] as PersonnelItem[], // Initialize new field
+      equipmentList: [] as EquipmentItem[],
+      personnelList: [] as PersonnelItem[],
+      otherResources: [] as string[], // Initialize new field
+      userId: '', // Initialize userId, assuming it might be set later or handled by auth
     };
     setProjects(prevProjects => [...prevProjects, newProject]);
     return newProject;
@@ -110,7 +112,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
           } else if (updates.outcomes) {
             newUpdates.outcomes = updates.outcomes;
           }
-          
+         
           const { spent, ...otherUpdates } = newUpdates; // spent is calculated, remove if passed in updates
           return { ...p, ...otherUpdates };
         }
@@ -173,28 +175,28 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       })
     );
   };
-  
+ 
   const reorderStages = (projectId: string, sourceStageId: string, targetStageId: string | null) => {
-    setProjects(prevProjects => 
+    setProjects(prevProjects =>
       prevProjects.map(p => {
         if (p.id === projectId) {
           const projectStages = [...p.stages];
           const sourceIndex = projectStages.findIndex(s => s.id === sourceStageId);
-          if (sourceIndex === -1) return p; 
+          if (sourceIndex === -1) return p;
 
-          const [sourceStage] = projectStages.splice(sourceIndex, 1); 
+          const [sourceStage] = projectStages.splice(sourceIndex, 1);
 
-          if (targetStageId === null) { 
+          if (targetStageId === null) {
             projectStages.push(sourceStage);
           } else {
             const targetIndex = projectStages.findIndex(s => s.id === targetStageId);
-            if (targetIndex === -1) { 
-              projectStages.push(sourceStage); 
+            if (targetIndex === -1) {
+              projectStages.push(sourceStage);
             } else {
-              projectStages.splice(targetIndex, 0, sourceStage); 
+              projectStages.splice(targetIndex, 0, sourceStage);
             }
           }
-          
+         
           const updatedOrderedStages = projectStages.map((stage, index) => ({
             ...stage,
             order: index,
@@ -259,7 +261,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       prevProjects.map(p => {
         if (p.id === projectId) {
           const stageExists = p.stages.some(s => s.id === stageId);
-          if (!stageExists) return p; 
+          if (!stageExists) return p;
 
           let currentOrderInStage = p.subtasks.filter(st => st.stageId === stageId).length;
 
