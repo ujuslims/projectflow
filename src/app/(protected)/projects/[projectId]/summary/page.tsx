@@ -9,12 +9,13 @@ import { useProjects } from '@/contexts/projects-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Project, Stage, Subtask, SubtaskStatus, ProjectStatus, ProjectOutcomes } from '@/lib/types';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle, Loader2, Lightbulb, Target, TrendingUp, Star, AlertTriangle, BookOpen } from 'lucide-react';
+import { ArrowLeft, Printer, ListChecks, DollarSign, CalendarDays, User, Building, Hash, MapPin, Globe, Edit, Hourglass, PackageOpen, CalendarCheck2, XCircle, InfoIcon, Users2, UserCog, PlayCircle, Loader2, Lightbulb, Target, TrendingUp, Star, AlertTriangle, BookOpen, Brain } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 import { format as formatDate, parseISO, isValid, differenceInCalendarDays } from 'date-fns';
 import { useCurrency } from '@/contexts/currency-context'; 
+import { generateExecutiveSummary, type GenerateExecutiveSummaryInput, type GenerateExecutiveSummaryOutput } from '@/ai/flows';
 
 
 const statusIconMapSmall: Record<SubtaskStatus, JSX.Element> = {
@@ -34,6 +35,9 @@ export default function ProjectSummaryPage() {
   const { selectedCurrency } = useCurrency(); 
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true); 
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [generatedExecutiveSummary, setGeneratedExecutiveSummary] = useState<string | null>(null);
+
 
   const projectSpent = useMemo(() => {
     if (!project) return 0;
@@ -71,6 +75,44 @@ export default function ProjectSummaryPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleGenerateSummary = async () => {
+    if (!project || !project.outcomes || Object.values(project.outcomes).every(val => !val || val.trim() === '')) {
+      toast({ title: "Info", description: "Please define project outcomes before generating an executive summary.", variant: "default" });
+      return;
+    }
+    setIsGeneratingSummary(true);
+    setGeneratedExecutiveSummary(null);
+    try {
+      const input: GenerateExecutiveSummaryInput = {
+        projectName: project.name,
+        projectDescription: project.description,
+        status: project.status,
+        startDate: project.startDate,
+        dueDate: project.dueDate,
+        budget: project.budget,
+        spent: projectSpent,
+        totalSubtasks: totalSubtasksCount,
+        completedSubtasks: completedSubtasksCount,
+        outcomes: {
+          keyFindings: project.outcomes.keyFindings,
+          conclusions: project.outcomes.conclusions,
+          recommendations: project.outcomes.recommendations,
+          achievements: project.outcomes.achievements,
+          challenges: project.outcomes.challenges,
+          lessonsLearned: project.outcomes.lessonsLearned,
+        }
+      };
+      const result = await generateExecutiveSummary(input);
+      setGeneratedExecutiveSummary(result.executiveSummary);
+      toast({ title: "AI Summary Generated", description: "Executive summary has been created." });
+    } catch (error) {
+      console.error("AI Summary Generation Error:", error);
+      toast({ title: "AI Error", description: "Could not generate executive summary.", variant: "destructive" });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
   };
   
   if (isLoading) { 
@@ -115,17 +157,22 @@ export default function ProjectSummaryPage() {
     { key: 'lessonsLearned', title: 'Lessons Learned', icon: <BookOpen className="h-5 w-5 text-primary mr-2 flex-shrink-0" />, content: project.outcomes.lessonsLearned },
   ].filter(section => section.content && section.content.trim() !== '') : [];
 
+  const hasOutcomes = project.outcomes && Object.values(project.outcomes).some(val => val && val.trim() !== '');
 
   return (
     <>
       <div className="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 print:hidden">
         <h1 className="text-3xl font-bold tracking-tight">Project Report: {project.name}</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
             <Link href={`/projects/${projectId}`}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Project Board
             </Link>
+          </Button>
+          <Button onClick={handleGenerateSummary} disabled={isGeneratingSummary || !hasOutcomes} variant="outline">
+            {isGeneratingSummary ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Brain className="mr-2 h-4 w-4" />}
+            AI Executive Summary
           </Button>
           <Button onClick={handlePrint} title="Print this project summary">
             <Printer className="mr-2 h-4 w-4" />
@@ -138,6 +185,36 @@ export default function ProjectSummaryPage() {
         <h1 className="text-2xl font-bold">Project Report: {project.name}</h1>
         <p className="text-sm text-muted-foreground">Generated on: {formatDate(new Date(), 'PPP p')}</p>
       </div>
+
+      {generatedExecutiveSummary && (
+        <Card className="mb-6 print:shadow-none print:border-0">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center">
+              <Brain className="mr-2 h-5 w-5 text-primary" />
+              AI Generated Executive Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm whitespace-pre-wrap">{generatedExecutiveSummary}</p>
+          </CardContent>
+        </Card>
+      )}
+      {!hasOutcomes && (
+         <Card className="mb-6 bg-accent/10 border-accent/30 print:hidden">
+            <CardContent className="pt-6">
+              <div className="flex items-center">
+                <InfoIcon className="h-5 w-5 mr-3 text-accent flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-accent">Define Project Outcomes for AI Summary</p>
+                  <p className="text-sm text-accent/80">
+                    Go to the project details page and fill in the "Outcomes" tab to enable AI Executive Summary generation.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+      )}
+
 
       <div className="space-y-6">
         <Card className="print:shadow-none print:border-0">
@@ -247,7 +324,7 @@ export default function ProjectSummaryPage() {
             </CardContent>
           </Card>
         )}
-        {(project?.outcomes && Object.values(project.outcomes).every(val => !val || val.trim() === '')) && (
+        {!hasOutcomes && (
           <Card className="print:shadow-none print:border-0">
             <CardHeader><CardTitle className="text-xl">Project Outcomes</CardTitle></CardHeader>
             <CardContent>

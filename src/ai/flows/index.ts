@@ -8,3 +8,4 @@
 // IMPORTANT: This file should NOT have 'use server';
 export { organizeSubtasks, type OrganizeSubtasksInput, type OrganizeSubtasksOutput } from './organize-subtasks';
 export { suggestSubtasks, type SuggestSubtasksInput, type SuggestSubtasksOutput } from './suggest-subtasks';
+export { generateExecutiveSummary, type GenerateExecutiveSummaryInput, type GenerateExecutiveSummaryOutput } from './generate-executive-summary';
