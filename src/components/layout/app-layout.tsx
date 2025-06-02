@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { ProjectFlowLogo } from '@/components/icons/project-flow-logo';
 import type { ReactNode } from 'react';
-import React from 'react'; // Added React import
+import React, { useState, useEffect } from 'react'; // Added useState, useEffect
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { LogOut, LogIn, UserPlus, Loader2, Settings2, Home, LayoutDashboard, FileText, PlusCircle } from 'lucide-react';
@@ -23,7 +23,14 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, signOutUser, loading } = useAuth();
   const { selectedCurrency, setSelectedCurrency, availableCurrencies } = useCurrency();
   const router = useRouter();
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const [currentPath, setCurrentPath] = useState(''); // Initialize currentPath state
+
+  useEffect(() => {
+    // Set currentPath only on the client side after mount
+    if (typeof window !== 'undefined') {
+      setCurrentPath(window.location.pathname);
+    }
+  }, []);
 
 
   const handleSignOut = async () => {
@@ -37,7 +44,6 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const navItems = [
     { href: '/', label: 'Home', icon: <Home /> },
-    // New Project will be handled separately if user is logged in
     { href: '/projects', label: 'Dashboard', icon: <LayoutDashboard />, authRequired: true },
     { href: '/reports', label: 'Reports', icon: <FileText />, authRequired: true },
   ];
@@ -66,7 +72,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                   size="sm"
                   asChild
                   className={cn(
-                    currentPath === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                    currentPath === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground",
                     "justify-start"
                   )}
                 >
@@ -82,7 +88,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 triggerButtonProps={{ 
                   variant: "ghost", 
                   size: "sm",
-                  className: "justify-start text-primary" // Changed text color here
+                  className: "justify-start text-primary"
                 }}
                 triggerButtonContent={
                   <>
@@ -92,7 +98,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 }
               />
             )}
-             {loading && ( // Show placeholder for New Project when loading
+             {loading && ( 
                 <Button variant="ghost" size="sm" disabled className="text-muted-foreground">
                     <PlusCircle className="mr-0 sm:mr-2 h-4 w-4" />
                     <span className="hidden sm:inline">New Project</span>
