@@ -93,6 +93,7 @@ export default function ProjectSummaryPage() {
         dueDate: project.dueDate,
         budget: project.budget,
         spent: projectSpent,
+        currencySymbol: selectedCurrency.symbol,
         totalSubtasks: totalSubtasksCount,
         completedSubtasks: completedSubtasksCount,
         outcomes: {
@@ -400,3 +401,4 @@ export default function ProjectSummaryPage() {
     </>
   );
 }
+

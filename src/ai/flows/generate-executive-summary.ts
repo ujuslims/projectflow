@@ -29,6 +29,7 @@ const GenerateExecutiveSummaryInputSchema = z.object({
   dueDate: z.string().optional().describe('The due date of the project (ISO format).'),
   budget: z.number().optional().describe('The total budget allocated for the project.'),
   spent: z.number().optional().describe('The amount spent on the project so far.'),
+  currencySymbol: z.string().optional().describe('The currency symbol for monetary values (e.g., $, €, £).'),
   totalSubtasks: z.number().describe('The total number of subtasks in the project.'),
   completedSubtasks: z.number().describe('The number of completed subtasks in the project.'),
   outcomes: z.object({
@@ -47,7 +48,7 @@ const GenerateExecutiveSummaryInputSchema = z.object({
 export type GenerateExecutiveSummaryInput = z.infer<typeof GenerateExecutiveSummaryInputSchema>;
 
 const GenerateExecutiveSummaryOutputSchema = z.object({
-  executiveSummary: z.string().describe("A concise executive summary of the project (2-4 paragraphs). It should cover the project's purpose, key progress, financial status, main outcomes (findings, achievements, challenges), and any critical recommendations. The tone should be professional and informative."),
+  executiveSummary: z.string().describe("A concise executive summary of the project (2-4 paragraphs). It should cover the project's purpose, key progress, financial status (using the provided currency symbol), main outcomes (findings, achievements, challenges), and any critical recommendations. Mention key resources (equipment, personnel, other) if relevant and integrate them naturally. The tone should be professional and informative."),
 });
 
 export type GenerateExecutiveSummaryOutput = z.infer<typeof GenerateExecutiveSummaryOutputSchema>;
@@ -66,8 +67,8 @@ Project Name: {{{projectName}}}
 Status: {{{status}}}
 {{#if startDate}}Start Date: {{{startDate}}}{{/if}}
 {{#if dueDate}}Due Date: {{{dueDate}}}{{/if}}
-Budget: {{{budget}}}
-Spent: {{{spent}}}
+Budget: {{#if currencySymbol}}{{{currencySymbol}}}{{/if}}{{{budget}}}
+Spent: {{#if currencySymbol}}{{{currencySymbol}}}{{/if}}{{{spent}}}
 Task Progress: {{{completedSubtasks}}}/{{{totalSubtasks}}} completed.
 
 Project Outcomes:
@@ -79,7 +80,7 @@ Project Outcomes:
 {{#if outcomes.lessonsLearned}}- Lessons Learned: {{{outcomes.lessonsLearned}}}{{/if}}
 
 {{#if equipmentList.length}}
-Equipment Utilized:
+Key Equipment Utilized:
 {{#each equipmentList}}
 - {{{name}}} ({{model}})
 {{/each}}
@@ -102,9 +103,9 @@ Other Key Resources:
 Based on the information above, generate a concise and informative executive summary (2-4 paragraphs). The summary should:
 1. Briefly introduce the project and its main objectives.
 2. Highlight key progress, including task completion and adherence to schedule (if dates are available).
-3. Summarize the financial status (budget vs. spent).
+3. Summarize the financial status (budget vs. spent), using the provided currency symbol.
 4. Integrate the most important aspects from the Project Outcomes (achievements, key findings, challenges, and key recommendations).
-5. If provided and relevant, briefly mention key equipment, personnel, or other resources, but keep it concise and integrated naturally.
+5. If provided and relevant, briefly mention key equipment, personnel, or other resources, but keep it concise and integrated naturally into the narrative. Avoid lengthy lists; summarize their impact or necessity if possible.
 6. Conclude with an overall assessment or outlook.
 
 Ensure the tone is professional and suitable for stakeholders.
@@ -124,3 +125,4 @@ const generateExecutiveSummaryFlow = ai.defineFlow(
     return output!;
   }
 );
+
